@@ -2,6 +2,7 @@ giac (1.9.0.57+dfsg2-3) unstable; urgency=medium
 
   * d/patches/additional_test_files_for_other_arch.patch: Fix chk_fhan0 test
     with test output files for different architectures (Closes: #1040889).
+  * d/control: Update email in Uploaders.
 
  -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 11 Sep 2023 19:00:33 +0300
 
