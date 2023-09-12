@@ -1,3 +1,10 @@
+giac (1.9.0.57+dfsg2-3) unstable; urgency=medium
+
+  * d/patches/additional_test_files_for_other_arch.patch: Fix chk_fhan0 test
+    with test output files for different architectures (Closes: #1040889).
+
+ -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 11 Sep 2023 19:00:33 +0300
+
 giac (1.9.0.57+dfsg2-2) unstable; urgency=medium
 
   * Fix failure to build source after successful build (Closes: #1044632).

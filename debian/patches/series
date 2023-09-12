@@ -1,4 +1,5 @@
 ## Issues with other programs, or version matches
+additional_test_files_for_other_arch.patch
 system-gl2ps.patch # refused
 version-bison-3.patch # refused
 dont-bg-hevea.patch # upstream doesn't know - says hevea2mml should be used
