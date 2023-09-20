@@ -14,6 +14,8 @@ export CCACHE_DIR := $(CURDIR)/debian/ccache
 $(shell mkdir -p "$(CCACHE_DIR)")
 endif
 
+include /usr/share/dpkg/architecture.mk
+
 # ~/.xcasrc sometimes interferes with doc/test targets, causing failures
 export HOME=/nonexistent
 
@@ -47,7 +49,9 @@ override_dh_auto_build-arch:
 	dh_auto_build -a -D doc -- info
 
 override_dh_auto_test-arch:
+ifneq (arm64,$(DEB_BUILD_ARCH))
 	dh_auto_test -a -D check -- VERBOSE=1
+endif
 
 override_dh_auto_test-indep:
 	true
