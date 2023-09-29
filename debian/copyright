@@ -28,7 +28,7 @@ Files-Excluded:
  po/*.gmo
  po/*.pot
  intl/*
- src/mkaout src/mkd* src/mkg* src/mkhist src/mkjs src/mkl* src/mkstat src/mkwcas src/mkxcas src/mkx*
+ src/mkaout src/mkd* src/mkg* src/mkhist src/mkjs src/mkl* src/mkstat src/mkwcas src/mkx*
  src/config.h.*
  mkdebian mkdebian2 debian debianold
 # Build output, we regenerate these instead
