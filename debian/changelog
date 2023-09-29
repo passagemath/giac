@@ -2,6 +2,7 @@ giac (1.9.0.59+dfsg2-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * d/copyright: Remove src/mkxcas from Files-Excluded, no longer present.
+  * d/patches: Refresh patches.
 
  -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Thu, 21 Sep 2023 17:39:28 +0300
 

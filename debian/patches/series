@@ -1,10 +1,8 @@
 ## Issues with other programs, or version matches
-additional_test_files_for_other_arch.patch
 system-gl2ps.patch # refused
 version-bison-3.patch # refused
 dont-bg-hevea.patch # upstream doesn't know - says hevea2mml should be used
 define-anyarg.patch
-increase-pari-size.patch
 fix-string-compiler-error.patch
 
 ## Build script patches
@@ -21,3 +19,4 @@ d-find-doc-files-at-buildtime.patch
 d-dont-include-remote-scripts.patch
 dont_build_dvi_and_ps.patch
 drop_fr_doc.patch
+additional_test_files_for_other_arch.patch
