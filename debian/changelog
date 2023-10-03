@@ -1,11 +1,11 @@
-giac (1.9.0.59+dfsg2-1) UNRELEASED; urgency=medium
+giac (1.9.0.59+dfsg2-1) unstable; urgency=medium
 
   * New upstream release.
   * d/copyright: Remove src/mkxcas from Files-Excluded, no longer present.
   * d/patches: Refresh patches.
   * d/rules: Allow build tests for arm64.
 
- -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Thu, 21 Sep 2023 17:39:28 +0300
+ -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Tue, 03 Oct 2023 17:19:09 +0300
 
 giac (1.9.0.57+dfsg2-4) unstable; urgency=medium
 
