@@ -9,8 +9,7 @@ fix-string-compiler-error.patch
 missing-build-rules.patch # not for upstream
 split-build-install.patch # upstream doesn't know - says hevea2mml should be used
 #no-X-deps-icas.patch # see README.source for details
-
-## Current checks only work on AMD64
+alter_test_files_for_other_arch.patch # fix chk_fhan0 for arm64, armel, and i386
 
 ### Debian only
 
@@ -19,4 +18,3 @@ d-find-doc-files-at-buildtime.patch
 d-dont-include-remote-scripts.patch
 dont_build_dvi_and_ps.patch
 drop_fr_doc.patch
-additional_test_files_for_other_arch.patch
