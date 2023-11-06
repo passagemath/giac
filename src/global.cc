@@ -213,7 +213,11 @@ int my_sprintf(char * s, const char * format, ...){
 #if defined(FIR) && !defined(FIR_LINUX)
   z = firvsprintf(s, format, ap);
 #else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   z = vsprintf(s, format, ap);
+  // z = vsnprintf(s, RAND_MAX,format, ap);
+#pragma clang diagnostic pop  
 #endif
   va_end(ap);
   return z;
@@ -1350,8 +1354,8 @@ bool dfu_check_epsilon2(const char * fname){
   srand(time(NULL));
   int i;
   for (i=0;i<n;++i){
-    int j=(rand()/(1.0+RAND_MAX))*n;
-    ptr[j]=rand();
+    int j=(std_rand()/(1.0+RAND_MAX))*n;
+    ptr[j]=std_rand();
   }
   for (i=0;i<n;++i){
     fputc(ptr[i],f);
@@ -1387,8 +1391,8 @@ bool dfu_check_apps2(const char * fname){
   srand(time(NULL));
   int i;
   for (i=0;i<n;++i){
-    int j=(rand()/(1.0+RAND_MAX))*n;
-    ptr[j]=rand();
+    int j=(giac::std_rand()/(1.0+RAND_MAX))*n;
+    ptr[j]=giac::std_rand();
   }
   for (i=0;i<n;++i){
     fputc(ptr[i],f);
@@ -2721,8 +2725,12 @@ extern "C" void Sleep(unsigned int miliSecond);
     return *ans;
   }
   vecteur & history_plot(GIAC_CONTEXT){
-    if (contextptr)
-      return *contextptr->history_plot_ptr;
+    if (contextptr){
+      vecteur * hist=contextptr->history_plot_ptr;
+      if (hist->size()>=256)
+        hist->erase(hist->begin(),hist->end()-128);
+      return *hist;
+    }
     else
       return _history_plot_();
   }
@@ -3750,8 +3758,8 @@ extern "C" void Sleep(unsigned int miliSecond);
 #endif
   volatile bool ctrl_c=false,interrupted=false,kbd_interrupted=false;
 #ifdef GIAC_HAS_STO_38
-  double powlog2float=1e4;
-  int MPZ_MAXLOG2=8600; // max 2^8600 about 1K
+  double powlog2float=1e4*10; // increase max int size for HP Prime
+  int MPZ_MAXLOG2=8600*10; // max 2^8600 about 1K*10
 #else
   double powlog2float=1e8;
   int MPZ_MAXLOG2=80000000; // 100 millions bits
@@ -5844,7 +5852,7 @@ NULL,NULL,SW_SHOWNORMAL);
   }
 #else
 
-  bool make_thread(const gen & g,int level,const giac_callback & f,void * f_param,context * contextptr){
+  bool make_thread(const gen & g,int level,const giac_callback & f,void * f_param,const context * contextptr){
     return false;
   }
 
@@ -7937,7 +7945,7 @@ void update_lexer_localization(const std::vector<int> & v,std::map<std::string,s
 	++pos;
 	continue;
       }
-      if (curch=='=' && openpar==0 && prevch!='>' && prevch!='<' && prevch!='!' && prevch!=':' && prevch!=';' && prevch!='=' && prevch!='+' && prevch!='-' && prevch!='*' && prevch!='/' && prevch!='%' && (pos==int(cur.size())-1 || (cur[pos+1]!='=' && cur[pos+1]!='<'))){
+      if (curch=='=' && openpar==0 && prevch!='>' && prevch!='<' && prevch!='!' && prevch!=':' && prevch!=';' && prevch!='=' && prevch!='+' && prevch!='-' && prevch!='*' && prevch!='/' && prevch!='%' && (pos==int(cur.size())-1 || (cur[pos+1]!='=' && cur[pos+1]!='<' && cur[pos+1]!='>'))){
 	cur.insert(cur.begin()+pos,':');
 	++pos;
 	continue;
