@@ -51,10 +51,17 @@
 #include "Xcas1.h"
 #include "Print.h"
 #include "Graph3d.h"
-#include <FL/gl.h>
+//#include <FL/gl.h>
 #include "Tableur.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#include "qrcodegen.h"
+#ifndef HAVE_PNG_H
+#undef HAVE_LIBPNG
+#endif
+#ifdef HAVE_LIBPNG
+#include <png.h>
 #endif
 
 #ifndef DBL_MIN
@@ -74,6 +81,222 @@ using namespace giac;
 namespace xcas {
 #endif // ndef NO_NAMESPACE_XCAS
 
+  const int QRDISP_WIDTH=200,QRDISP_HEIGHT=200;
+  class QRGraph:public Fl_Widget {
+  public:
+    int QRscale,size_border;
+    string filename;
+    unsigned char data[QRDISP_WIDTH][QRDISP_HEIGHT];
+    virtual FL_EXPORT void draw();
+    QRGraph(int x,int y,int scale=3,const char * f="qrcode"):QRscale(scale),Fl_Widget(x,y,200*scale,200*scale),filename(f){};
+  };
+  void QRGraph::draw(){
+    fl_color(FL_WHITE);
+    fl_rectf(x(), y(), w(), h());
+    fl_color(FL_BLACK);
+    for (int Y=0;Y<QRDISP_HEIGHT;++Y){
+      for (int X=0;X<QRDISP_WIDTH;++X){
+        if (!data[X][Y])
+          fl_rectf(x()+QRscale*X,y()+QRscale*Y,QRscale,QRscale);
+      }
+    }
+  }
+
+  QRGraph * in_find_qrgraph(Fl_Widget * wid){
+    if (QRGraph * g=dynamic_cast<QRGraph *>(wid))
+      return g;
+    if (Fl_Group * gr =dynamic_cast<Fl_Group *>(wid)){
+      // search in children
+      int n=gr->children();
+      for (int i=0;i<n;++i){
+	if (QRGraph * res = in_find_qrgraph(gr->child(i)))
+	  return res;
+      }
+    }
+    return 0;
+  }
+
+  QRGraph * find_qrgraph(Fl_Widget * wid){
+    if (!wid) return 0;
+    if (QRGraph * res = dynamic_cast<QRGraph *>(Fl::focus()) )
+      return res;
+    if (QRGraph * res=in_find_qrgraph(wid))
+      return res;
+    return find_qrgraph(wid->parent());
+  }
+
+  static void cb_QRGraph_Print(Fl_Menu_* m , void*) {
+    QRGraph * gr = find_qrgraph(m);
+    if (gr)
+      widget_print(gr);
+  }
+
+#ifdef HAVE_LIBPNG
+  void QRGraph2png(const QRGraph * gr,int scale){
+    static int counter=0;
+    string filename=gr->filename+print_INT_(counter)+".png";
+    ++counter;
+    int bs=gr->size_border;
+    if (0 && (scale<=1 || scale>16)){
+      unsigned char *rows[bs];
+      for (int i=0; i<bs; i++) {
+        rows[i] = (unsigned char *) gr->data[i];
+      }
+      write_png(filename.c_str(),rows,bs,bs,PNG_COLOR_TYPE_GRAY,8);
+      return ;
+    }
+    vector< vector<unsigned char> > grdata(bs,vector<unsigned char>(bs*scale));
+    unsigned char *rows[bs*scale];
+    for (int i=0; i<bs; i++) {
+      for (int j=0;j<bs;j++){
+        for (int k=0;k<scale;++k)
+          grdata[i][j*scale+k]=gr->data[j][i];
+      }
+      for (int j=0;j<scale;++j)
+        rows[i*scale+j]=&grdata[i].front();
+    }
+    if (write_png(filename.c_str(),rows,bs*scale,bs*scale,PNG_COLOR_TYPE_GRAY,8)==0)
+      fl_alert("File %s saved",filename.c_str());
+    else
+      fl_alert("%s","Error saving file");
+  }
+  static void cb_QRGraph_PNG6(Fl_Menu_* m , void*) {
+    QRGraph * gr = find_qrgraph(m);
+    if (!gr)
+      return;
+    QRGraph2png(gr,6);
+  }
+  static void cb_QRGraph_PNG2(Fl_Menu_* m , void*) {
+    QRGraph * gr = find_qrgraph(m);
+    if (!gr)
+      return;
+    QRGraph2png(gr,2);
+  }
+  static void cb_QRGraph_PNG3(Fl_Menu_* m , void*) {
+    QRGraph * gr = find_qrgraph(m);
+    if (!gr)
+      return;
+    QRGraph2png(gr,3);
+  }
+  static void cb_QRGraph_PNG4(Fl_Menu_* m , void*) {
+    QRGraph * gr = find_qrgraph(m);
+    if (!gr)
+      return;
+    QRGraph2png(gr,4);
+  }
+  static void cb_QRGraph_PNG8(Fl_Menu_* m , void*) {
+    QRGraph * gr = find_qrgraph(m);
+    if (!gr)
+      return;
+    QRGraph2png(gr,8);
+  }
+#endif
+
+  static void cb_QRGraph_Preview(Fl_Menu_* m , void*) {
+    static int counter=0;
+    string s="qrcode"+print_INT_(counter);
+    QRGraph * gr = find_qrgraph(m);
+    if (gr)
+      widget_ps_print(gr,s.c_str(),true);
+  }
+
+
+  Fl_Menu_Item QRGraph_menu[] = {
+    {gettext("Export Print"), 0,  0, 0, 64, 0, 0, 14, 56},
+#ifdef HAVE_LIBPNG
+    {gettext("PNG scale 6"), 0,  (Fl_Callback*)cb_QRGraph_PNG6, 0, 0, 0, 0, 14, 56},
+    {gettext("PNG scale 4"), 0,  (Fl_Callback*)cb_QRGraph_PNG4, 0, 0, 0, 0, 14, 56},
+    {gettext("PNG scale 8"), 0,  (Fl_Callback*)cb_QRGraph_PNG8, 0, 0, 0, 0, 14, 56},
+#endif
+    {gettext("EPS and preview"), 0,  (Fl_Callback*)cb_QRGraph_Preview, 0, 0, 0, 0, 14, 56},
+    {gettext("Print"), 0,  (Fl_Callback*)cb_QRGraph_Print, 0, 0, 0, 0, 14, 56},
+    {0},
+    {0},
+  };
+
+  
+  // Displays the given QR Code with FLTK
+  // example "https://www-fourier.ujf-grenoble.fr/~parisse/xcasfr.html";
+  bool QRdisp(const char * text) {
+    enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;  // Error correction level
+    
+    // Make the QR Code symbol
+    uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
+    uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
+    string S(text);
+    while (1){
+      bool ok = qrcodegen_encodeText(S.c_str(), tempBuffer, qrcode, errCorLvl,
+                                     qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true);
+      if (!ok)
+        return false;
+      History_Pack * hp=get_history_pack(Fl::focus());
+      static Fl_Window * w = 0;
+      static Fl_Button * button = 0,*recalc=0;
+      static QRGraph * gr=0;
+      static Fl_Menu_Bar * menubar=0;
+      static Fl_Multiline_Input * in=0;
+      int initscale=3;
+      if (!w){
+        Fl_Group::current(0);
+        w=new Fl_Window(20+200*initscale,70+200*initscale);
+        menubar= new Fl_Menu_Bar(10,10,w->w()/2-20,24,"Export, Print");
+        menubar->menu (QRGraph_menu);    
+        button = new Fl_Button(10+w->w()/2,10,w->w()/3-20,24);
+        button->label(gettext("Done"));
+        in = new Fl_Multiline_Input(10,36,w->w()-60,34);
+        recalc = new Fl_Button(w->w()-40,36,40,34);
+        recalc->label(gettext("QR"));
+        gr = new QRGraph(10,70,initscale);
+        w->label(gettext("QR Code generator (c) Project Nayuki"));
+        w->end();
+      }
+      in->value(S.c_str());
+      in->position(0);
+      memset(gr->data,255,sizeof(gr->data));
+      if (hp && hp->url)
+        gr->filename="qr"+remove_path(remove_extension(*hp->url));
+      if (hp)
+        xcas::change_group_fontsize(w,hp->labelsize());
+      int size = qrcodegen_getSize(qrcode);
+      int border = 4;
+      gr->size_border=size+2*border;
+      int scale=(giacmin(w->w(),w->h())-60)/gr->size_border;
+      w->resize(w->x(),w->y(),60+200*initscale,60+200*initscale);
+      gr->QRscale=scale;
+      for (int y = -border; y < size + border; y++) {
+        for (int x = -border; x < size + border; x++) {
+          gr->data[border+x][border+y]=qrcodegen_getModule(qrcode, x, y)?0:255;
+        }
+      }
+      gr->redraw();
+      w->set_modal();
+      w->show();
+      w->hotspot(w);
+      Fl::focus(button);
+      bool finished=false;
+      while (1){
+        Fl_Widget *o = Fl::readqueue();
+        if (o==button || o==w){
+          finished=true;
+          break;
+        }
+        else if (o==recalc){
+          S=in->value();
+          break;
+        }
+        else {
+          Fl::wait(0.0001);
+          usleep(100);
+        }
+      }
+      if (finished){
+        w->hide();
+        return true;
+      }
+    } // end main while(1) loop
+  }
+
+  
   bool do_helpon=true;
 
   void TextureCache::_remove(img_ptr_pair_t *p,bool is_internal) {
@@ -192,9 +415,11 @@ namespace xcas {
 	  fl_color(r,g,b);
       }
       else  {
+#ifdef HAVE_LIBFLTK_GL
 	if (dim3)
 	  gl_color(color);
 	else
+#endif
 	  fl_color(color);
       }
     }
@@ -655,6 +880,7 @@ namespace xcas {
 		display_mode |= 0x4;
 	    }
 	    // GL_LIGHT_MODEL_COLOR_CONTROL=GL_SEPARATE_SPECULAR_COLOR ||  GL_SINGLE_COLOR
+#ifdef HAVE_LIBFLTK_GL
 #ifndef WIN32
 	    if (optname.val==_GL_LIGHT_MODEL_COLOR_CONTROL && optvalue.type==_INT_)
 	      glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,optvalue.val);
@@ -670,7 +896,6 @@ namespace xcas {
 		glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,optvalf._DOUBLE_val);
 	    }
 #endif
-#ifdef HAVE_LIBFLTK_GL
 	    /* GL_LIGHT_MODEL_TWO_SIDE = true /false */
 	    if (optname.val==_GL_LIGHT_MODEL_TWO_SIDE && optvalue.type==_INT_){
 	      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,optvalue.val);
@@ -1552,6 +1777,7 @@ namespace xcas {
 
   Graph2d3d::Graph2d3d(int x,int y,int w,int h,const char * l,double xmin,double xmax,double ymin,double ymax,double zmin,double zmax,double ortho,History_Pack * hp_):
     Fl_Widget(x,y,w,h,l),
+    cursor_point_type(3),
     pushed(false),
     show_mouse_on_object(false),
     mode(255),args_tmp_push_size(0),no_handle(false),
@@ -1585,6 +1811,7 @@ namespace xcas {
 
   Graph2d3d::Graph2d3d(int x,int y,int w,int h,const char * l,History_Pack * hp_):
     Fl_Widget(x,y,w,h,l),
+    cursor_point_type(3),
     pushed(false),
     show_mouse_on_object(false),
     display_mode(0x45),
@@ -6045,6 +6272,8 @@ namespace xcas {
 	  if (t!=x)
 	    tracemode_add += ", t="+giac::print_DOUBLE_(curt._DOUBLE_val,3);
 	  if (tracemode & 2){
+            // make sure G is the right point, e.g. for plotpolar(sqrt(cos(2x)))
+            G=subst(parameq,t,curt,false,contextptr);
 	    gen G1=derive(parameq,t,contextptr);
 	    gen G1t=subst(G1,t,curt,false,contextptr);
 	    gen G1x,G1y; reim(G1t,G1x,G1y,contextptr);
@@ -8220,7 +8449,9 @@ namespace xcas {
     if (is_context_busy(contextptr))
       return;
 #endif
+#ifdef HAVE_LIBPTHREAD
     pthread_mutex_lock(&turtle_mutex);
+#endif
     try {
       int clip_x,clip_y,clip_w,clip_h;
       fl_clip_box(x(),y(),w(),h(),clip_x,clip_y,clip_w,clip_h);
@@ -8228,7 +8459,9 @@ namespace xcas {
       indraw();
       fl_pop_clip();
     } catch (...){ }
+#ifdef HAVE_LIBPTHREAD    
     pthread_mutex_unlock(&turtle_mutex);
+#endif
   }
   
   void Turtle::indraw(){

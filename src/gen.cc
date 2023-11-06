@@ -4291,14 +4291,14 @@ namespace giac {
     if (is_zero_or_contains(realpart,contextptr)){
       if (is_zero_or_contains(imagpart,contextptr))
 	return undef;
-      return (cst_pi_over_2-atan(realpart/imagpart,contextptr))*sign(imagpart,contextptr);
+      return operator_plus(cst_pi_over_2,-atan(realpart/imagpart,contextptr),contextptr)*sign(imagpart,contextptr);
     }
     if (is_zero_or_contains(imagpart,contextptr))
-      return (1-sign(realpart,contextptr))*cst_pi_over_2+atan(imagpart/realpart,contextptr);
+      return operator_plus((1-sign(realpart,contextptr))*cst_pi_over_2,atan(imagpart/realpart,contextptr),contextptr);
     if ( (realpart.type==_DOUBLE_ || realpart.type==_FLOAT_) || (imagpart.type==_DOUBLE_ || imagpart.type==_FLOAT_) )
       return eval(atan(rdiv(imagpart,realpart,contextptr),contextptr)+(1-sign(realpart,contextptr))*sign(imagpart,contextptr)*evalf_double(cst_pi_over_2,1,contextptr),1,contextptr);
     else
-      return atan(rdiv(imagpart,realpart,contextptr),contextptr)+(1-sign(realpart,contextptr))*sign(imagpart,contextptr)*cst_pi_over_2;
+      return operator_plus(atan(rdiv(imagpart,realpart,contextptr),contextptr),(1-sign(realpart,contextptr))*sign(imagpart,contextptr)*cst_pi_over_2,contextptr);
   }
   
   static gen _VECTarg(const vecteur & a,GIAC_CONTEXT){
@@ -6783,6 +6783,18 @@ namespace giac {
 	}
 	return operator_times(base,base,contextptr);
       }
+      if (exponent.val%2==0 && base.is_symb_of_sommet(at_prod) && has_op(base,*at_pow)){
+        const gen & f=base._SYMBptr->feuille;
+        if (f.type==_VECT){
+          const vecteur & v=*f._VECTptr;
+          int s=v.size();
+          vecteur w(v);
+          for (int i=0;i<s;++i){
+            w[i]=pow(w[i],exponent,contextptr);
+          }
+          return symbolic(at_prod,gen(w,_SEQ__VECT));
+        }
+      }
     }
     if (is_undef(base))
       return base;
@@ -7034,7 +7046,7 @@ namespace giac {
 	   // && base.subtype==3
 	   ) 
 	  || base.type==_FLOAT_ || ( (base.type<_POLY || base.type==_FLOAT_) && (exponent.type==_REAL || exponent.type==_DOUBLE_ || exponent.type==_FLOAT_)))
-	return exp(exponent*log(base,contextptr),contextptr);
+	return exp(operator_times(exponent,log(base,contextptr),contextptr),contextptr);
       /* 
 	 if (base.is_symb_of_sommet(at_neg))
 	 return minus1pow(exponent)*pow(base._SYMBptr->feuille,exponent);
@@ -10731,9 +10743,9 @@ namespace giac {
   static gen _CPLXgcd(const gen & a,const gen & b){ // a & b must be gen
     if (!is_cinteger(a) || !is_cinteger(b) )
       return plus_one;
-    gen acopy(a),bcopy(b),r;
+    gen acopy(a),bCopy(b),r;
     for (;;){
-      if (is_exactly_zero(bcopy)){
+      if (is_exactly_zero(bCopy)){
 	complex<double> c=gen2complex_d(acopy);
 	double d=arg(c);
 	int quadrant=int(std::floor((2*d)/M_PI));
@@ -10750,9 +10762,9 @@ namespace giac {
 	  return acopy;
 	}
       }
-      r=acopy%bcopy;
-      acopy=bcopy;
-      bcopy=r;
+      r=acopy%bCopy;
+      acopy=bCopy;
+      bCopy=r;
     }
   }
 
