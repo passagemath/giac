@@ -1,22 +1,22 @@
 Description: Use system gl2ps
 Author: Ximin Luo <infinity0@debian.org>
-Forwarded: TODO
+Forwarded: not-needed
 --- a/src/Graph3d.cc
 +++ b/src/Graph3d.cc
-@@ -45,7 +45,7 @@
- #include "Xcas1.h"
- #include "Cfg.h"
- #include "Print.h"
+@@ -23,7 +23,7 @@
+ #define __CARBONSOUND__
+ #ifdef HAVE_LIBFLTK
+ #ifdef HAVE_LIBFLTK_GL
 -#include "gl2ps.h"
 +#include <gl2ps.h>
- 
- #ifdef __APPLE__
- //#include <OpenGL/gl.h>
+ #else
+ void gl_font(int fontid, int size){}
+ void gl_draw(const char *){}
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
 @@ -16,7 +16,7 @@
    caseval.c cutils.c graphic.c libbf.c libregexp.c libunicode.c \
-   qjsgiac.c quickjs.c quickjs-libc.c js.c
+   qjsgiac.c quickjs.c quickjs-libc.c js.c qrcodegen.c qrcodegen.h
  
 -libgiac_la_LIBADD = $(NTL_LIBS) $(COCOA_LIBS) $(PARI_LIBS) $(GSL_LIBS) 
 +libgiac_la_LIBADD = $(NTL_LIBS) $(COCOA_LIBS) $(PARI_LIBS) $(GSL_LIBS) -lgl2ps

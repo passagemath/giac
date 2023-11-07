@@ -1,6 +1,7 @@
 giac (1.9.0.69+dfsg2-1) unstable; urgency=medium
 
   * New upstream release.
+  * d/patches: Refresh patches.
 
  -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 06 Nov 2023 19:02:28 +0200
 
