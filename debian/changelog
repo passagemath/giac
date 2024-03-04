@@ -1,6 +1,8 @@
 giac (1.9.0.93+dfsg2-1) UNRELEASED; urgency=medium
 
   * New upstream release (Closes: #1063597).
+  * d/copyright: src/mkjs removed from source and updated the copyright year
+    for debian files from 2023 to 2024.
 
  -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 04 Mar 2024 21:13:06 +0200
 

@@ -28,7 +28,7 @@ Files-Excluded:
  po/*.gmo
  po/*.pot
  intl/*
- src/mkaout src/mkd* src/mkg* src/mkhist src/mkjs src/mkl* src/mkstat src/mkwcas src/mkx*
+ src/mkaout src/mkd* src/mkg* src/mkhist src/mkl* src/mkstat src/mkwcas src/mkx*
  src/config.h.*
  mkdebian mkdebian2 debian debianold
 # Build output, we regenerate these instead
@@ -220,7 +220,7 @@ Files: debian/*
 Copyright: 2009 Gilles Filippini <gilles.filippini@free.fr>
            2017 Ximin Luo <infinity0@debian.org>
            2020-2021 Julien Puydt <jpuydt@debian.org>
-           2022-2023 Ileana Dumitrescu <ileanadumi95@protonmail.com>
+           2022-2024 Ileana Dumitrescu <ileanadumi95@protonmail.com>
 License: GPL-3+
 
 Files: debian/man/*
