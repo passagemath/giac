@@ -1,4 +1,4 @@
-giac (1.9.0.93+dfsg2-1) UNRELEASED; urgency=medium
+giac (1.9.0.93+dfsg2-1) unstable; urgency=medium
 
   * New upstream release (Closes: #1063597).
   * d/copyright: src/mkjs removed from source and updated the copyright year
@@ -6,7 +6,7 @@ giac (1.9.0.93+dfsg2-1) UNRELEASED; urgency=medium
   * d/patches: Refresh patches.
   * d/source/lintian-overrides: Remove unused overrides.
 
- -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 04 Mar 2024 21:13:06 +0200
+ -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 04 Mar 2024 21:43:04 +0200
 
 giac (1.9.0.69+dfsg2-1.1) unstable; urgency=medium
 
