@@ -193,14 +193,14 @@ size_t pythonjs_stack_size=30*1024,
 void * bf_ctx_ptr=0;
 size_t bf_global_prec=128; // global precision for BF
 
-int sprintf256(char * s, const char * format, ...){
+int sprintf512(char * s, const char * format, ...){
   int z;
   va_list ap;
   va_start(ap,format);
 #if defined(FIR) && !defined(FIR_LINUX)
-  z = firvsprintf(s, format, ap);
+  z = firvsnprintf(s, 512, format, ap);
 #else
-  z = vsnprintf(s, 256, format, ap);
+  z = vsnprintf(s, 512, format, ap);
 #endif
   va_end(ap);
   return z;
@@ -3653,7 +3653,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   // gbasis modular algorithm on Q: simultaneous primes (more primes means more parallel threads but also more memory required)
   double gbasis_reinject_ratio=0.2;
   // gbasis modular algo on Q: if new basis element exceed this ratio, new elements are reinjected in the ideal generators for the remaining computations
-  double gbasis_reinject_speed_ratio=1/6.;
+  double gbasis_reinject_speed_ratio=1./6; // fails for cyclic8
   // gbasis modular algo on Q: new basis elements are reinjected if the 2nd run with learning CPU speed / 1st run without learning CPU speed is >=
   int gbasis_logz_age_sort=0,gbasis_stop=0;
   // rur_do_gbasis==-1 no gbasis Q recon for rur, ==0 always gbasis Q recon, >0 size limit in monomials of the gbasis for gbasis Q recon
@@ -3665,6 +3665,8 @@ extern "C" void Sleep(unsigned int miliSecond);
   int MAX_PROD_EXPAND_SIZE=4096;
   int ABERTH_NMAX=25;
   int ABERTH_NBITSMAX=8192;
+  int LAZY_ALG_EXT=0;
+  int ALG_EXT_DIGITS=180;
 #if defined RTOS_THREADX || defined BESTA_OS || defined(KHICAS)
 #ifdef BESTA_OS
   int LIST_SIZE_LIMIT = 100000 ;
@@ -3701,6 +3703,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   int GBASIS_DETERMINISTIC=20;
   int GBASISF4_MAX_TOTALDEG=1024;
   int GBASISF4_MAXITER=256;
+  int RUR_PARAM_MAX_DEG=128;
   // int GBASISF4_BUCHBERGER=5;
   const int BUFFER_SIZE=512;
 #else
@@ -3753,6 +3756,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   int GBASIS_DETERMINISTIC=50;
   int GBASISF4_MAX_TOTALDEG=16384;
   int GBASISF4_MAXITER=1024;
+  int RUR_PARAM_MAX_DEG=128;
   // int GBASISF4_BUCHBERGER=5;
   const int BUFFER_SIZE=16384;
 #endif
@@ -4618,8 +4622,12 @@ extern "C" void Sleep(unsigned int miliSecond);
       s=giac_aide_location;
       s=s.substr(0,s.size()-8);
 #endif
-      if (s.size())
-	read_config(s+"/xcas.rc",contextptr,verbose);
+      if (s.size()){
+        if (s[s.size()-1]=='/')
+          read_config(s+"xcas.rc",contextptr,verbose);
+        else
+          read_config(s+"/xcas.rc",contextptr,verbose);
+      }
       s=home_directory();
       if (s.size()<2)
 	s="";
@@ -4923,6 +4931,8 @@ extern "C" void Sleep(unsigned int miliSecond);
       browser="mozilla";
       if (!access("/usr/bin/dillo",R_OK))
 	browser="dillo";
+      if (!access("/usr/bin/xdg-open",R_OK))
+        browser="xdg-open";
       if (!access("/usr/bin/chromium",R_OK))
 	browser="chromium";
       if (!access("/usr/bin/firefox",R_OK))
@@ -4938,7 +4948,9 @@ extern "C" void Sleep(unsigned int miliSecond);
     ++i;
     string browsersub=browser.substr(i,bs-i);
     if (s[0]!='\'') s='\''+s+'\'';
-    if (browsersub=="mozilla" || browsersub=="mozilla-bin" || browsersub=="firefox" || browsersub=="chromium"){
+    if (browsersub=="mozilla" || browsersub=="mozilla-bin"
+        //|| browsersub=="firefox"
+        || browsersub=="chromium"){
       s="if ! "+browser+" -remote \"openurl("+s+")\" ; then "+browser+" "+s+" & fi &";
     }
     else

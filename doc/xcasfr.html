@@ -43,6 +43,7 @@
     div.emscripten {
       text-align: center;
     }
+
   </style>
   <style id="document_style" type="text/css">
     h3 {
@@ -81,6 +82,7 @@
     }
   </style>
   <style type="text/css">
+    #divoutput span.mjx-chtml.MJXc-display { display: inline-block; }
     .matrixcell {
       font-size: 18px;
       width: 80px;
@@ -475,6 +477,7 @@
 <span id='thelink'></span>
 <span id='themailto'></span>
 <textarea id='theforumlink' style="display:none"></textarea>
+<textarea id='locallink' style="display:none"></textarea>
 <span id="history1" style="display:none">
         <button class="bouton" title="Cliquer ici pour sauvegarder l'historique avec le nom de fichier du champ texte qui suit" onclick="if ($id('loadbutton_file').style.display=='none') UI.savesession(2); else UI.savesession(0);">&#x1f4be;</button>
         <textarea cols="7" id="outputfilename" class="filenamecss" style="font-size:large" title="Nom de sauvegarde du fichier. Avec Firefox, pour pouvoir faire plusieurs sauvegardes sous le meme nom, cocher Toujours demander... dans Pr&eacute;f&eacute;rences, G&eacute;n&eacute;ral, T&eacute;l&eacute;chargements.">session</textarea>
@@ -2856,6 +2859,15 @@ Pour avoir des informations pendant le d&eacute;roulement des calculs, tapez la 
     <button class="bouton" onclick="UI.insert_focused('triangle(')"
             title="Triangle">&#x25b3;
     </button>
+    <button class="bouton" onclick="UI.insert_focused('A:=point(0);\nB:=point(1);\nassume(a=[0.3,-2,2,0.1]);\nassume(b=[0.6,-2,2,0.1]);\nC:=point(a,b);\ntriangle(A,B,C);\n')"
+            title="Triangle symbolique">&#x25b3;ABC
+    </button>
+    <button class="bouton" onclick="UI.insert_focused('pointc(x):=(1+i*x)/(1-i*x);\nassume(a=[0.3,0,2,0.1]);\nassume(b=[0.6,0,2,0.1]);\nP1:=point(-1,display=hidden_name);\nP2:=point(pointc(a),display=hidden_name);\nP3:=point(pointc(-b),display=hidden_name);\nL1:=perpendicular(P1,line(0,P1)):;\nL2:=perpendicular(P2,line(0,P2)):;\nL3:=perpendicular(P3,line(0,P3)):;\nA:=single_inter(L1,L2);\nB:=single_inter(L2,L3);\nC:=single_inter(L3,L1);\ntriangle(A,B,C);circle(0,1);\n')"
+            title="Triangle symbolique + cercle inscrit">&#x25ef;in&#x25b3;
+    </button>
+    <button class="bouton" onclick="UI.insert_focused('pointc(x):=(1+i*x)/(1-i*x);\nassume(b=[0.3,0,2,0.1]);\nassume(c=[0.6,0,2,0.1]);\nA:=point(-1);\nB:=point(pointc(b));\nC:=point(pointc(-c));\ncircle(0,1);triangle(A,B,C);\n')"
+            title="Triangle symbolique + cercle circonscrit">&#x25b3;in&#x25ef;
+    </button>
     <button class="bouton" onclick="UI.insert_focused('rectangle(')"
             title="Rectangle">&#x25ad;
     </button>
@@ -3979,8 +3991,9 @@ Pour avoir des informations pendant le d&eacute;roulement des calculs, tapez la 
     var ua = window.navigator.userAgent;
     var old_ie = ua.indexOf('MSIE ');
     var new_ie = ua.indexOf('Trident/');
+    var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
     if ((old_ie > -1) || (new_ie > -1) 
-        || Boolean(window.chrome)
+        || Boolean(window.chrome) || isSafari
         ) {
         (function () {
             var script = document.createElement("script");
@@ -4027,7 +4040,8 @@ Pour avoir des informations pendant le d&eacute;roulement des calculs, tapez la 
         var ua = window.navigator.userAgent;
         var old_ie = ua.indexOf('MSIE ');
         var new_ie = ua.indexOf('Trident/');
-        if (Boolean(window.chrome) && window.location.href.substr(0, 4) != 'file') UI.prettyprint = false;
+        var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+        if ( (isSafari || Boolean(window.chrome)) && window.location.href.substr(0, 4) != 'file') UI.prettyprint = false;
         if ((old_ie > -1) || (new_ie > -1)) UI.isie = true;
         var bt = UI.browser_type();
         if (UI.isie || (bt!=1 && bt!=2 )) {
