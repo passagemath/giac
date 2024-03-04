@@ -4,6 +4,7 @@ giac (1.9.0.93+dfsg2-1) UNRELEASED; urgency=medium
   * d/copyright: src/mkjs removed from source and updated the copyright year
     for debian files from 2023 to 2024.
   * d/patches: Refresh patches.
+  * d/source/lintian-overrides: Remove unused overrides.
 
  -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 04 Mar 2024 21:13:06 +0200
 

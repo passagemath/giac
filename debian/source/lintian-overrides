@@ -25,11 +25,6 @@ giac source: source-is-missing [doc/nws.js]
 
 # False positive, source-is-missing with very-long-line-length-in-source-file
 giac source: source-is-missing [doc/algolycee.html]
-giac source: source-is-missing [doc/en/tutoriel.html]
 giac source: source-is-missing [doc/khicasnw.html]
 giac source: source-is-missing [doc/xcasen.html]
 giac source: source-is-missing [doc/xcasfr.html]
-
-# Configure generated files removed in override_dh_auto_clean
-giac source: configure-generated-file-in-source [config.log]
-giac source: configure-generated-file-in-source [config.status]
