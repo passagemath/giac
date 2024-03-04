@@ -6,7 +6,7 @@ Forwarded: not-needed
 
 --- a/src/global.cc
 +++ b/src/global.cc
-@@ -4644,6 +4644,10 @@
+@@ -4652,6 +4652,10 @@
        string s=getenv("XCAS_ROOT");
        return s;
      }
