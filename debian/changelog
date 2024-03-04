@@ -1,3 +1,9 @@
+giac (1.9.0.93+dfsg2-1) UNRELEASED; urgency=medium
+
+  * New upstream release (Closes: #1063597).
+
+ -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Mon, 04 Mar 2024 21:13:06 +0200
+
 giac (1.9.0.69+dfsg2-1.1) unstable; urgency=medium
 
   * Non-maintainer upload.
