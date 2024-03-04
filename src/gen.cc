@@ -2,10 +2,14 @@
 #include "giacPCH.h"
 #ifdef KHICAS
 #include "kdisplay.h"
-#if defined DEVICE && !defined NSPIRE_NEWLIB
+#if defined DEVICE && !defined NSPIRE_NEWLIB && !defined N0120
 size_t stackptr=0x20036000;
 #else
+#if defined x86_64
 size_t stackptr=0xffffffffffffffff;
+#else
+size_t stackptr=0xffffffff;
+#endif
 #endif
 #endif
 
@@ -892,7 +896,7 @@ namespace giac {
 #else
     __ZINTptr= new ref_mpz_t(m);
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
       if ((size_t) _ZINTptr > stackptr)
 	ctrl_c=interrupted=true;
 #endif
@@ -914,7 +918,7 @@ namespace giac {
       * ((ulonglong * ) this) = ulonglong(ptr) << 16;
 #else
       __ZINTptr= new ref_mpz_t();
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
       if ((size_t) _ZINTptr > stackptr)
 	ctrl_c=interrupted=true;
 #endif
@@ -966,7 +970,7 @@ namespace giac {
 #else
     __VECTptr= new_ref_vecteur(v);
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
     if (v.size()>1 &&
 	( (size_t) _VECTptr > stackptr ||
 	  (size_t) _VECTptr->begin() > stackptr)
@@ -985,7 +989,7 @@ namespace giac {
 #endif
     type=_VECT;
     subtype=(signed char)s;
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
     if (_VECTptr->size()>1 &&
 	( (size_t) _VECTptr > stackptr ||
 	  (size_t) _VECTptr->begin() > stackptr)
@@ -1020,7 +1024,7 @@ namespace giac {
 #endif
     type = _SYMB;
     subtype = 0;
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
     if (_SYMBptr->sommet!=at_restart && _SYMBptr->sommet!=at_purge && (size_t) _SYMBptr > stackptr)
       ctrl_c=interrupted=true;
 #endif
@@ -1034,7 +1038,7 @@ namespace giac {
 #endif
     type = _SYMB;
     subtype = 0;
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
     if (_SYMBptr->sommet!=at_restart && _SYMBptr->sommet!=at_purge && (size_t) _SYMBptr > stackptr)
       ctrl_c=interrupted=true;
 #endif
@@ -1156,7 +1160,7 @@ namespace giac {
 #else
 	__POLYptr = new Tref_tensor<gen>(p) ;
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
 	if ((size_t) _POLYptr > stackptr)
 	  ctrl_c=interrupted=true;
 #endif
@@ -1209,7 +1213,7 @@ namespace giac {
 #else
     __POLYptr = pptr ;
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
     if ((size_t) _POLYptr > stackptr)
       ctrl_c=interrupted=true;
 #endif
@@ -1244,7 +1248,7 @@ namespace giac {
 #else
       __ZINTptr = mptr;
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
       if ((size_t) _ZINTptr > stackptr)
 	ctrl_c=interrupted=true;
 #endif
@@ -1312,7 +1316,7 @@ namespace giac {
 #else
       __ZINTptr = new ref_mpz_t(z.ptr);
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
       if ((size_t) _ZINTptr > stackptr)
 	ctrl_c=interrupted=true;
 #endif
@@ -1577,7 +1581,7 @@ namespace giac {
 #else
 	__SPOL1ptr= new ref_sparse_poly1(p);
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
 	if ((size_t) _SPOL1ptr > stackptr)
 	  ctrl_c=interrupted=true;
 #endif
@@ -2463,6 +2467,8 @@ namespace giac {
       return gen(accurate_evalf(*g._VECTptr,nbits),g.subtype);
     if (g.type==_SYMB)
       return symbolic(g._SYMBptr->sommet,accurate_evalf(g._SYMBptr->feuille,nbits));
+    if (g.type==_IDNT)
+      return g;
     gen r,i;reim(g,r,i,context0); // only called for numeric values
     if (is_exactly_zero(i))
       return set_precision(r,nbits);
@@ -2643,7 +2649,7 @@ namespace giac {
     if (g.type==_EXT){
       gen a,b;
       if (has_evalf(*g._EXTptr,a,level,contextptr) && has_evalf(*(g._EXTptr+1),b,level,contextptr)){
-	a=alg_evalf(a,b,contextptr);
+	a=alg_evalf(a,b,*(g._EXTptr+2),contextptr);
 	return a.type==_EXT?false:has_evalf(a,res,level,contextptr);
       }
       return false;
@@ -2752,7 +2758,10 @@ namespace giac {
 	return true;
       }
       if (_SYMBptr->sommet==at_rootof){
-	evaled=approx_rootof(_SYMBptr->feuille.evalf(level,contextptr),contextptr);
+        gen f=_SYMBptr->feuille;
+        if (f.type==_VECT && f._VECTptr->size()>2 && f[1].type!=_VECT)
+          f=makevecteur(makevecteur(1,0),f);
+	evaled=approx_rootof(f.evalf(level,contextptr),contextptr);
 	return true;
       }
       if (_SYMBptr->sommet==at_cell)
@@ -2786,7 +2795,7 @@ namespace giac {
     case _MOD: case _ROOT:
       return false; // replace in RPN mode
     case _EXT:
-      evaled=alg_evalf(_EXTptr->eval(level,contextptr),(_EXTptr+1)->eval(level,contextptr),contextptr);
+      evaled=alg_evalf(_EXTptr->eval(level,contextptr),(_EXTptr+1)->eval(level,contextptr),*(_EXTptr+2),contextptr);
       return true;
     case _POLY:
       evaled=apply(*_POLYptr,no_context_evalf);
@@ -2931,8 +2940,10 @@ namespace giac {
       if (s.quoted()) {
 	if (s==at_quote)
 	  return f;
+        if (f.type==_SYMB && contains(f,cst_pi))
+	  f=evalf2double_nock(f,1,contextptr);
 	f=s(f,contextptr);
-	if (f.type<_IDNT || f.type==_FRAC || (f.type==_SYMB && contains(f,cst_pi)) )
+	if (f.type<_IDNT || f.type==_FRAC)
 	  f=evalf2double_nock(f,1,contextptr);
 	return f;
       }
@@ -4263,10 +4274,12 @@ namespace giac {
   }
 
   // workaround for intervals
-  static bool is_zero_or_contains(const gen & g,GIAC_CONTEXT){
+  bool is_zero_or_contains(const gen & g,GIAC_CONTEXT){
 #ifdef NO_RTTI
     return is_zero(g,contextptr);
 #else
+    if (g.type==_CPLX)
+      return is_zero_or_contains(*g._CPLXptr,contextptr) && is_zero_or_contains(*(g._CPLXptr+1),contextptr);
     if (is_zero(g,contextptr))
       return true;
     if (g.type!=_REAL)
@@ -4296,9 +4309,9 @@ namespace giac {
     if (is_zero_or_contains(imagpart,contextptr))
       return operator_plus((1-sign(realpart,contextptr))*cst_pi_over_2,atan(imagpart/realpart,contextptr),contextptr);
     if ( (realpart.type==_DOUBLE_ || realpart.type==_FLOAT_) || (imagpart.type==_DOUBLE_ || imagpart.type==_FLOAT_) )
-      return eval(atan(rdiv(imagpart,realpart,contextptr),contextptr)+(1-sign(realpart,contextptr))*sign(imagpart,contextptr)*evalf_double(cst_pi_over_2,1,contextptr),1,contextptr);
+      return eval(atan(ratnormal(rdiv(imagpart,realpart,contextptr),contextptr),contextptr)+(1-sign(realpart,contextptr))*sign(imagpart,contextptr)*evalf_double(cst_pi_over_2,1,contextptr),1,contextptr);
     else
-      return operator_plus(atan(rdiv(imagpart,realpart,contextptr),contextptr),(1-sign(realpart,contextptr))*sign(imagpart,contextptr)*cst_pi_over_2,contextptr);
+      return operator_plus(atan(ratnormal(rdiv(imagpart,realpart,contextptr),contextptr),contextptr),(1-sign(realpart,contextptr))*sign(imagpart,contextptr)*cst_pi_over_2,contextptr);
   }
   
   static gen _VECTarg(const vecteur & a,GIAC_CONTEXT){
@@ -6926,7 +6939,7 @@ namespace giac {
 	if (new_exp.type>_IDNT)
 	  new_exp=normal(new_exp,contextptr);
 	if ( v1.type==_INT_ && v1.val%2==0 
-	     && (new_exp.type!=_INT_ || new_exp.val%2 )
+	     && ((new_exp.type!=_INT_ && !is_assumed_integer(new_exp,contextptr)) || new_exp.val%2 )
 	     && !complex_mode(contextptr) ) 
 	  return pow(abs(v[0],contextptr),new_exp,contextptr); 
 	else 
@@ -8757,7 +8770,9 @@ namespace giac {
 	return true;
       if (a.subtype!=b.subtype){
 	if ( (a.subtype==_MATRIX__VECT && b.subtype==0) ||
-	     (b.subtype==_MATRIX__VECT && a.subtype==0) )
+	     (b.subtype==_MATRIX__VECT && a.subtype==0) ||
+             (a.subtype==_SORTED__VECT && b.subtype==_SEQ__VECT) ||
+             (a.subtype==_SEQ__VECT && b.subtype==_SORTED__VECT))
 	  ; // don't consider them different
 	else
 	  return false;
@@ -9800,8 +9815,12 @@ namespace giac {
     else {
       if (has_inf_or_undef(i))
 	return undef;
-      if (*this==x__IDNT_e || *this==t__IDNT_e)
-	return i; // avoid warning for expressions used as function if var is x or t
+      if (*this==x__IDNT_e || *this==t__IDNT_e){
+        if (i.type==_IDNT && i._IDNTptr->quoted)
+          ; // for e.g. desolve(t*x'+x=0), we don't want x(t) to be evaled to t
+        else
+          return i; // avoid warning for expressions used as function if var is x or t
+      }
       return symb_of(*this,i);
     }
   }
@@ -9845,6 +9864,7 @@ namespace giac {
     case _CPLX: 
       {
 	gen a1=abs(*this,context0),a2=abs(other,context0);
+	//gen a1=squarenorm(context0),a2=other.squarenorm(context0);
 	if (a1!=a2)
 	  return is_strictly_greater(a1,a2,context0);
 	a1=re(context0);
@@ -11156,7 +11176,7 @@ namespace giac {
     case _INT___CPLX: case _ZINT__CPLX: case _CPLX__CPLX:   
       return(a-b*iquo(a,b));
     case _VECT__VECT:
-      return (*a._VECTptr)%(*b._VECTptr);
+      return gen((*a._VECTptr)%(*b._VECTptr),_POLY1__VECT);
     default:
       return gentypeerr(gettext("%"));
     }
@@ -12689,6 +12709,13 @@ void sprint_double(char * s,double d){
 	ch=toupper(ch);
       if (forme.size()<2 || forme.size()>3 || forme[1]<'0' || forme[1]>'9' || (forme.size()==3 && forme[2]<'0' && forme[2]>'9'))
 	return "invalid format";
+      if (forme.size()==3){
+        int dig=(forme[1]-'0')*10+forme[2]-'0';
+        if (dig>17){
+          forme[1]='1';
+          forme[2]='7';
+        }
+      }
       if (my_isnan(d))
 	return "undef";
       if (my_isinf(d))
@@ -14493,6 +14520,8 @@ void sprint_double(char * s,double d){
 	else
 	  return "return ;";
       }
+      if (*this==at_display)
+        return "display";
       if (rpn_mode(contextptr) || _FUNCptr->ptr()->printsommet==&printastifunction || subtype==0) 
 	return _FUNCptr->ptr()->print(contextptr);
       else
@@ -15346,7 +15375,7 @@ void sprint_double(char * s,double d){
 #else
     mpf_set(_REALptr->inf,g.inf);
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
     if ((size_t) _REALptr > stackptr)
       ctrl_c=interrupted=true;
 #endif
@@ -15358,7 +15387,7 @@ void sprint_double(char * s,double d){
 #else
       __REALptr = (ref_real_object *) new ref_real_interval;
 #endif
-#ifdef KHICAS
+#if defined KHICAS && !defined SIMU
     if ((size_t) _REALptr > stackptr)
       ctrl_c=interrupted=true;
 #endif

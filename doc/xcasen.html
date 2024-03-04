@@ -81,6 +81,7 @@
     }
   </style>
   <style type="text/css">
+    #divoutput span.mjx-chtml.MJXc-display { display: inline-block; }
     .matrixcell {
       font-size: 18px;
       width: 80px;
@@ -505,6 +506,7 @@
 <span id='thelink'></span>
 <span id='themailto'></span>
 <textarea id='theforumlink' style="display:none"></textarea>
+<textarea id='locallink' style="display:none"></textarea>
 <span id="history1" style="display:none">
         <button class="bouton"
                 title="Click here to save history (filename in the next textfield)"
@@ -2652,6 +2654,15 @@ If you want to see informations while a computation is running, run first
     <button class="bouton" onclick="UI.insert(UI.focused,'triangle(')"
             title="Triangle">&#x25b3;
     </button>
+    <button class="bouton" onclick="UI.insert_focused('A:=point(0);\nB:=point(1);\nassume(a=[0.3,-2,2,0.1]);\nassume(b=[0.6,-2,2,0.1]);\nC:=point(a,b);\ntriangle(A,B,C);\n')"
+            title="Symbolic triangle">&#x25b3;ABC
+    </button>
+    <button class="bouton" onclick="UI.insert_focused('pointc(x):=(1+i*x)/(1-i*x);\nassume(a=[0.3,0,2,0.1]);\nassume(b=[0.6,0,2,0.1]);\nP1:=point(-1,display=hidden_name);\nP2:=point(pointc(a),display=hidden_name);\nP3:=point(pointc(-b),display=hidden_name);\nL1:=perpendicular(P1,line(0,P1)):;\nL2:=perpendicular(P2,line(0,P2)):;\nL3:=perpendicular(P3,line(0,P3)):;\nA:=single_inter(L1,L2);\nB:=single_inter(L2,L3);\nC:=single_inter(L3,L1);\ntriangle(A,B,C);circle(0,1);\n')"
+            title="Symbolic triangle + incircle">&#x25ef;in&#x25b3;
+    </button>
+    <button class="bouton" onclick="UI.insert_focused('pointc(x):=(1+i*x)/(1-i*x);\nassume(b=[0.3,0,2,0.1]);\nassume(c=[0.6,0,2,0.1]);\nA:=point(-1);\nB:=point(pointc(b));\nC:=point(pointc(-c));\ncircle(0,1);triangle(A,B,C);\n')"
+            title="Symbolic triangle + circumcircle">&#x25b3;in&#x25ef;
+    </button>
     <button class="bouton" onclick="UI.insert(UI.focused,'rectangle(')"
             title="Rectangle">&#x25ad;
     </button>
@@ -3776,7 +3787,8 @@ If you want to see informations while a computation is running, run first
     var ua = window.navigator.userAgent;
     var old_ie = ua.indexOf('MSIE ');
     var new_ie = ua.indexOf('Trident/');
-    if ((old_ie > -1) || (new_ie > -1) || Boolean(window.chrome)) {
+    var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    if ((old_ie > -1) || (new_ie > -1) || Boolean(window.chrome) || isSafari) {
         (function () {
             var script = document.createElement("script");
             script.type = "text/javascript";
@@ -3821,7 +3833,8 @@ If you want to see informations while a computation is running, run first
         var ua = window.navigator.userAgent;
         var old_ie = ua.indexOf('MSIE ');
         var new_ie = ua.indexOf('Trident/');
-        if (Boolean(window.chrome) && window.location.href.substr(0, 4) != 'file') UI.prettyprint = false;
+        var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+        if ((isSafari || Boolean(window.chrome)) && window.location.href.substr(0, 4) != 'file') UI.prettyprint = false;
         if ((old_ie > -1) || (new_ie > -1)) UI.isie = true;
         var bt = UI.browser_type();
         if (UI.isie || (bt != 1 && bt != 2)) {

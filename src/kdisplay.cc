@@ -29,7 +29,6 @@
 #include <syscall.h>
 #include "sha256.h"
 #endif
-#include "qrcodegen.h"
 #include <alloca.h>
 #ifndef is_cx2
 #define is_cx2 false
@@ -56,6 +55,7 @@ int shell_x=0,shell_y=0,shell_fontw=12,shell_fonth=18;
 // soit comme sur la CX si l'ecriture en flash NAND marche un jour
 
 #ifdef KHICAS
+#include "qrcodegen.h"
 
 #ifdef NUMWORKS
 char * freeptr=0;
@@ -17512,7 +17512,7 @@ void save_console_state_smem(const char * filename,bool xwaspy,bool qr,GIAC_CONT
     Bfile_WriteFile_OS(hFile, script.c_str(), scriptsize);
     // save console state
     int pos=1;
-    string qrs=lang?"http://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasfr.html#":"http://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasen.html#";//"https://xcas.univ-grenoble-alpes.fr/xcasjs/#";
+    string qrs=lang?"https://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasfr.html#":"https://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasen.html#";//"https://xcas.univ-grenoble-alpes.fr/xcasjs/#";
     qrs += xcas_python_eval==1?"micropy=":"cas=";
     if (qr) qrs += "0,0,"+replace_html5(script)+'&';
     // save console state

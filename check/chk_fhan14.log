@@ -1,0 +1,83 @@
+// Using locale /usr/share/locale/
+// setlocale returns 0
+// /usr/share/locale/
+// giac
+// UTF-8
+// Maximum number of parallel threads 1
+// Unable to find keyword file doc/en/keywords
+Added 0 synonyms
+// Warning: x, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining randP
+// Warning: x,l, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining berl
+// Warning: A,B,rep,p,N,r,LX,Q,P,x,Powmod, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining unfacteur
+// Warning: unfacteur,t,tt, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining facteurpseudoirred
+// Warning: A, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining borne
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+facteurs multiples,2
+facteurs multiples,3
+facteurs multiples,11
+facteurs multiples,13
+facteurs multiples,19
+facteurs multiples,23
+// Time 0.02
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+f est irred
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+on a bien trouve tous les facteurs
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+x^2+9*x+17,est un diviseur dans Z
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Total time 0.06
+PASS chk_fhan14 (exit status: 0)

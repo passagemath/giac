@@ -457,7 +457,7 @@ namespace giac {
 
   static bool has_subst(const gen & e,const gen & i,const gen & newi,gen & newe,bool quotesubst,GIAC_CONTEXT){
     switch (e.type){
-    case _INT_: case _ZINT: case _DOUBLE_: case _REAL: case _STRNG: case _MOD: case _SPOL1: case _USER:
+    case _INT_: case _ZINT: case _DOUBLE_: case _REAL: case _STRNG: case _MOD: case _SPOL1: case _USER: case _EXT:
       return false;
     case _CPLX:
       if (i==cst_i){
@@ -502,7 +502,7 @@ namespace giac {
 	return true;
       }
       if (has_subst(e._SYMBptr->feuille,i,newi,newe,quotesubst,contextptr)){
-	if (quotesubst || e._SYMBptr->sommet.quoted())
+	if (quotesubst || e._SYMBptr->sommet.quoted())// || e._SYMBptr->sommet==at_abs) // avoid eval of abs because it calls sturmsign/limit/subst?
 	  newe=symbolic(e._SYMBptr->sommet,newe);
 	else
 	  newe=e._SYMBptr->sommet(newe,contextptr); 
@@ -1047,7 +1047,7 @@ namespace giac {
   }
 
   gen hyp2exp(const gen & e,GIAC_CONTEXT){
-    return subst(e,sinhcoshtanh_tab,hyp2exp_tab,false,contextptr);
+    return subst(e,sinhcoshtanh_tab,hyp2exp_tab,true,contextptr);
   }
   gen _hyp2exp(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -3357,6 +3357,8 @@ namespace giac {
       find_conjugates(n,v_in,v_out);
       gen mult=subst(n,v_in,v_out,false,contextptr);
       n=n*mult; // n=simplify(n*mult);
+      if (!deno)
+        return n;
       d=d*mult;
     }
     else {

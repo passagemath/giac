@@ -1,0 +1,161 @@
+// Using locale /usr/share/locale/
+// C
+// /usr/share/locale/
+// giac
+// UTF-8
+// Maximum number of parallel threads 1
+// Unable to find keyword file doc/en/keywords
+Added 0 synonyms
+// Warning: a, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// Success
+// Success
+// Success
+// Success
+// Success
+// Success
+// Success
+// Success
+// End defining T
+============== restarted ===============
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+0
+0
+0
+// Time 0.03
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+// Time 0.03
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0.01
+  *** _ZM_mul_worker: Warning: increasing stack size to 4096000.
+  *** _ZM_mul_worker: Warning: increasing stack size to 4096000.
+  *** _ZM_mul_worker: Warning: increasing stack size to 4096000.
+  *** _ZM_mul_worker: Warning: increasing stack size to 4096000.
+  *** _ZM_mul_worker: Warning: increasing stack size to 4096000.
+// Time 0.14
+// Time 0.19
+// Time 0.13
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0.18
+// Time 0.15
+// Time 0.15
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+  ***   Warning: increasing stack size to 4096000.
+// Time 0.21
+// Time 0.24
+// Time 0.16
+// Time 0.21
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.19
+// Time 0
+// Time 0
+// Time 0
+
+Evaluation time: 0.66
+// Time 0.66
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Total time 2.72
+PASS chk_fhan4 (exit status: 0)

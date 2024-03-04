@@ -5340,12 +5340,20 @@ namespace giac {
 	    int p2s=P2n.lexsorted_degree();
 	    V=vecteur(U.begin()+p2s,U.end());
 	    poly12polynome(V,1,v);
-	    v=(v*P2) % p1;
-	    U=vecteur(U.begin(),U.begin()+p2s);
-	    poly12polynome(U,1,u);
-	    u=(u*P1) % p2;
-	    //CERR << (operator_times(u,p1,0)+operator_times(v,p2,0))/D << '\n';
-	    return;
+	    //v=(v*P2) % p1;
+            polynome prod(v*P2),quo(p1.dim),rem(p1.dim);
+            if (prod.TDivRem1(p1,quo,rem,true)){
+              v=rem;
+              U=vecteur(U.begin(),U.begin()+p2s);
+              poly12polynome(U,1,u);
+              // u=(u*P1) % p2;
+              prod=u*P1;
+              if (prod.TDivRem1(p2,quo,rem,true)){
+                u=rem;
+                //CERR << (operator_times(u,p1,0)+operator_times(v,p2,0))/D << '\n';
+                return;
+              }
+            }
 	  }
 	}
       }
@@ -5958,6 +5966,8 @@ namespace giac {
     }
     if (debug_infolevel)
       CERR << CLOCK()*1e-6 << " norme factor begin" << '\n';
+    gen normden(1); lcmdeno(norme,normden);
+    norme=normden*norme;
     bool test=factor(norme,temp,f,true,false,complexmode,1,extra_div);
     if (debug_infolevel)
       CERR << CLOCK()*1e-6 << " norme factor end" << '\n';
@@ -6612,7 +6622,7 @@ namespace giac {
 
   static bool sqff_evident_primitive(const polynome & pp,factorization & f,bool with_sqrt,bool complexmode){
     // first square-free factorization
-
+    
 #if 0 // Cette version ne marche pas it->fact plus bas renvoie un vecteur vide.. ou quelquechose comme ca..
    const factorization & sqff_f = has_num_coeff(pp)?factorization(1,facteur< polynome >(pp,1)):sqff(pp);
 #else // celle la, plus ancienne, marche... 

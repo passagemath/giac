@@ -2775,7 +2775,8 @@ namespace giac {
   }
 
   vecteur proot(const vecteur & v,double & eps,int & rprec,GIAC_CONTEXT){
-    return proot(v,eps,rprec,true,contextptr);
+    vecteur res(proot(v,eps,rprec,true,contextptr));
+    return res;
   }
 
   vecteur proot(const vecteur & v,double eps,GIAC_CONTEXT){
@@ -6376,10 +6377,29 @@ namespace giac {
     return true;
   }
 
+  bool is_cinteger_vecteur(const vecteur & m){
+    const_iterateur it=m.begin(),itend=m.end();
+    for (;it!=itend;++it){
+      if (it->type==_INT_) continue;
+      if (it->type==_ZINT) continue;
+      if (it->type==_CPLX && is_integer(*it->_CPLXptr) && is_integer(*(it->_CPLXptr+1))) continue;
+      return false;
+      // if (!is_integer(*it)) return false;
+    }
+    return true;
+  }
+
   bool is_integer_matrice(const matrice & m,bool intonly){
     const_iterateur it=m.begin(),itend=m.end();
     for (;it!=itend;++it)
       if (it->type!=_VECT || !is_integer_vecteur(*it->_VECTptr,intonly)) return false;
+    return true;
+  }
+
+  bool is_cinteger_matrice(const matrice & m){
+    const_iterateur it=m.begin(),itend=m.end();
+    for (;it!=itend;++it)
+      if (it->type!=_VECT || !is_cinteger_vecteur(*it->_VECTptr)) return false;
     return true;
   }
 
@@ -6489,7 +6509,6 @@ namespace giac {
 #define CLOCKS_PER_SEC 1e6
 #endif
   
-#ifndef GIAC_HAS_STO_38
   // compute first prime suitable for padic linsolve
   // returns true on success
   bool padic_firstprime(const matrice & a,gen & p){
@@ -6520,6 +6539,8 @@ namespace giac {
     p=nextprime(int(p0));
     return true;
   }
+
+#ifndef GIAC_HAS_STO_38
   
   static int mrref_int(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
 			int fullreduction,int dont_swap_below,bool convert_internal,int algorithm,int rref_or_det_or_lu,
@@ -7087,7 +7108,7 @@ namespace giac {
     return status;
   }
 
-  bool remove_identity(matrice & res,GIAC_CONTEXT){
+  bool remove_identity(matrice & res,bool normalize,GIAC_CONTEXT){
     int s=int(res.size());
     // "shrink" res
     for (int i=0;i<s;++i){
@@ -7099,7 +7120,7 @@ namespace giac {
 	return false;
       gen tmp=new ref_vecteur(v.begin()+s,v.end());
       divvecteur(*tmp._VECTptr,v[i],*tmp._VECTptr);
-      res[i] = normal(tmp,contextptr);
+      res[i] = normalize?normal(tmp,contextptr):tmp;
     }
     return true;
   }
@@ -7118,8 +7139,27 @@ namespace giac {
   int mrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
 	    int fullreduction_,int dont_swap_below,bool convert_internal,int algorithm_,int rref_or_det_or_lu,
 	    GIAC_CONTEXT){
+    vector<int> permutation(lmax);
+    for (int i=0;i<lmax;++i)
+      permutation[i]=i;
+    return mrref(a,res,permutation,pivots,det,l,lmax,c,cmax,fullreduction_,dont_swap_below,convert_internal,algorithm_,rref_or_det_or_lu,contextptr);
+  }
+
+  int mrref(const matrice & a, matrice & res, vector<int> & permutation,vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
+	    int fullreduction_,int dont_swap_below,bool convert_internal,int algorithm_,int rref_or_det_or_lu,
+	    GIAC_CONTEXT){
     if (!ckmatrix(a))
       return 0;
+    // check for a matrix with coefficients in an alg. extension of Q 
+    int redtype=0;
+    if (!fullreduction_)
+      redtype=1;
+    if (rref_or_det_or_lu==1)
+      redtype=2;
+    else if (rref_or_det_or_lu==2)
+      redtype=3;
+    if (l==0 && c==0 && lmax==a.size() && cmax==a[0]._VECTptr->size() && algnum_rref(a,res,pivots,det,redtype,contextptr))
+      return 3;
     double eps=epsilon(contextptr);
     unsigned as=unsigned(a.size()),a0s=unsigned(a.front()._VECTptr->size());
     bool step_rref=false;
@@ -7153,9 +7193,6 @@ namespace giac {
       convert_internal=false;
       fullreduction=0;
     }
-    vector<int> permutation(lmax);
-    for (int i=0;i<lmax;++i)
-      permutation[i]=i;
 #ifndef GIAC_HAS_STO_38
     // modular algorithm
     if ( ( (algorithm==RREF_GUESS && (
@@ -7673,7 +7710,7 @@ namespace giac {
     int ok=1;
     if (convert_internal){
       if (rm_idn_after){
-	if (!remove_identity(res,contextptr))
+	if (!remove_identity(res,false/* normalize*/,contextptr))
 	  return 0;
 	res = *(r2sym (res,lv,contextptr)._VECTptr);
 	res =*normal(res,contextptr)._VECTptr;
@@ -8009,7 +8046,7 @@ namespace giac {
 	if (convertpos){
 	  int C=col+1;
 	  longlong * buf=&buffer[C];
-	  longlong * bufend=&buffer[cmax]-8;
+	  longlong * bufend=&buffer[0]+cmax-8;
 	  const int * nline=&Nline[C];
 	  for (;buf<=bufend;buf+=8,nline+=8){
 	    longlong x,y;
@@ -8033,7 +8070,7 @@ namespace giac {
 	else {
 	  int C=col+1;
 	  longlong * buf=&buffer[C];
-	  longlong * bufend=&buffer[cmax]-8;
+	  longlong * bufend=&buffer[0]+cmax-8;
 	  const int * nline=&Nline[C];
 	  for (;buf<=bufend;buf+=8,nline+=8){
 	    buf[0] -= coeff*nline[0];
@@ -8279,7 +8316,7 @@ namespace giac {
 	    }
 #else
 	    int C=col+1;
-	    longlong * ptr= &buffer[C],*ptrend=&buffer[cmax]-4;
+	    longlong * ptr= &buffer[C],*ptrend=&buffer[0]+cmax-4;
 	    const int *ptrN=&Nline[C];
 	    for (;ptr<ptrend;ptrN+=4,ptr+=4){
 	      longlong x = *ptr;
@@ -8311,7 +8348,7 @@ namespace giac {
 	  }
 	  else {
 	    int C=col+1;
-	    longlong * ptr= &buffer[C],*ptrend=&buffer[cmax]-4;
+	    longlong * ptr= &buffer[C],*ptrend=&buffer[0]+cmax-4;
 	    const int *ptrN=&Nline[C];
 	    for (;ptr<ptrend;ptrN+=4,ptr+=4){
 	      *ptr -= coeff*(*ptrN);
@@ -9827,7 +9864,7 @@ namespace giac {
   }
 
   bool remove_identity(matrice & res){
-    return remove_identity(res,context0);
+    return remove_identity(res,false,context0);
   }
 
   bool remove_identity(vector< vector<int> > & res,int modulo){
@@ -11647,7 +11684,7 @@ namespace giac {
       return false;
     if (debug_infolevel)
       CERR << CLOCK()*1e-6 << " remove identity" << '\n';
-    if (ok!=2 && !remove_identity(res,contextptr))
+    if (ok!=2 && !remove_identity(res,ok!=3,contextptr))
       return false;
     if (debug_infolevel)
       CERR << CLOCK()*1e-6 << " end matrix inv" << '\n';
@@ -15251,6 +15288,28 @@ namespace giac {
   // return a vector which elements are the basis of the ker of a
   bool mker(const matrice & a,vecteur & v,int algorithm,GIAC_CONTEXT){
     v.clear();
+    if (is_cinteger_matrice(a)){ // quick modular check that ker is not empty
+      int L=a.size(),C=a.front()._VECTptr->size();
+      vector< vector<int> > A,V;
+      double p=((1LL<<62)-giac_rand(contextptr))/L/L;
+      p=std::sqrt(p)-1e5;
+      int modulo=nextprime(int(p)).val;
+      gen az(a);
+      if (!is_integer_matrice(a)){
+        while (modulo%4!=1){
+          modulo=nextprime(modulo+1).val;
+        }
+        int i=modsqrtminus1(modulo);
+        gen ar,ai;
+        reim(az,ar,ai,contextptr);
+        az=ar+i*ai;
+      }
+      vecteur2vectvector_int(*az._VECTptr,modulo,A);
+      if (mker(A,V,modulo)){
+        if (V.empty())
+          return true;
+      }
+    }
     gen det;
     vecteur pivots;
     matrice res;
