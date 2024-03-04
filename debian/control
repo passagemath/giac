@@ -5,7 +5,7 @@ Maintainer: Debian Science Maintainers <debian-science-maintainers@alioth-lists.
 Uploaders: Ximin Luo <infinity0@debian.org>,
            Gilles Filippini <pini@debian.org>,
            Ileana Dumitrescu <ileanadumitrescu95@gmail.com>
-Build-Depends: automake,
+Build-Depends: dpkg-dev (>= 1.22.5), automake,
                bison,
                debhelper-compat (= 13),
                flex,
@@ -49,7 +49,10 @@ Homepage: https://www-fourier.ujf-grenoble.fr/~parisse/giac.html
 Vcs-Browser: https://salsa.debian.org/science-team/giac
 Vcs-Git: https://salsa.debian.org/science-team/giac.git
 
-Package: libgiac0
+Package: libgiac0t64
+Provides: ${t64:Provides}
+Replaces: libgiac0
+Breaks: libgiac0 (<< ${source:Version})
 Section: libs
 Architecture: amd64 arm64 armel armhf i386 mips64el mipsel riscv64
 Multi-Arch: same
@@ -67,7 +70,7 @@ Package: libgiac-dev
 Architecture: amd64 arm64 armel armhf i386 mips64el mipsel riscv64
 Section: libdevel
 Depends: libfltk1.3-dev,
-         libgiac0 (= ${binary:Version}),
+         libgiac0t64 (= ${binary:Version}),
          libgmp-dev,
          libgsl-dev,
          libmpfi-dev,
@@ -86,7 +89,7 @@ Description: Computer Algebra System C++ library - Development files
 Package: xcas
 Architecture: amd64 arm64 armel armhf i386 mips64el mipsel riscv64
 Multi-Arch: allowed
-Depends: libgiac0 (= ${binary:Version}),
+Depends: libgiac0t64 (= ${binary:Version}),
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
