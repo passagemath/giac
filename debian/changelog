@@ -1,3 +1,10 @@
+giac (1.9.0.93+dfsg2-2) UNRELEASED; urgency=medium
+
+  * d/patches: Fix implicit-function-declaration error for fesetround by
+    declaring the function in fenv.h (Closes: #1066335).
+
+ -- Ileana Dumitrescu <ileanadumitrescu95@gmail.com>  Thu, 14 Mar 2024 21:19:20 +0200
+
 giac (1.9.0.93+dfsg2-1) unstable; urgency=medium
 
   * New upstream release (Closes: #1063597).

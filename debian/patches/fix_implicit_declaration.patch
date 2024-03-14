@@ -1,0 +1,13 @@
+From: Ileana Dumitrescu <ileanadumitrescu95@gmail.com>
+Date: Thu, 14 Mar 2024 21:19:20 +0200
+Description: Fix implicit-function-declaration error for fesetround by
+  declaring the function in fenv.h
+
+--- a/src/fenv.h
++++ b/src/fenv.h
+@@ -5,3 +5,5 @@
+ #define FE_UPWARD 2
+ #define PTHREAD_MUTEX_INITIALIZER 0
+ #endif
++
++int fesetround (int);
