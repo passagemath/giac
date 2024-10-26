@@ -1,3 +1,12 @@
+giac (1.9.0.93+dfsg2-3) unstable; urgency=medium
+
+  * Team upload.
+
+  [ zhangdandan <zhangdandan@loongson.cn> ]
+  * Add support for loongarch64 (Closes: #1058675)
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Sat, 26 Oct 2024 18:28:10 +0200
+
 giac (1.9.0.93+dfsg2-2) unstable; urgency=medium
 
   * d/patches: Fix implicit-function-declaration error for fesetround by

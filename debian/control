@@ -54,7 +54,7 @@ Provides: ${t64:Provides}
 Replaces: libgiac0
 Breaks: libgiac0 (<< ${source:Version})
 Section: libs
-Architecture: amd64 arm64 armel armhf i386 mips64el mipsel riscv64
+Architecture: amd64 arm64 armel armhf i386 loong64 mips64el mipsel riscv64
 Multi-Arch: same
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Suggests: giac-doc
@@ -67,7 +67,7 @@ Description: Computer Algebra System C++ library
  This package contains the shared libraries needed to run programs using giac.
 
 Package: libgiac-dev
-Architecture: amd64 arm64 armel armhf i386 mips64el mipsel riscv64
+Architecture: amd64 arm64 armel armhf i386 loong64 mips64el mipsel riscv64
 Section: libdevel
 Depends: libfltk1.3-dev,
          libgiac0t64 (= ${binary:Version}),
@@ -87,7 +87,7 @@ Description: Computer Algebra System C++ library - Development files
  development files needed to build software that uses giac.
 
 Package: xcas
-Architecture: amd64 arm64 armel armhf i386 mips64el mipsel riscv64
+Architecture: amd64 arm64 armel armhf i386 loong64 mips64el mipsel riscv64
 Multi-Arch: allowed
 Depends: libgiac0t64 (= ${binary:Version}),
          ${misc:Depends},
