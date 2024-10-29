@@ -16,7 +16,9 @@ pdf-local: $(PDF_LOCAL)
 dvi-local: $(DVI_LOCAL)
 ps-local: $(PS_LOCAL)
 
-install-data-local: $(HTML_STAMPS) $(PDF_LOCAL) $(PS_LOCAL) $(DVI_LOCAL)
+all-local: $(HTML_STAMPS) pdf-local ps-local dvi-local
+
+install-data-local: all-local
 	$(install_sh) -d $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
 #	$(INSTALL_DATA) $(PDF_LOCAL) $(DESTDIR)/$(the_LANG)
 #	$(INSTALL_DATA) $(PS_LOCAL) $(DESTDIR)/$(the_LANG)

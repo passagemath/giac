@@ -24,7 +24,9 @@ ps-local: $(PS_LOCAL)
 
 $(srcdir)/cascmd_el: cascmd_el.stamp
 
-install-data-local: $(HTML_STAMPS) $(PDF_LOCAL) $(PS_LOCAL) $(DVI_LOCAL)
+all-local: html-local pdf-local ps-local dvi-local
+
+install-data-local: all-local
 	$(install_sh) -d $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
 #	$(INSTALL_DATA) $(PDF_LOCAL) $(DESTDIR)/$(the_LANG)
 #	$(INSTALL_DATA) $(PS_LOCAL) $(DESTDIR)/$(the_LANG)
