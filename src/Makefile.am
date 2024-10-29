@@ -83,7 +83,7 @@ xcas_LDADD = libxcas.la $(GSL_LIBS) $(LAPACK_LIBS)
 
 AM_YFLAGS = -p giac_yy -d
 EXTRA_DIST = .gdbinit xgiac pgiac prime.table gen_user \
-	input_parser.h softmath.h softmath.cc\
+	input_parser.h lexer.h softmath.h softmath.cc\
 	khicas.lua luagiac.c luabridge.cc luabridge.h \
 	giacnspire.cc missing.c ndlessconfigure \
 	sha256.h sha256.c \
