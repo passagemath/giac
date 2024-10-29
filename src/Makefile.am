@@ -16,7 +16,7 @@ libgiac_la_SOURCES = input_lexer.ll sym2poly.cc gausspol.cc threaded.cc \
   caseval.c cutils.c graphic.c libbf.c libregexp.c libunicode.c \
   qjsgiac.c quickjs.c quickjs-libc.c js.c qrcodegen.c qrcodegen.h
 
-libgiac_la_LIBADD = $(NTL_LIBS) $(COCOA_LIBS) $(PARI_LIBS) $(GSL_LIBS) 
+libgiac_la_LIBADD = $(NTL_LIBS) $(COCOA_LIBS) $(PARI_LIBS) $(GSL_LIBS) -lgl2ps
 
 giacincludedir = $(includedir)/giac
 giacinclude_HEADERS = dispatch.h fraction.h gen.h desolve.h misc.h ti89.h \
@@ -42,11 +42,11 @@ libxcas_la_SOURCES = History.cc Input.cc Xcas1.cc Equation.cc Print.cc \
 	Tableur.cc Editeur.cc Graph.cc Graph3d.cc Help1.cc Cfg.cc \
 	Flv_CStyle.cc \
 	Flve_Check_Button.cc Flve_Input.cc Flv_Style.cc Flv_Data_Source.cc \
-	Flve_Combo.cc Flv_List.cc Flv_Table.cc gl2ps.c \
+	Flve_Combo.cc Flv_List.cc Flv_Table.cc \
 	History.h Input.h Xcas1.h Equation.h Print.h Tableur.h \
 	Editeur.h Graph.h Graph3d.h Help1.h Cfg.h Python.cc Python.h \
 	Flv_CStyle.H  Flve_Check_Button.H  Flve_Input.H  Flv_Style.H \
-	Flv_Data_Source.H  Flve_Combo.H Flv_List.H Flv_Table.H gl2ps.h
+	Flv_Data_Source.H  Flve_Combo.H Flv_List.H Flv_Table.H
 
 ##libjavagiac_la_LIBADD = libgiac.la 
 
