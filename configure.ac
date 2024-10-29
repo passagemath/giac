@@ -584,8 +584,6 @@ doc/en/Makefile
 doc/es/Makefile
 doc/fr/Makefile
 doc/el/Makefile
-doc/el/tutoriel/Makefile
-doc/el/casinter/Makefile
 doc/local/Makefile
 doc/pt/Makefile
 doc/zh/Makefile
@@ -593,8 +591,6 @@ doc/de/Makefile
 intl/Makefile
 po/Makefile.in
 examples/Makefile
-debianold/Makefile
-debian/Makefile
 micropython-1.12/Makefile
 micropython-1.12/docs/Makefile
 micropython-1.12/drivers/Makefile

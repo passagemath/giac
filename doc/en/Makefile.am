@@ -1,6 +1,6 @@
 TEX_LOCAL = cascmd_en.tex casinter.tex cas.tex slipres.tex giacxcas.tex tutoriel.tex
 
-PDF_LOCAL = cascmd_en.pdf casinter.pdf cas.pdf troussesurvie_en.pdf
+PDF_LOCAL = cascmd_en.pdf casinter.pdf cas.pdf
 
 PS_LOCAL = cascmd_en.ps casinter.ps cas.ps
 
@@ -34,13 +34,12 @@ $(srcdir)/cascmd_en: cascmd_en.stamp
 $(srcdir)/casinter: casinter.stamp
 $(srcdir)/tutoriel: tutoriel.stamp
 
-install-data-local: $(HTML_STAMPS) troussesurvie_en.pdf # $(PDF_LOCAL) # $(PS_LOCAL) $(DVI_LOCAL) 
-all-local: html-local ps-local dvi-local troussesurvie_en.pdf
+install-data-local: $(HTML_STAMPS) # $(PDF_LOCAL) # $(PS_LOCAL) $(DVI_LOCAL)
+all-local: html-local ps-local dvi-local
 
 install-data-local: all-local
 	$(install_sh) -d $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
 #	$(INSTALL_DATA) $(PDF_LOCAL) $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
-	$(INSTALL_DATA) troussesurvie_en.pdf $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
 #	$(INSTALL_DATA) $(PS_LOCAL) $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
 #	$(INSTALL_DATA) $(DVI_LOCAL) $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
 #	$(INSTALL_DATA) $(HTML_LOCAL) $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
