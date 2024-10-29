@@ -88,8 +88,8 @@ jobs:
       # Sage distribution packages to build
       targets: SAGE_CHECK=no SAGE_CHECK_PACKAGES="giac" giac
       # Standard setting: Test the current beta release of Sage:
-      sage_repo: sagemath/sage
-      sage_ref: develop
+      sage_repo: passagemath/passagemath
+      sage_ref: main
       upstream_artifact: upstream
       # Docker targets (stages) to tag
       docker_targets: "with-targets"
