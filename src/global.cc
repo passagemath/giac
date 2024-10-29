@@ -6153,11 +6153,7 @@ NULL,NULL,SW_SHOWNORMAL);
     return isnan(d);
 #endif
 #else
-#if defined(FIR_LINUX) || defined(FIR_ANDROID)
     return std::isnan(d);
-#else
-    return isnan(d);
-#endif
 #endif
   }
 
@@ -6166,11 +6162,7 @@ NULL,NULL,SW_SHOWNORMAL);
     double x=0.0;
     return d==1.0/x || d==-1.0/x;
 #else
-#if defined(FIR_LINUX) || defined(FIR_ANDROID)
     return std::isinf(d);
-#else
-    return isinf(d);
-#endif
 #endif
   }
 
