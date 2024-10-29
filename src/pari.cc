@@ -39,6 +39,12 @@ using namespace std;
 #endif
 
 #ifdef HAVE_LIBPARI
+// ANYARG disappeared from PARI 2.15.0
+#ifdef __cplusplus
+# define ANYARG ...
+#else
+# define ANYARG
+#endif
 
 #ifndef ANYARG
 #ifdef __cplusplus
