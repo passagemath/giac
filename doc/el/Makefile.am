@@ -5,7 +5,7 @@ TEX_LOCAL = cas_el.tex cascmd_el.tex
 PDF_LOCAL = cas_el.pdf
 PS_LOCAL = cas_el.ps
 DVI_LOCAL = cas_el.dvi
-HTML_DIRS_LOCAL = cascmd_el
+HTML_DIRS_LOCAL =
 HTML_STAMPS = cas_el.stamp cascmd_el.stamp
 
 EXTRA_DIST = $(TEX_LOCAL) $(PS_LOCAL) $(DVI_LOCAL) $(PDF_LOCAL) $(HTML_LOCAL) $(HTML_STAMPS) cutting.hva cutting.sty
