@@ -5,3 +5,5 @@
 #define FE_UPWARD 2
 #define PTHREAD_MUTEX_INITIALIZER 0
 #endif
+
+int fesetround (int);
