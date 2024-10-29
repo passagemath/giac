@@ -4040,9 +4040,6 @@ namespace giac {
 #endif
 #ifdef HAVE_LIBPARI
     if (ifactor_pari){
-#ifdef __APPLE__
-      return vecteur(1,gensizeerr(gettext("(Mac OS) Large number, you can try pari(); pari_factor(")+n0.print(contextptr)+")"));
-#endif
       gen g(pari_ifactor(n0),contextptr); 
       if (g.type==_VECT){
 	matrice m(mtran(*g._VECTptr));
