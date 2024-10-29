@@ -168,29 +168,20 @@ void dealloc(struct Tgraph *graph);
 static int texmacs_counter= 0;
 
 
+#include "Xcas1.h"
+
 #ifndef HAVE_LIBFLTK
 using namespace giac;
 #define STDIN_FILENO 0
-namespace xcas {
-  /*
-  void icas_eval(giac::gen & g,giac::gen & gg,int & reading_file,std::string &filename,giac::context * contextptr){
-    gg=protecteval(g,10,contextptr);
-  }
-
-  bool fltk_view(const giac::gen & g,giac::gen & ge,const std::string & filename,std::string & figure_filename,int file_type,const giac::context *contextptr){
-    return false;
-  }
-  */
-}
 
 #else
-#include "Xcas1.h"
+
 #include "Cfg.h"
 void ctrl_c_signal_handler(int signum){
   giac::ctrl_c=true;
   cerr << "icas/giac process " << getpid() << ", Ctrl-C pressed, interruption requested" << '\n';
 }
-#endif
+#endif // fltk
 
 void format_plugin () {
   // The configuration of a plugin can be completed at startup time.
@@ -466,7 +457,7 @@ static const string silent_err(" 2>/dev/null");
 #endif
 
 bool texmacs_graph_lr_margins(const string &fname,int &val,bool init=true,int width=0) {
-#ifdef VISUALC
+#if defined VISUALC || defined USE_GMP_REPLACEMENTS
   return false;
 #else
   char buffer[1024];
@@ -705,7 +696,9 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
     }
   } else {
     int ans_num=(int)history_out(contextptr).size()-1;
+#ifndef USE_GMP_REPLACEMENTS
     printf("scheme:(equation* (document %s))",giac::gen2scm(gg,giac::context0).c_str());
+#endif
   }
 #else
   if (reading_file){
@@ -1861,7 +1854,11 @@ int main(int ARGC, char *ARGV[]){
   if (intexmacs){
     giac::html_help_init(ARGV[0],false);
     giac::enable_texmacs_compatible_latex_export(true);
+#ifdef USE_GMP_REPLACEMENTS
+    texmacs_image_file="casgraph";
+#else
     texmacs_image_file=giac::temp_file_name("casgraph");
+#endif
 #ifdef WITH_GNUPLOT
     int out_handle;
     giac::run_gnuplot(out_handle);
@@ -2161,6 +2158,7 @@ int main(int ARGC, char *ARGV[]){
 #endif
 	continue;
       }
+#ifdef HAVE_LIBFLTK
       if (s=="!xcas"){
 	system("./xcas");
 	printf("%s\n","Running ./xcas");
@@ -2171,6 +2169,7 @@ int main(int ARGC, char *ARGV[]){
 	xcas::fltk_view(0,ge,"session.xws",filename,5,contextptr);
 	continue;
       }
+#endif
       if (s=="giac"){
 	python_compat(python_compat(contextptr)&3,contextptr);
 	printf("%s\n","Switching to giac interpreter");
@@ -2265,9 +2264,11 @@ int main(int ARGC, char *ARGV[]){
       // 2-d plot?
       int graph_output=graph_output_type(ge);
       if (reading_file>=2 || graph_output || (giac::ckmatrix(ge,true) &&ge.subtype==giac::_SPREAD__VECT) ){
+#ifdef HAVE_LIBFLTK
 	if (xcas::fltk_view(gq,ge,"",filename,reading_file,contextptr))
 	  cout << "Done";
 	else
+#endif
 	  cout << "Plot cancelled or unable to plot";
       }
       else {
@@ -2412,7 +2413,7 @@ int main(int ARGC, char *ARGV[]){
 #ifdef __APPLE__
       startc=clock();
 #endif
-#ifdef HAVE_LIBFLTK
+#if 1 // def HAVE_LIBFLTK
       xcas::icas_eval(gq,e,reading_file,filename,contextptr);
 #else
       e=eval(gq,1,contextptr);

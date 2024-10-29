@@ -222,6 +222,17 @@ var UI = {
       UI.numworks_save(file.name,data);
     }
   },
+  download:function(url, filename) {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+      })
+      .catch(console.error);
+  },
   numworks_save:function(filename,S){
     //console.log(filename,S); return;
     UI.nws_connect();
@@ -263,6 +274,70 @@ var UI = {
     });
     return 0;
   },    
+  numworks_install_slotb:function(version_longue=1,tar_only=0){
+    if (tar_only==0 && !confirm(UI.langue==-1?'En confirmant l\'installation, vous acceptez la licence GPL2 de KhiCAS':'If you confirm install, you accept the GPL2 license of KhiCAS'))
+      return;
+    $id('persoinit').style.display='none';    
+    UI.calc=2;
+    UI.nws_connect();
+    window.setTimeout(UI.numworks_install_slotb_,100,version_longue,tar_only);
+  },
+  numworks_install_slotb_:async function(version_longue=1,tar_only=0){
+    if (!UI.calculator_connected){
+      alert(UI.lang==-1?'Pas de calculatrice trouvée. Cliquez sur le bouton Détecter.':'No calculator found. Click on the Detect button');
+      return;
+    }
+    if (tar_only==0 || tar_only==-1){
+      let pinfo = await UI.calculator.getPlatformInfo();
+      let n120=UI.calculator.device.startAddress >= 0x24000000;
+      console.log('install_slotb versio_longue tar_only',version_longue,tar_only);
+      if (tar_only==-1){
+	UI.calculator.device.startAddress = n120?0x90190000:0x90180000;
+	UI.calculator.device.logProgress(0,'KhiCAS launcher at '+(n120?'0x90190000':'0x90180000'));
+	let data=await UI.loadfile(n120?"sector19":"sector18");
+	let res=await UI.calculator.device.do_download(UI.calculator.transferSize, data, false);
+	if (res==0){
+	  alert(UI.langue==-1?'Erreur d\'ecriture flash':'Error writing flash');
+	  return 2;
+	}
+        return 0;
+      }
+      if (version_longue){
+	UI.calculator.device.startAddress = 0x90260000;
+	UI.calculator.device.logProgress(0,'KhiCAS slot A at 0x90260000');
+	let data=await UI.loadfile(n120?"khi120a":"khi110a");
+	let res=await UI.calculator.device.do_download(UI.calculator.transferSize, data, false);
+	if (res==0){
+	  alert(UI.langue==-1?'Erreur d\'ecriture flash sur la fin du slot A':'Error writing flash at end of slot A');
+	  return 2;
+	}
+      }
+      let fich=n120?"khi120b.tar":"khi110b.tar";
+      if (version_longue)
+        fich=n120?"khi120ab.tar":"khi110ab.tar";
+      console.log(UI.calculator.device.startAddress,fich);
+      UI.calculator.device.startAddress = 0x90400000;
+      UI.calculator.device.logProgress(0,'KhiCAS slot B at 0x90400000');
+      let data=await UI.loadfile(fich);
+      let res=await UI.calculator.device.do_download(UI.calculator.transferSize, data, false);
+      if (res==0){
+	alert(UI.langue==-1?'Erreur d\'ecriture flash. Redémarrez depuis le slot A, cela peut être fait en tapant reset+6 puis mise à jour depuis le site de Numworks':'Error writing flash. Restart the calc from slot A, this can be done by Reset+6 then upgrade from Numworks site');
+	return 3;
+      }
+    }
+    if (tar_only==1
+        || (!version_longue && confirm(UI.langue==-1?"Installer les scripts et sessions exemples?":"Install script and example sessions?"))
+       ){
+      UI.calculator.device.startAddress = 0x90200000;
+      UI.calculator.device.logProgress(0,'KhiCAS script and examples at 0x90200000');
+      let data=await UI.loadfile('khi92.tar');
+      let res=await UI.calculator.device.do_download(UI.calculator.transferSize, data, false);
+      if (res==0)
+	alert(UI.langue==-1?'Erreur d\'ecriture flash.':'');
+    }
+    alert(UI.langue==-1?"Pour finir l'installation, installez le lanceur ou fermez cet onglet et installez khicas.nwa depuis https://my.numworks.com/apps. Vous devrez répéter l'installation du lanceur ou de khicas.nwa depuis le site de Numworks à chaque RESET/crash tant que Numworks n'a pas corrigé le support des apps externes.":"Install launcher or close this browser tab and install khicas.nwa from https://my.numworks.com/apps. You will have to reinstall the launcher or khicas.nwa from Numworks site after every calculator RESET/crash until Numworks fixes external apps support.");
+    return 0;
+  },
   numworks_install_delta:function(do_backup=1,khionly=0){
     if (khionly && !confirm(UI.langue==-1?'En confirmant l\'installation, vous acceptez la licence CC BY-NC-SA de Khi':'If you confirm, you accept the CC BY-NC-SA license of Khi.'))
       return;
@@ -944,6 +1019,8 @@ var UI = {
       UI.numworks_buffer=await UI.loadfile('apps.tar');
     else if (calc==-1)
       UI.numworks_buffer=await UI.loadfile('appsalpha.tar');
+    else if (calc==-2)
+      UI.numworks_buffer=await UI.loadfile('khi92.tar');
     else
       UI.numworks_buffer=await UI.calculator.get_apps();
     let finfo=UI.tar_fileinfo(UI.numworks_buffer,1),s=finfo.length;

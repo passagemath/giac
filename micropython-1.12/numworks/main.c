@@ -58,8 +58,6 @@ void console_output(const char *,int);
 const char * read_file(const char * filename);
 bool file_exists(const char * filename);
 
-
-#if 0
 const char numpy_script[]=R"(import linalg
 import math
 class array: 
@@ -217,14 +215,14 @@ def shape(x):
 def dot(a,b):
     return a*b
 
-def transpose(x):
+def transpose(a):
     if type(x)==array:
         return array(linalg.transpose(x.a))
 
-def trn(x):
+def trn(a):
     if type(x)==array:
         return array(linalg.conj(linalg.transpose(x.a)))
-    return linalg.conj(x)
+    return linalg.conj(linalg.transpose(x.a))
 
 def zeros(n,m=0):
     return array(linalg.zeros(n,m))
@@ -284,7 +282,6 @@ mp_lexer_t * mp_lexer_new_from_file(const char * filename) {
   else
     mp_raise_OSError(MP_ENOENT);
 }
-#endif
 
 mp_import_stat_t mp_import_stat(const char *path) {
   if (strcmp(path,"numpy.py")==0 || file_exists(path)) {
@@ -311,6 +308,7 @@ void mp_keyboard_interrupt(void) {
 bool back_key_pressed();
 int getkey(int allow_suspend);
 
+double millis();
 
 int micropython_port_vm_hook_loop() {
   /* This function is called very frequently by the MicroPython engine. We grab
@@ -320,17 +318,29 @@ int micropython_port_vm_hook_loop() {
   /* Doing too many things here slows down Python execution quite a lot. So we
    * only do things once in a while and return as soon as possible otherwise. */
   static int c = 0;
-
   ++c; 
-  if (c & 0x7ff ) {
+  if (c & 0x7f ) {
     return 0;
   }
 
+  static double t = 0;
+  const int delay = 100;
+  double t2 = millis();
+  if (t2-t<delay) 
+    return 0;
+  t = t2;
+#if 1
+  if (!back_key_pressed())
+    return 0;
+  mp_keyboard_interrupt();
+  return 1;
+#else
   // Check if the user asked for an interruption from the keyboard
   int g=getkey(mp_interrupt_char | 0x80000000);
   if (!g) return 0;
   mp_keyboard_interrupt();
   return 1;
+#endif
 }
 
 
@@ -586,8 +596,6 @@ char * micropy_init(int stack_size,int heap_size){
 #endif
 
     mp_init();
-    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_path), 0);
-    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_argv), 0);
 
     return heap;
 }

@@ -1020,6 +1020,7 @@ enable_curl
 enable_gui
 enable_fltk
 with_x
+enable_gettext
 enable_nls
 enable_rpath
 with_libiconv_prefix
@@ -1716,6 +1717,7 @@ Optional Features:
                           incompatible, you should configure with
                           --disable-fltk
   --enable-fltk           enable FLTK [[default=yes]]
+  --enable-gettext        enable GETTEXT [[default=yes]]
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
   --enable-micropy        enable MICROPY [[default=yes]]
@@ -5900,13 +5902,13 @@ if ${lt_cv_nm_interface+:} false; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5903: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5905: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5906: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5908: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5909: output\"" >&5)
+  (eval echo "\"\$as_me:5911: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6994,7 +6996,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6997 "configure"' > conftest.$ac_ext
+  echo '#line 6999 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9051,11 +9053,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9054: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9056: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9058: \$? = $ac_status" >&5
+   echo "$as_me:9060: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9375,11 +9377,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9378: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9380: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9382: \$? = $ac_status" >&5
+   echo "$as_me:9384: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9480,11 +9482,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9483: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9485: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9487: \$? = $ac_status" >&5
+   echo "$as_me:9489: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9535,11 +9537,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9538: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9540: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9542: \$? = $ac_status" >&5
+   echo "$as_me:9544: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11907,7 +11909,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11910 "configure"
+#line 11912 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12007,7 +12009,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12010 "configure"
+#line 12012 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13954,11 +13956,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13957: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13959: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13961: \$? = $ac_status" >&5
+   echo "$as_me:13963: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14053,11 +14055,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14056: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14058: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14060: \$? = $ac_status" >&5
+   echo "$as_me:14062: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14105,11 +14107,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14108: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14110: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14112: \$? = $ac_status" >&5
+   echo "$as_me:14114: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15583,7 +15585,7 @@ fi
 done
 
 
-CXXFLAGS="$CXXFLAGS -U_GLIBCXX_ASSERTIONS -DUSE_OBJET_BIDON"
+CXXFLAGS="$CXXFLAGS  -U_GLIBCXX_ASSERTIONS -DUSE_OBJET_BIDON"
 
 if test "x$ac_cv_c_bigendian" = "xyes"; then
 	CXXFLAGS="$CXXFLAGS -DDOUBLEVAL"
@@ -17731,6 +17733,45 @@ _ACEOF
 
 fi
 
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lfltk_jpeg" >&5
+$as_echo_n "checking for main in -lfltk_jpeg... " >&6; }
+if ${ac_cv_lib_fltk_jpeg_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfltk_jpeg  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_fltk_jpeg_main=yes
+else
+  ac_cv_lib_fltk_jpeg_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_fltk_jpeg_main" >&5
+$as_echo "$ac_cv_lib_fltk_jpeg_main" >&6; }
+if test "x$ac_cv_lib_fltk_jpeg_main" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBFLTK_JPEG 1
+_ACEOF
+
+  LIBS="-lfltk_jpeg $LIBS"
+
+fi
+
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lfltk_images" >&5
 $as_echo_n "checking for main in -lfltk_images... " >&6; }
 if ${ac_cv_lib_fltk_images_main+:} false; then :
@@ -19600,14 +19641,16 @@ fi
 
 done
 
-for ac_header in vcl1/vectorclass.h
+for ac_header in vcl2/vectorclass.h
 do :
-  ac_fn_cxx_check_header_mongrel "$LINENO" "vcl1/vectorclass.h" "ac_cv_header_vcl1_vectorclass_h" "$ac_includes_default"
-if test "x$ac_cv_header_vcl1_vectorclass_h" = xyes; then :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "vcl2/vectorclass.h" "ac_cv_header_vcl2_vectorclass_h" "$ac_includes_default"
+if test "x$ac_cv_header_vcl2_vectorclass_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_VCL1_VECTORCLASS_H 1
+#define HAVE_VCL2_VECTORCLASS_H 1
 _ACEOF
-
+ CONFIG_VECTORCLASS="yes"
+else
+  CONFIG_VECTORCLASS="no"
 fi
 
 done
@@ -19945,6 +19988,53 @@ done
 
 
 ALL_LINGUAS="es fr el pt it en zh de"
+CONFIG_GETTEXT="yes"
+# Check whether --enable-gettext was given.
+if test "${enable_gettext+set}" = set; then :
+  enableval=$enable_gettext;  if test "x$enableval" = "xno"; then CONFIG_GETTEXT="no"; fi
+fi
+
+
+if test "$CONFIG_GETTEXT" = "yes"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lintl" >&5
+$as_echo_n "checking for main in -lintl... " >&6; }
+if ${ac_cv_lib_intl_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lintl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_intl_main=yes
+else
+  ac_cv_lib_intl_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_intl_main" >&5
+$as_echo "$ac_cv_lib_intl_main" >&6; }
+if test "x$ac_cv_lib_intl_main" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBINTL 1
+_ACEOF
+
+  LIBS="-lintl $LIBS"
+
+fi
+
 
 
         MKINSTALLDIRS=
@@ -23639,6 +23729,7 @@ $as_echo "#define HAVE_DCGETTEXT 1" >>confdefs.h
 
 
 
+   fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for egrep" >&5
 $as_echo_n "checking for egrep... " >&6; }
@@ -26800,3 +26891,8 @@ echo "#define giac_locale_location \"$prefix/share/locale/\"" >> path.h
 echo "#endif" >> path.h
 echo "#define giac_gnuplot_location \"$GNUPLOT\"" >> path.h
 rm -f src/path.h && cp path.h src
+if test "$CONFIG_VECTORCLASS" = "yes" ; then
+	echo "SIMD instruction support enabled. Check that CXXFLAGS contains -std=c++17"
+else
+	echo "If you want SIMD instruction support, please install https://github.com/vectorclass version 2, export CXXFLAGS='-std=c++17 -march=native -O2' and run ./configure again."
+fi

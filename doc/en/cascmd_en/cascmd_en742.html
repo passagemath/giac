@@ -2,17 +2,17 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Creating neural networks</title>
 </head>
 <body >
-<a href="cascmd_en741.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en743.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en741.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en743.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="sec:nnet1" class="subsection">22.2.1  Creating neural networks</h3>
-<p>The command <span style="font-family:monospace">neural_network</span><a id="hevea_default1473"></a>
+<p>The command <span style="font-family:monospace">neural_network</span><a id="hevea_default1474"></a>
 is used for creating trainable feed-forward neural networks.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">neural_network</span> takes one mandatory argument and several optional arguments:
@@ -28,11 +28,11 @@ The number of layers will be referred to as <span style="font-style:italic">L</s
 </li><li class="li-itemize">If <span style="font-style:italic">net</span> is given, then a copy of <span style="font-style:italic">net</span> is constructed with optional
 modifications of the parameters as specified by the additional arguments (see below).
 </li></ul>
-</li><li class="li-itemize"><a id="hevea_default1474"></a>
+</li><li class="li-itemize"><a id="hevea_default1475"></a>
 Optionally, <span style="font-family:monospace">block_size=</span><span style="font-style:italic">bs</span>, where <span style="font-style:italic">bs</span> is a positive integer specifying
 the amount of samples that can be processed by the network at a time. This value can be set to
 the batch size or some smaller number for faster execution (by default, <span style="font-style:italic">bs</span>=1).
-</li><li class="li-itemize"><a id="hevea_default1475"></a>
+</li><li class="li-itemize"><a id="hevea_default1476"></a>
 Optionally, <span style="font-family:monospace">learning_rate=</span><span style="font-style:italic">rate</span>, where <span style="font-style:italic">rate</span> is a positive real
 number which is used as the learning rate of the network (by default, <span style="font-style:italic">rate</span>=0.001).
 Alternatively, <span style="font-style:italic">rate</span> can be a two-element vector
@@ -41,21 +41,21 @@ is the initial rate (a real number) and <span style="font-style:italic">schedule
 which is used as the schedule multiplier for <span style="font-style:italic">rinit</span> (<span style="font-style:italic">t</span> is initially zero and increases
 by 1 after each weight update).
 In this case, the learning rate in iteration <span style="font-style:italic">t</span> is η<sub><span style="font-style:italic">t</span></sub>=η<sub>0</sub>η(<span style="font-style:italic">t</span>).
-</li><li class="li-itemize"><a id="hevea_default1476"></a>
+</li><li class="li-itemize"><a id="hevea_default1477"></a>
 Optionally, <span style="font-family:monospace">momentum=</span><span style="font-style:italic">mom</span>, where <span style="font-style:italic">mom</span> is a number µ∈[0,1)
 which specifies the momentum parameter of the network (it is usually set between 0.5 and 1.0).
 Alternatively, <span style="font-style:italic">mom</span> can be specified as a two-element vector [β<sub>1</sub>,β<sub>2</sub>] in which
 case Adam (adaptive moment estimation) method is used. To use Adam with the default (paper)
 parameters β<sub>1</sub>=0.9 and β<sub>2</sub>=0.999, simply set <span style="font-style:italic">mom</span> to <span style="font-family:monospace">adaptive</span>.
 (By default, µ=0, i.e. no momentum is used.)
-</li><li class="li-itemize"><a id="hevea_default1477"></a>
+</li><li class="li-itemize"><a id="hevea_default1478"></a>
 Optionally, <span style="font-family:monospace">func=</span><span style="font-style:italic">act</span>, where <span style="font-style:italic">act</span> is the activation function used in
 the hidden layers. It can be specified either as an univariate function
 (e.g. <span style="font-family:monospace">tanh</span> or <span style="font-family:monospace">logistic</span>) or a list in which the first element is a univariate
 function <span style="font-style:italic">f</span>(<span style="font-style:italic">x</span>,<span style="font-style:italic">a</span>,<span style="font-style:italic">b</span>,…) with parameters <span style="font-style:italic">a</span>,<span style="font-style:italic">b</span>,…, and the other elements are the fixed
 values <span style="font-style:italic">a</span><sub>0</sub>,<span style="font-style:italic">b</span><sub>0</sub>,… of the parameters.
 In the latter case the value of <span style="font-style:italic">f</span> at <span style="font-style:italic">x</span> is obtained by computing <span style="font-style:italic">f</span>(<span style="font-style:italic">x</span>,<span style="font-style:italic">a</span><sub>0</sub>,<span style="font-style:italic">b</span><sub>0</sub>,…).
-ReLU activation is specified by the symbol <span style="font-family:monospace">ReLU</span><a id="hevea_default1478"></a>.
+ReLU activation is specified by the symbol <span style="font-family:monospace">ReLU</span><a id="hevea_default1479"></a>.
 By default, ReLU activation is used for regression models while tanh is used for
 classifiers (see below).
 </li><li class="li-itemize">Optionally, <span style="font-family:monospace">output=</span><span style="font-style:italic">outact</span>, where <span style="font-style:italic">outact</span> is the activation
@@ -71,9 +71,9 @@ In the latter case the error is computed as <span style="font-style:italic">f</s
 the network after forward-propagation of the input. By default, half mean squared distance is
 used in regression models while log-loss and cross-entropy are used in binary and
 multi-class classifiers, respectively. These error functions
-can be specified by using shorthands <span style="font-family:monospace">MSE</span><a id="hevea_default1479"></a>,
-<span style="font-family:monospace">log_loss</span><a id="hevea_default1480"></a> and
-<span style="font-family:monospace">cross_entropy</span><a id="hevea_default1481"></a>.
+can be specified by using shorthands <span style="font-family:monospace">MSE</span><a id="hevea_default1480"></a>,
+<span style="font-family:monospace">log_loss</span><a id="hevea_default1481"></a> and
+<span style="font-family:monospace">cross_entropy</span><a id="hevea_default1482"></a>.
 The corresponding definitions are:
 <table class="display dcenter"><tr style="vertical-align:middle"><td class="dcell">
      
@@ -110,7 +110,7 @@ is used. (By default, <span style="font-style:italic">lab</span> is unset, i.e.�
 With <span style="font-family:monospace">labels</span> the network becomes a multi-label classifier (multiple labels may be assigned
 to the output), while with <span style="font-family:monospace">classes</span> it becomes a binary/multi-class classifier
 (exactly one label is assigned to the output).
-</li><li class="li-itemize"><a id="hevea_default1482"></a>
+</li><li class="li-itemize"><a id="hevea_default1483"></a>
 Optionally, <span style="font-family:monospace">weights=</span><span style="font-style:italic">wi</span>, where <span style="font-style:italic">wi</span> is either a list of
 matrices containing initial weights for the model or a random variable used for generating
 initial weights automatically.
@@ -135,7 +135,7 @@ can be specified as strings <span style="font-family:monospace">"he"</span>, <sp
 By default, the uniform random variable
 <span style="font-style:italic">U</span>(−1/√<span style="text-decoration:overline"><span style="font-style:italic">n</span></span><sub><span style="text-decoration:overline"><span style="font-style:italic">in</span></span></sub>,1/√<span style="text-decoration:overline"><span style="font-style:italic">n</span></span><sub><span style="text-decoration:overline"><span style="font-style:italic">in</span></span></sub>) is
 used for weights initialization. Note that bias weights are always initialized to zero.
-</li><li class="li-itemize"><a id="hevea_default1483"></a>
+</li><li class="li-itemize"><a id="hevea_default1484"></a>
 Optionally, <span style="font-family:monospace">weight_decay=</span><span style="font-style:italic">wd</span>, where <span style="font-style:italic">wd</span> is a positive real number α
 or a list of <span style="font-style:italic">L</span>−1 such numbers [α<sub>1</sub>,α<sub>2</sub>,…,α<sub><span style="font-style:italic">L</span>−1</sub>]. These numbers are the
 <span style="font-style:italic">L</span><sup>2</sup>-regularization coefficients used in the model (by default, they are all equal to zero, i.e. no
@@ -143,7 +143,7 @@ regularization is performed). If a single number α is given, then the coefficie
 layers are set to that value. If the list is given, then α<sub><span style="font-style:italic">k</span></sub> is used for the <span style="font-style:italic">k</span>th layer
 (α<sub><span style="font-style:italic">k</span></sub> is a weight decay coefficient for the weights in <span style="font-style:italic">W</span><sup>(<span style="font-style:italic">k</span>)</sup>). Note that regularization
 is not applied to bias weights.
-</li><li class="li-itemize"><a id="hevea_default1484"></a>
+</li><li class="li-itemize"><a id="hevea_default1485"></a>
 Optionally, <span style="font-family:monospace">title=</span><span style="font-style:italic">str</span>, where <span style="font-style:italic">str</span> is a string holding the name of
 the newtork which is printed alongside its one-line description (by default, network is not named).
 </li></ul>
@@ -171,7 +171,7 @@ for obtaining the list of output labels,
 for obtaining the momentum/Adam parameter(s),
 </li><li class="li-itemize"><span style="font-family:monospace">title</span>,
 for obtaining the network name,
-</li><li class="li-itemize"><span style="font-family:monospace">topology</span><a id="hevea_default1485"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">topology</span><a id="hevea_default1486"></a>,
 for obtaining the network topology, i.e. the list of layer sizes,
 </li><li class="li-itemize"><span style="font-family:monospace">weight_decay</span>,
 for obtaining the list of <span style="font-style:italic">L</span><sup>2</sup>-regularization parameters,
@@ -244,8 +244,8 @@ Now we create a copy of <span style="font-family:monospace">net</span> with bloc
 </table></td></tr>
 </table>
 <hr>
-<a href="cascmd_en741.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en743.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en741.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en743.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

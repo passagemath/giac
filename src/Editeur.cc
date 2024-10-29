@@ -3,7 +3,9 @@
 #include "Input.h"
 #include "Tableur.h"
 #include "Python.h"
+#ifdef HAVE_LIBFLTK
 Fl_Tabs * xcas_main_tab=0;
+#endif
 #ifdef HAVE_LIBMICROPYTHON
 extern "C" int mp_token(const char * line);
 #endif
@@ -237,7 +239,9 @@ namespace xcas {
     int	last;
     char buf[255], *bufptr;
     const char *temp;
-    update_js_vars();
+#ifndef __MINGW_H
+    update_js_vars(); // disabled, otherwise valgrind reports error
+#endif
     for (current = *style, col = 0, last = 0; length > 0; length --, text ++) {
       if (current == 'B' || current>='E') current = 'A';
       if (current == 'A') {
@@ -2900,6 +2904,7 @@ namespace xcas {
   }
 
   Xcas_Text_Editor::Xcas_Text_Editor(int X, int Y, int W, int H, Fl_Text_Buffer *b,const char* l ):Fl_Text_Editor(X,Y,W,H,l){
+    tooltipptr=0;
     styletable=vector<Fl_Text_Display::Style_Table_Entry>(styletable_init,styletable_init+styletable_n);
     styletable[0].color=Xcas_editor_color;
     cursor_color(Xcas_editor_color);
@@ -3401,7 +3406,7 @@ namespace xcas {
 #endif
 
   void Xcas_Text_Editor::set_tooltip(){
-    static string toolt;
+    string toolt;
     History_Pack * hp=get_history_pack(this);
     giac::context * contextptr=get_context(this);
     int pos=insert_position();
@@ -3434,9 +3439,16 @@ namespace xcas {
 	toolt += gettext("Press F1 to open help index at ");
 	toolt += s;
       }
-      tooltip(toolt.c_str());
-      int hh=height(toolt.c_str(),Fl_Tooltip::size());
-      Fl_Tooltip::enter_area(this,0,-hh,0,0,toolt.c_str());
+      char * newptr=(char *)malloc(toolt.size()+1);
+      if (newptr){
+        strcpy(newptr,toolt.c_str());
+        tooltip(newptr);
+        int hh=height(toolt.c_str(),Fl_Tooltip::size());
+        Fl_Tooltip::enter_area(this,0,-hh,0,0,newptr);
+        if (tooltipptr)
+          free(tooltipptr); 
+        tooltipptr=newptr;
+      }
     }
     else
       tooltip("");

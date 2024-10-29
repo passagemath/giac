@@ -2,17 +2,17 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Determinant of a matrix</title>
 </head>
 <body >
-<a href="cascmd_en521.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en523.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en521.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en523.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="ssec:det" class="subsection">15.1.4  Determinant of a matrix</h3>
-<p>The <span style="font-family:monospace">det</span><a id="hevea_default911"></a> and
+<p>The <span style="font-family:monospace">det</span><a id="hevea_default912"></a> and
 <span style="font-family:monospace">det_minor</span> commands compute the determinant of a matrix.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">det</span> takes one mandatory argument and one optional
@@ -22,18 +22,18 @@ argument:
 </li><li class="li-itemize">Optionally, <span style="font-style:italic">method</span>, which determines how the
 determinant will be computed and can be one of:
 <ul class="itemize"><li class="li-itemize">
-<span style="font-family:monospace">lagrange</span><a id="hevea_default912"></a>
+<span style="font-family:monospace">lagrange</span><a id="hevea_default913"></a>
 When the matrix elements are polynomials or
 rational functions, this method computes the determinant by
 evaluating the elements and using Lagrange interpolation.
-</li><li class="li-itemize"><span style="font-family:monospace">rational_det</span><a id="hevea_default913"></a>
+</li><li class="li-itemize"><span style="font-family:monospace">rational_det</span><a id="hevea_default914"></a>
 This method uses Gaussian elimination
 without converting to to the internal format for fractions.
-</li><li class="li-itemize"><span style="font-family:monospace">bareiss</span><a id="hevea_default914"></a>
+</li><li class="li-itemize"><span style="font-family:monospace">bareiss</span><a id="hevea_default915"></a>
 This uses the Gauss-Bareiss algorithm.
 </li><li class="li-itemize"><span style="font-family:monospace">linsolve</span> This uses the <span style="font-style:italic">p</span>-adic algorithm for
 matrices with integer coefficients.
-</li><li class="li-itemize"><span style="font-family:monospace">minor_det</span><a id="hevea_default915"></a>
+</li><li class="li-itemize"><span style="font-family:monospace">minor_det</span><a id="hevea_default916"></a>
 This uses expansion by minor determinants,
 which requires 2<sup><span style="font-style:italic">n</span></sup> operations, but can still be faster for average
 sized matrices (up to about <span style="font-style:italic">n</span>=20).
@@ -58,7 +58,7 @@ returns the determinant det(<span style="font-style:italic">A</span>) of the mat
 1
 </span></td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 </table></td></tr>
-</table><p>The <span style="font-family:monospace">det_minor</span><a id="hevea_default916"></a>
+</table><p>The <span style="font-family:monospace">det_minor</span><a id="hevea_default917"></a>
 command finds the determinant of a matrix by
 expanding the determinant using Laplace’s algorithm.
 </p><ul class="itemize"><li class="li-itemize">
@@ -85,8 +85,8 @@ expanding the determinant using Laplace’s algorithm.
 </table></td></tr>
 </table>
 <hr>
-<a href="cascmd_en521.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en523.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en521.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en523.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

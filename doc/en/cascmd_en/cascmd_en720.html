@@ -2,14 +2,14 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Analytic representation of a real signal</title>
 </head>
 <body >
-<a href="cascmd_en719.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en721.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en719.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en721.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="ssec:analytic-signal" class="subsection">21.4.7  Analytic representation of a real signal</h3>
 <p>Hilbert transform is the key component of the <em>analytic representation</em> of a real signal
@@ -17,11 +17,11 @@
 Briefly, given a real signal <span style="font-style:italic">u</span>(<span style="font-style:italic">t</span>), its analytic representation is
 <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub>(<span style="font-style:italic">t</span>)=<span style="font-style:italic">u</span>(<span style="font-style:italic">t</span>)+<span style="font-style:italic">i</span><span style="color:red"><span style="font-style:italic">H</span></span>{<span style="font-style:italic">u</span>}(<span style="font-style:italic">t</span>), the main property of which is that its imaginary
 part is the Hilbert transform of the real part, the latter being exactly the original signal.
-As a consequence, the spectrum of <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub> does not contain negative frequency components.</p><p>The <span style="font-family:monospace">hilbert</span><a id="hevea_default1445"></a>
+As a consequence, the spectrum of <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub> does not contain negative frequency components.</p><p>The <span style="font-family:monospace">hilbert</span><a id="hevea_default1446"></a>
 command can find analytic representation <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub> of a discrete real signal <span style="font-style:italic">u</span>
 by using the algorithm of Marple (1999) which uses FFT as a subroutine.
 See Section <a href="cascmd_en491.html#ssec%3Aspecial-matrix">14.2.2</a> and Section <a href="cascmd_en719.html#ssec%3Ahtrans">21.4.6</a> for other uses of <span style="font-family:monospace">hilbert</span>.
-<a id="hevea_default1446"></a>
+<a id="hevea_default1447"></a>
 </p><ul class="itemize"><li class="li-itemize">
 To find <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub>, <span style="font-family:monospace">hilbert</span> takes <span style="font-style:italic">u</span>, a list [<span style="font-style:italic">u</span><sub>1</sub>,<span style="font-style:italic">u</span><sub>2</sub>,…,<span style="font-style:italic">u</span><sub><span style="font-style:italic">n</span></sub>] of real numbers.
 </li><li class="li-itemize"><span style="font-family:monospace">hilbert(</span><span style="font-style:italic">u</span><span style="font-family:monospace">)</span> returns the analytic representation <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub> of <span style="font-style:italic">u</span> as
@@ -115,7 +115,7 @@ Indeed, ϕ in (<a href="#eq%3Ainstphase">4</a>) is non-decreasing because ω(<s
 Note that unwrapping the phase introduces uncertainties and requires user-defined
 parameters; in the above definition, ϕ<sub>0</sub> can have infinitely many values.</p><p>The instantaneous amplitude of <span style="font-style:italic">u</span> is obtained simply by calling the <span style="font-family:monospace">abs</span>
 command with <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub> as its argument. The vector of squared amplitudes is called the
-<em>energy</em> of <span style="font-style:italic">u</span>.</p><p>The <span style="font-family:monospace">instfreq</span><a id="hevea_default1447"></a> command finds instantaneous
+<em>energy</em> of <span style="font-style:italic">u</span>.</p><p>The <span style="font-family:monospace">instfreq</span><a id="hevea_default1448"></a> command finds instantaneous
 frequency of a discrete signal <span style="font-style:italic">u</span> given its analytic representation <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub>.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">instfreq</span> takes one mandatory argument and one optional argument:
@@ -136,7 +136,7 @@ components
 The above formula handles phase wrapping.
 </li><li class="li-itemize">In the discrete case, ω<sub><span style="font-style:italic">i</span></sub> is the angular frequency of <span style="font-style:italic">u</span> at offset <span style="font-style:italic">i</span>+1,
 where <span style="font-style:italic">i</span>=1,2,…,<span style="font-style:italic">n</span>−1.
-</li></ul><p>The <span style="font-family:monospace">instphase</span><a id="hevea_default1448"></a> command finds instantaneous
+</li></ul><p>The <span style="font-family:monospace">instphase</span><a id="hevea_default1449"></a> command finds instantaneous
 phase of a discrete signal <span style="font-style:italic">u</span> given its analytic representation <span style="font-style:italic">u</span><sub><span style="font-style:italic">a</span></sub>, without wrapping.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">instphase</span> takes one mandatory argument and one optional argument:
@@ -371,8 +371,8 @@ by entering:
 </table></td></tr>
 </table>
 <hr>
-<a href="cascmd_en719.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en721.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en719.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en721.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

@@ -45,10 +45,10 @@ GINAC_STD_CXX_HEADERS
 AC_CHECK_HEADERS(regex)
 AC_CHECK_FUNCS(tgammaf)
 
-dnl CXXFLAGS="$CXXFLAGS -std=c++0x"
-dnl avoid "security" checks for vectors
+dnl avoid "security" checks for vectors is also included in first.h
+dnl use -std=c++17 -march=native  for vectorclass v2 optimizations
 dnl -DUSE_OBJET_BIDON added because xcas::localisation() does not load locales correctly for modules loaded before main() is executed
-CXXFLAGS="$CXXFLAGS -U_GLIBCXX_ASSERTIONS -DUSE_OBJET_BIDON"
+CXXFLAGS="$CXXFLAGS  -U_GLIBCXX_ASSERTIONS -DUSE_OBJET_BIDON"
 
 dnl Define DOUBLEVAL if bigendian
 if test "x$ac_cv_c_bigendian" = "xyes"; then
@@ -404,10 +404,12 @@ dnl Check for X11 anf fltk or cygwin and fltk...
 		*cygwin*)
 		AC_CHECK_LIB(GL, main)
 dnl		AC_CHECK_LIB(GLU, main)
+dnl		AC_CHECK_LIB(fltk_png, main)
 		AC_CHECK_LIB(fltk_gl, main)
 		AC_CHECK_LIB(fltk, main)
 		AC_CHECK_LIB(z, main)
 		AC_CHECK_LIB(jpeg, main)
+		AC_CHECK_LIB(fltk_jpeg, main)
 		AC_CHECK_LIB(fltk_images, main)
 		if test "$HAVE_LIBFLTK" = "1" ; then
 			AC_DEFINE([HAVE_LIBFLVW],1,[Now defined if fltk is available])
@@ -481,8 +483,8 @@ AC_CHECK_LIB(dfu,dfu_main)
 AC_CHECK_LIB(cliquer,main) 
 AC_CHECK_LIB(nauty,main)
 AC_CHECK_HEADERS(nauty/naututil.h)
-dnl https://github.com/vectorclass by Agner Fog
-AC_CHECK_HEADERS(vcl1/vectorclass.h)
+dnl https://github.com/vectorclass by Agner Fog, make sure to export -std=c++17 in CXXFLAGS
+AC_CHECK_HEADERS(vcl2/vectorclass.h,CONFIG_VECTORCLASS="yes",CONFIG_VECTORCLASS="no")
   
 AC_CHECK_LIB(pthread,main)
 AC_CHECK_HEADERS(pthread.h)
@@ -492,7 +494,7 @@ AC_CHECK_LIB(rt,clock_gettime)
   
   dnl Checking for hash_map
 AC_CHECK_HEADER(unordered_map, AC_DEFINE(C11_UNORDERED_MAP,1, [Define if <unordered_map> header is available]))
-AC_CHECK_HEADER(ext/hash_map, AC_DEFINE(EXT_HASH_MAP,1, [Define if <ext/hash_map> header is aviailable]))
+AC_CHECK_HEADER(ext/hash_map, AC_DEFINE(EXT_HASH_MAP,1, [Define if <ext/hash_map> header is available]))
 AC_CHECK_HEADER(tr1/unordered_map, AC_DEFINE(UNORDERED_MAP,1, [Define if <tr1/unordered_map> header is available]))
 AC_CHECK_HEADER(hash_map,AC_DEFINE(HASH_MAP,1, [Define if <hash_map> header is aviailable]))
 AC_CHECK_HEADERS(pwd.h, ,AC_DEFINE(HAVE_NO_PWD_H,1, [Set if pwd.h is NOT available]))
@@ -509,10 +511,17 @@ AC_CHECK_FUNCS(getpwuid, , AC_DEFINE(HAVE_NO_HOME_DIRECTORY,1, [Set if getpwuid(
 AC_CHECK_FUNCS(system, , AC_DEFINE(HAVE_NO_SYSTEM, 1, [Set if system() function is NOT available]))
   
 ALL_LINGUAS="es fr el pt it en zh de"
-AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION([0.14.5])
+CONFIG_GETTEXT="yes"
+AC_ARG_ENABLE([gettext],
+	[AS_HELP_STRING([--enable-gettext], [enable GETTEXT [[default=yes]]])],
+	[ if test "x$enableval" = "xno"; then CONFIG_GETTEXT="no"; fi], [])
+
+if test "$CONFIG_GETTEXT" = "yes"; then 
+   AC_CHECK_LIB(intl, main) 
+   AM_GNU_GETTEXT
+   AM_GNU_GETTEXT_VERSION([0.14.5])
+   fi
 dnl for Slowlaris comment next line
-dnl AC_CHECK_LIB(intl, main) 
 dnl auto-check will work if the function checked is alone in a file
 dnl and independant from the whole micropython library
 dnl otherwise it will fail because it depends on giac
@@ -634,3 +643,8 @@ echo "#define giac_locale_location \"$prefix/share/locale/\"" >> path.h
 echo "#endif" >> path.h
 echo "#define giac_gnuplot_location \"$GNUPLOT\"" >> path.h
 rm -f src/path.h && cp path.h src
+if test "$CONFIG_VECTORCLASS" = "yes" ; then
+	echo "SIMD instruction support enabled. Check that CXXFLAGS contains -std=c++17"
+else
+	echo "If you want SIMD instruction support, please install https://github.com/vectorclass version 2, export CXXFLAGS='-std=c++17 -march=native -O2' and run ./configure again."
+fi

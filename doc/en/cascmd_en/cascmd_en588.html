@@ -2,17 +2,17 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Solving (mixed integer) linear programming problems</title>
 </head>
 <body >
-<a href="cascmd_en587.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en589.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en587.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en589.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="sec1383" class="subsection">16.1.2  Solving (mixed integer) linear programming problems</h3>
-<p>The <span style="font-family:monospace">lpsolve</span><a id="hevea_default1005"></a>
+<p>The <span style="font-family:monospace">lpsolve</span><a id="hevea_default1006"></a>
 command can solve linear programming problems,
 where a multivariate linear function needs to be maximized or
 minimized subject to linear (in)equality constraints, as well as
@@ -43,88 +43,88 @@ two-column matrix, consider using the conversion routine
 in form <span style="font-style:italic">option</span><span style="font-family:monospace">=</span><span style="font-style:italic">value</span>, where <span style="font-style:italic">option</span>
 may be one of:
 <ul class="itemize"><li class="li-itemize">
-<span style="font-family:monospace">lp_assume</span><a id="hevea_default1006"></a>
-(or <span style="font-family:monospace">assume</span><a id="hevea_default1007"></a>), which specifies a global
+<span style="font-family:monospace">lp_assume</span><a id="hevea_default1007"></a>
+(or <span style="font-family:monospace">assume</span><a id="hevea_default1008"></a>), which specifies a global
 constraint on variables and whose value can be one of:
 <ul class="itemize"><li class="li-itemize">
-<span style="font-family:monospace">lp_nonnegative</span><a id="hevea_default1008"></a>
+<span style="font-family:monospace">lp_nonnegative</span><a id="hevea_default1009"></a>
 (all variables are nonnegative)
-</li><li class="li-itemize"><span style="font-family:monospace">lp_integer</span><a id="hevea_default1009"></a>
-or <span style="font-family:monospace">integer</span><a id="hevea_default1010"></a>
+</li><li class="li-itemize"><span style="font-family:monospace">lp_integer</span><a id="hevea_default1010"></a>
+or <span style="font-family:monospace">integer</span><a id="hevea_default1011"></a>
 (all variables are integers)
-</li><li class="li-itemize"><span style="font-family:monospace">lp_binary</span><a id="hevea_default1011"></a>
+</li><li class="li-itemize"><span style="font-family:monospace">lp_binary</span><a id="hevea_default1012"></a>
 (all variables are binary, i.e. 0 or 1)
-</li><li class="li-itemize"><span style="font-family:monospace">lp_nonnegint</span><a id="hevea_default1012"></a>
-or <span style="font-family:monospace">nonnegint</span><a id="hevea_default1013"></a>
+</li><li class="li-itemize"><span style="font-family:monospace">lp_nonnegint</span><a id="hevea_default1013"></a>
+or <span style="font-family:monospace">nonnegint</span><a id="hevea_default1014"></a>
 (all variables are nonnegative integers)
 </li></ul>
 (by default, <span style="font-style:italic">unset</span>.)
-</li><li class="li-itemize"><span style="font-family:monospace">lp_integervariables</span><a id="hevea_default1014"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_integervariables</span><a id="hevea_default1015"></a>,
 whose value should be a list
 of identifiers or indices of integer variables (empty by default).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_binaryvariables</span><a id="hevea_default1015"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_binaryvariables</span><a id="hevea_default1016"></a>,
 whose value should be a list
 of identifiers or indices of binary variables (empty by default).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_maximize</span><a id="hevea_default1016"></a>
-(or <span style="font-family:monospace">maximize</span><a id="hevea_default1017"></a>), whose value can
+</li><li class="li-itemize"><span style="font-family:monospace">lp_maximize</span><a id="hevea_default1017"></a>
+(or <span style="font-family:monospace">maximize</span><a id="hevea_default1018"></a>), whose value can
 be <span style="font-family:monospace">true</span> or <span style="font-family:monospace">false</span> setting the objective
 direction (by default <span style="font-family:monospace">false</span>, meaning that the objective is minimized).
 You can enter only <span style="font-family:monospace">maximize</span>, which is equivalent to
 <span style="font-family:monospace">maximize=true</span>.
-</li><li class="li-itemize"><span style="font-family:monospace">lp_method</span><a id="hevea_default1018"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_method</span><a id="hevea_default1019"></a>,
 setting the solver type, which can be one of:
-<span style="font-family:monospace">exact</span>, <span style="font-family:monospace">float</span><a id="hevea_default1019"></a>,
-<span style="font-family:monospace">lp_simplex</span><a id="hevea_default1020"></a> (the default) or
-<span style="font-family:monospace">lp_interiorpoint</span><a id="hevea_default1021"></a>.
-</li><li class="li-itemize"><span style="font-family:monospace">lp_depthlimit</span><a id="hevea_default1022"></a>,
+<span style="font-family:monospace">exact</span>, <span style="font-family:monospace">float</span><a id="hevea_default1020"></a>,
+<span style="font-family:monospace">lp_simplex</span><a id="hevea_default1021"></a> (the default) or
+<span style="font-family:monospace">lp_interiorpoint</span><a id="hevea_default1022"></a>.
+</li><li class="li-itemize"><span style="font-family:monospace">lp_depthlimit</span><a id="hevea_default1023"></a>,
 whose value can be a positive
 integer, which sets the maximum depth of the branch-and-bound tree
 (by default, <span style="font-style:italic">unlimited</span>).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_nodelimit</span><a id="hevea_default1023"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_nodelimit</span><a id="hevea_default1024"></a>,
 whose value can be a positive integer,
 which sets the maximum number of nodes in the branch-and-bound tree
 (by default, <span style="font-style:italic">unlimited</span>).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_iterationlimit</span><a id="hevea_default1024"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_iterationlimit</span><a id="hevea_default1025"></a>,
 whose value can be a positive integer
 setting the maximum iterations of the simplex
 algorithm (by default, <span style="font-style:italic">unlimited</span>).<p>If the maximum number of iterations is reached, the current
 feasible solution (not necessarily an optimal one) is returned.
-</p></li><li class="li-itemize"><span style="font-family:monospace">lp_timelimit</span><a id="hevea_default1025"></a>,
+</p></li><li class="li-itemize"><span style="font-family:monospace">lp_timelimit</span><a id="hevea_default1026"></a>,
 whose value can be a positive real number,
 setting the maximum solving time in milliseconds (by default, <span style="font-style:italic">unlimited</span>).
 </li><li class="li-itemize"><span style="font-family:monospace">acyclic</span>, whose value can be either <span style="font-family:monospace">true</span> or
 <span style="font-family:monospace">false</span>, enabling/disabling the Bland rule safeguarding
 (by default, <span style="font-family:monospace">true</span>).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_maxcuts</span><a id="hevea_default1026"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_maxcuts</span><a id="hevea_default1027"></a>,
 whose value can be a nonnegative integer
 setting the maximum GMI cuts per node (by default 5).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_gaptolerance</span><a id="hevea_default1027"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_gaptolerance</span><a id="hevea_default1028"></a>,
 whose value can be a positive
 number, setting the relative integrality gap threshold (by default, 0).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_presolve</span><a id="hevea_default1028"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_presolve</span><a id="hevea_default1029"></a>,
 whose value can be either <span style="font-family:monospace">true</span> or
 <span style="font-family:monospace">false</span>, enabling/disabling the preprocessing step (by default,
 <span style="font-family:monospace">true</span>).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_heuristic</span><a id="hevea_default1029"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_heuristic</span><a id="hevea_default1030"></a>,
 whose value can be either <span style="font-family:monospace">true</span> or
 <span style="font-family:monospace">false</span>, enabling/disabling the rounding heuristic (by default,
 <span style="font-family:monospace">true</span>).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_nodeselect</span><a id="hevea_default1030"></a>,
+</li><li class="li-itemize"><span style="font-family:monospace">lp_nodeselect</span><a id="hevea_default1031"></a>,
 which sets the branching node
 selection strategy and whose value can be one of:
-<span style="font-family:monospace">lp_depthfirst</span><a id="hevea_default1031"></a>,
-<span style="font-family:monospace">lp_breadthfirst</span><a id="hevea_default1032"></a>,
-<span style="font-family:monospace">lp_bestlocalbound</span><a id="hevea_default1033"></a> (the default),
-<span style="font-family:monospace">lp_hybrid</span><a id="hevea_default1034"></a> or
-<span style="font-family:monospace">lp_bestprojection</span><a id="hevea_default1035"></a>.
-</li><li class="li-itemize"><span style="font-family:monospace">lp_varselect</span><a id="hevea_default1036"></a>,
+<span style="font-family:monospace">lp_depthfirst</span><a id="hevea_default1032"></a>,
+<span style="font-family:monospace">lp_breadthfirst</span><a id="hevea_default1033"></a>,
+<span style="font-family:monospace">lp_bestlocalbound</span><a id="hevea_default1034"></a> (the default),
+<span style="font-family:monospace">lp_hybrid</span><a id="hevea_default1035"></a> or
+<span style="font-family:monospace">lp_bestprojection</span><a id="hevea_default1036"></a>.
+</li><li class="li-itemize"><span style="font-family:monospace">lp_varselect</span><a id="hevea_default1037"></a>,
 which sets the branching variable
 selection strategy, whose value can be one of:
-<span style="font-family:monospace">lp_firstfractional</span><a id="hevea_default1037"></a>,
-<span style="font-family:monospace">lp_lastfractional</span><a id="hevea_default1038"></a>,
-<span style="font-family:monospace">lp_mostfractional</span><a id="hevea_default1039"></a> or
-<span style="font-family:monospace">lp_pseudocost</span><a id="hevea_default1040"></a> (the default).
-</li><li class="li-itemize"><span style="font-family:monospace">lp_verbose</span><a id="hevea_default1041"></a>,
+<span style="font-family:monospace">lp_firstfractional</span><a id="hevea_default1038"></a>,
+<span style="font-family:monospace">lp_lastfractional</span><a id="hevea_default1039"></a>,
+<span style="font-family:monospace">lp_mostfractional</span><a id="hevea_default1040"></a> or
+<span style="font-family:monospace">lp_pseudocost</span><a id="hevea_default1041"></a> (the default).
+</li><li class="li-itemize"><span style="font-family:monospace">lp_verbose</span><a id="hevea_default1042"></a>,
 whose value can be <span style="font-family:monospace">true</span> or
 <span style="font-family:monospace">false</span> (by default <span style="font-family:monospace">false</span>). You can enter
 only <span style="font-family:monospace">lp_verbose</span>, which is equivalent to <span style="font-family:monospace">lp_verbose=true</span>.
@@ -895,8 +895,8 @@ floating-point values. Therefore, to solve the problem with the native solver,
 you have to use the option <span style="font-family:monospace">lp_method=exact</span>
 (see Section <a href="#sec%3Alp-float">16.1.2</a>).</p>
 <hr>
-<a href="cascmd_en587.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en589.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en587.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en589.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

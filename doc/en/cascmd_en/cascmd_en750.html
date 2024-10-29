@@ -2,21 +2,21 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Finding approximate solutions of equations involving one variable</title>
 </head>
 <body >
-<a href="cascmd_en749.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en751.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en749.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en751.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="sec:fsolve" class="subsection">23.3.2  Finding approximate solutions of equations involving one variable</h3>
-<p>The <span style="font-family:monospace">fsolve</span><a id="hevea_default1495"></a>
-or <span style="font-family:monospace">nSolve</span><a id="hevea_default1496"></a>
+<p>The <span style="font-family:monospace">fsolve</span><a id="hevea_default1496"></a>
+or <span style="font-family:monospace">nSolve</span><a id="hevea_default1497"></a>
 command can solve equations or systems of
 equations. This section will discuss solving equations; systems will
-be discussed in the next section.</p><p>The <span style="font-family:monospace">cfsolve</span><a id="hevea_default1497"></a>
+be discussed in the next section.</p><p>The <span style="font-family:monospace">cfsolve</span><a id="hevea_default1498"></a>
 command is the complex version of
 <span style="font-family:monospace">fsolve</span>, with the same arguments. The only difference is that
 <span style="font-family:monospace">cfsolve</span> gives numeric solutions over the complex numbers,
@@ -39,23 +39,23 @@ optional arguments:
 used by the GSL solver. The possible values are:
 <dl class="description"><dt class="dt-description">
 <span style="font-family:monospace">bisection_solver</span>.</dt><dd class="dd-description">
-<a id="hevea_default1498"></a>
 <a id="hevea_default1499"></a>
+<a id="hevea_default1500"></a>
 This algorithm of dichotomy is the simplest but also generally the
 slowest. It encloses the zero of a function on an interval. Each
 iteration cuts the interval into two parts, the middle
 point value is calculated. The function sign at this point gives you the
 half-interval on which the next iteration will be performed.
 </dd><dt class="dt-description"><span style="font-family:monospace">brent_solver</span>.</dt><dd class="dd-description">
-<a id="hevea_default1500"></a>
 <a id="hevea_default1501"></a>
+<a id="hevea_default1502"></a>
 The Brent method interpolates of <span style="font-style:italic">f</span> at three points, finds the
 intersection of the interpolation with the <span style="font-style:italic">x</span> axis, computes the sign
 of <span style="font-style:italic">f</span> at this point and chooses the interval where the sign changes.
 It is generally faster than bisection.
 </dd><dt class="dt-description"><span style="font-family:monospace">falsepos_solver</span>.</dt><dd class="dd-description">
-<a id="hevea_default1502"></a>
 <a id="hevea_default1503"></a>
+<a id="hevea_default1504"></a>
 The “false position” algorithm is an iterative algorithm based on
 linear interpolation: it computes the value of <span style="font-style:italic">f</span> at the intersection
 of the line (<span style="font-style:italic">a</span>,<span style="font-style:italic">f</span>(<span style="font-style:italic">a</span>)), (<span style="font-style:italic">b</span>,<span style="font-style:italic">f</span>(<span style="font-style:italic">b</span>)) with the <span style="font-style:italic">x</span> axis. This value gives
@@ -63,8 +63,8 @@ us the part of the interval containing the root, and on which a new
 iteration is performed. The convergence is linear but generally
 faster than bisection.
 </dd><dt class="dt-description"><span style="font-family:monospace">newton_solver</span>.</dt><dd class="dd-description">
-<a id="hevea_default1504"></a>
 <a id="hevea_default1505"></a>
+<a id="hevea_default1506"></a>
 This is the classic Newton method. The algorithm
 starts at an initial value <span style="font-style:italic">x</span><sub>0</sub>, then finds the intersection
 <span style="font-style:italic">x</span><sub>1</sub> of the tangent at <span style="font-style:italic">x</span><sub>0</sub> to the graph of <span style="font-style:italic">f</span>, with the <span style="font-style:italic">x</span> axis,
@@ -79,8 +79,8 @@ sequence is defined by
 If the Newton method converges, then the convergence is quadratic for
 roots of multiplicity 1.
 </dd><dt class="dt-description"><span style="font-family:monospace">secant_solver</span>.</dt><dd class="dd-description">
-<a id="hevea_default1506"></a>
 <a id="hevea_default1507"></a>
+<a id="hevea_default1508"></a>
 The secant method is a simplified version of Newton’s method. The
 computation of <span style="font-style:italic">x</span><sub>1</sub> is done using Newton’s method, but then the
 computation of <span style="font-style:italic">f</span>′(<span style="font-style:italic">x</span><sub><span style="font-style:italic">n</span></sub>), <span style="font-style:italic">n</span>&gt;1 is done approximately. This method is
@@ -97,8 +97,8 @@ used when the computation of the derivative is expensive:
 The convergence for roots of multiplicity 1 is of order
 (1+√<span style="text-decoration:overline">5</span>)/2 ≈ 1.62… .
 </dd><dt class="dt-description"><span style="font-family:monospace">steffenson_solver</span>.</dt><dd class="dd-description">
-<a id="hevea_default1508"></a>
 <a id="hevea_default1509"></a>
+<a id="hevea_default1510"></a>
 The Steffenson method is generally the fastest method. It combines
 Newton’s method with a “delta-two” Aitken acceleration: with
 Newton’s method, you get the sequence <span style="font-style:italic">x</span><sub><span style="font-style:italic">i</span></sub> and the convergence
@@ -183,8 +183,8 @@ Input in any mode:
 </table></td></tr>
 </table>
 <hr>
-<a href="cascmd_en749.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en751.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en749.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en751.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

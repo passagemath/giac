@@ -2,17 +2,17 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Solving general nonlinear programming problems</title>
 </head>
 <body >
-<a href="cascmd_en594.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en596.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en594.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en596.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="sec1422" class="subsection">16.3.4  Solving general nonlinear programming problems</h3>
-<p>The <span style="font-family:monospace">nlpsolve</span><a id="hevea_default1052"></a>
+<p>The <span style="font-family:monospace">nlpsolve</span><a id="hevea_default1053"></a>
 command computes the optimum of a multivariate objective function subject
 to equality and/or inequality constraints with continuous and/or integer variables.
 </p><ul class="itemize"><li class="li-itemize">
@@ -34,21 +34,21 @@ routine <span style="font-family:monospace">box_constraints</span> (see Section�
 </li><li class="li-itemize">Optionally, <span style="font-style:italic">opt</span>, a sequence of options in which each
 option may be one of:
 <ul class="itemize"><li class="li-itemize">
-<a id="hevea_default1053"></a>
+<a id="hevea_default1054"></a>
 <span style="font-family:monospace">maximize=</span><span style="font-style:italic">bool</span> or
 <span style="font-family:monospace">nlp_maximize=</span><span style="font-style:italic">bool</span>,
 where <span style="font-style:italic">bool</span> can be <span style="font-family:monospace">true</span> or <span style="font-family:monospace">false</span>.
 Just <span style="font-family:monospace">maximize</span> or <span style="font-family:monospace">nlp_maximize</span>
 is equivalent to <span style="font-family:monospace">maximize=true</span>. (By default,
 <span style="font-family:monospace">maximize=false</span>, i.e. the objective is minimized.)
-</li><li class="li-itemize"><a id="hevea_default1054"></a>
+</li><li class="li-itemize"><a id="hevea_default1055"></a>
 <span style="font-family:monospace">nlp_initialpoint=</span><span style="font-style:italic">pt</span>, where <span style="font-style:italic">pt</span>
 is a starting point for the solver or a list of starting points,
 each of which is given in the form [<span style="font-style:italic">x</span>=<span style="font-style:italic">x</span><sub>0</sub>,<span style="font-style:italic">y</span>=<span style="font-style:italic">y</span><sub>0</sub>,…]. 
 Alternatively, <span style="font-style:italic">pt</span> may be an initial search rectangle specified by
 [<span style="font-style:italic">x</span>=<span style="font-style:italic">x</span><sub><span style="font-style:italic">min</span></sub><span style="font-family:monospace">..</span><span style="font-style:italic">x</span><sub><span style="font-style:italic">max</span></sub>,<span style="font-style:italic">y</span>=<span style="font-style:italic">y</span><sub><span style="font-style:italic">min</span></sub><span style="font-family:monospace">..</span><span style="font-style:italic">y</span><sub><span style="font-style:italic">max</span></sub>,…]
 which serves as a frame for automatic generation of starting points.
-</li><li class="li-itemize"><a id="hevea_default1055"></a>
+</li><li class="li-itemize"><a id="hevea_default1056"></a>
 <span style="font-family:monospace">nlp_method=</span><span style="font-style:italic">meth</span>, which is a string or a list specifying the method
 of optimization. Available methods are:
 <ul class="itemize"><li class="li-itemize">
@@ -93,13 +93,13 @@ Nelder-Mead method should be refined by a local method, where <span style="font-
 (by default, <span style="font-style:italic">value</span>=<span style="font-family:monospace">true</span>).
 </li></ul>
 The optimization method is determined automatically if <span style="font-style:italic">meth</span> is not set (see below).
-</li><li class="li-itemize"><a id="hevea_default1056"></a>
+</li><li class="li-itemize"><a id="hevea_default1057"></a>
 <span style="font-family:monospace">nlp_precision=</span>ε for some ε&gt;0, which
 sets the optimality tolerance for the solver (by default, ε=<span style="font-family:monospace">epsilon()</span><sup>2/3</sup>).
-</li><li class="li-itemize"><a id="hevea_default1057"></a>
+</li><li class="li-itemize"><a id="hevea_default1058"></a>
 <span style="font-family:monospace">nlp_tolerance=</span>δ for some δ&gt;0,
 which sets the feasibility tolerance for the solver (by default, δ=10<sup>−5</sup>).
-</li><li class="li-itemize"><a id="hevea_default1058"></a>
+</li><li class="li-itemize"><a id="hevea_default1059"></a>
 <span style="font-family:monospace">nlp_presolve=</span><span style="font-style:italic">bool</span>, where <span style="font-style:italic">bool</span> can be
 either <span style="font-family:monospace">true</span> or <span style="font-family:monospace">false</span>. This option enables/disables the
 preprocessing step which attempts to reduce the number of decision
@@ -113,17 +113,17 @@ are substituted back to the solution.
 </li><li class="li-itemize"><span style="font-family:monospace">border=</span><span style="font-style:italic">bool</span>, where <span style="font-style:italic">bool</span> is a boolean value.
 This enables or disables finding variable bounds automatically. (By default,
 <span style="font-family:monospace">border=true</span>.)
-</li><li class="li-itemize"><a id="hevea_default1059"></a>
+</li><li class="li-itemize"><a id="hevea_default1060"></a>
 <span style="font-family:monospace">nlp_integervariables=</span><span style="font-style:italic">lst</span>, where <span style="font-style:italic">lst</span>
 is a list of problem variables that are supposed to take integral values (empty by default).
-</li><li class="li-itemize"><a id="hevea_default1060"></a>
+</li><li class="li-itemize"><a id="hevea_default1061"></a>
 <span style="font-family:monospace">nlp_binaryvariables=</span><span style="font-style:italic">lst</span>, where <span style="font-style:italic">lst</span>
 is a list of problem variables that are supposed to take binary (0-1)
 values (empty by default).
-</li><li class="li-itemize"><a id="hevea_default1061"></a>
+</li><li class="li-itemize"><a id="hevea_default1062"></a>
 <span style="font-family:monospace">nlp_iterationlimit=</span><span style="font-style:italic">N</span> for a positive integer <span style="font-style:italic">N</span>, which sets the
 maximum number of iterations allowed for the solver (by default, <span style="font-style:italic">N</span>=250).
-</li><li class="li-itemize"><a id="hevea_default1062"></a>
+</li><li class="li-itemize"><a id="hevea_default1063"></a>
 <span style="font-family:monospace">nlp_verbose=</span><span style="font-style:italic">v</span>, where <span style="font-style:italic">v</span> is an integer specifying the verbosity level:
 0 – no messages, 1 – only errors, 2 – errors and warnings, 3 – all messages (by default, <span style="font-style:italic">v</span>=1).
 </li><li class="li-itemize"><span style="font-family:monospace">cluster=</span><span style="font-style:italic">k</span> or <span style="font-style:italic">bool</span>, where <span style="font-style:italic">k</span>≥ 2 is an integer and <span style="font-style:italic">bool</span> is
@@ -144,18 +144,18 @@ choosing a suitable optimization method.)
 </li><li class="li-itemize"><span style="font-family:monospace">assume=</span><span style="font-style:italic">asmp</span>, where <span style="font-style:italic">asmp</span> may be one
 of the following:
 <ul class="itemize"><li class="li-itemize">
-<a id="hevea_default1063"></a>
+<a id="hevea_default1064"></a>
 <span style="font-family:monospace">nlp_nonnegative</span>, which restricts all variables to
 nonnegative values (existing positive lower bounds are kept, however),
-</li><li class="li-itemize"><a id="hevea_default1064"></a>
-<a id="hevea_default1065"></a>
+</li><li class="li-itemize"><a id="hevea_default1065"></a>
+<a id="hevea_default1066"></a>
 <span style="font-family:monospace">nlp_nonnegint</span> or <span style="font-family:monospace">nonnegint</span>, which makes
 all variables take nonnegative integer values,
-</li><li class="li-itemize"><a id="hevea_default1066"></a>
-<a id="hevea_default1067"></a>
+</li><li class="li-itemize"><a id="hevea_default1067"></a>
+<a id="hevea_default1068"></a>
 <span style="font-family:monospace">nlp_integer</span> or <span style="font-family:monospace">integer</span>, which forces
 all variables to take integer values,
-</li><li class="li-itemize"><a id="hevea_default1068"></a>
+</li><li class="li-itemize"><a id="hevea_default1069"></a>
 <span style="font-family:monospace">nlp_binary</span>, which forces all variables to take
 0-1 values.
 </li></ul>
@@ -421,8 +421,8 @@ This technique should be used for “black box” objectives possibly requiring 
 
 </div>
 <hr>
-<a href="cascmd_en594.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en596.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en594.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en596.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

@@ -115,6 +115,7 @@ extern const struct _mp_obj_module_t ulab_user_cmodule;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
 	{ MP_ROM_QSTR(MP_QSTR__os), (mp_obj_t) &mp_module_os }, \
+	{ MP_ROM_QSTR(MP_QSTR_ion), (mp_obj_t) &mp_module_nsp }, \
 	{ MP_ROM_QSTR(MP_QSTR_nsp), (mp_obj_t) &mp_module_nsp }, \
 	{ MP_ROM_QSTR(MP_QSTR_time), (mp_obj_t) &mp_module_nsp }, \
 	{ MP_ROM_QSTR(MP_QSTR_cas), (mp_obj_t) &mp_module_cas }, \

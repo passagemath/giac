@@ -3999,6 +3999,7 @@ namespace giac {
   }
 
   static vecteur ifactors1(const gen & n0,GIAC_CONTEXT){
+    // CERR << "ifactors1 " << n0 << '\n';
     if (is_greater(1e71,n0,contextptr))
       return giac_ifactors(n0,contextptr);
     if (n0.type==_VECT && !n0._VECTptr->empty())
@@ -4157,10 +4158,18 @@ namespace giac {
     if (args.type==_VECT && args.subtype==_SEQ__VECT && args._VECTptr->size()==2 ){
       gen g=args._VECTptr->front();
       gen b=args._VECTptr->back();
-      if (b==at_matrix){
+      if (b==at_matrix || b==at_prod){
 	g=_ifactors(g,contextptr);
 	if (g.type!=_VECT || g._VECTptr->size()%2)
 	  return g;
+        if (b==at_prod){
+          vecteur & v =*g._VECTptr;
+          vecteur l;
+          for (int i=0;i<v.size();i+=2){
+            l=mergevecteur(l,vecteur(v[i+1].val,v[i]));
+          }
+          return symbolic(at_prod,gen(l,_SEQ__VECT));
+        }
 	return _matrix(makesequence(g._VECTptr->size()/2,2,g),contextptr);
       }
 #if !defined EMCC && defined HAVE_LIBPARI

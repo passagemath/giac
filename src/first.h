@@ -21,12 +21,27 @@
 #ifndef _GIAC_FIRST_H_
 #define _GIAC_FIRST_H_
 
+#if __cplusplus >= 201103L
+// post-c++11 functional headers changes, thanks to George Huebner
+#define CPP11
+#endif
+  
+// register is deprecated in c++17
+#define register 
+
+
 #ifdef _GLIBCXX_ASSERTIONS
 #undef _GLIBCXX_ASSERTIONS
 #endif
 
-#ifdef NUMWORKS
+#if defined NUMWORKS && !defined SDL_KHICAS
 #define KHICAS 1
+#ifdef NUMWORKS_SLOTBFR
+#define NUMWORKS_SLOTB
+#endif
+#ifdef NUMWORKS_SLOTBEN
+#define NUMWORKS_SLOTB
+#endif
 #endif
 
 #ifndef GIAC_VERSION
@@ -188,7 +203,7 @@ int my_sprintf(char * s, const char * format, ...);
 #ifdef WITH_MYOSTREAM
 #include "myostream.h"
 #else
-#if defined KHICAS //&& defined STATIC_BUILTIN_LEXER_FUNCTION
+#if defined KHICAS || defined SDL_KHICAS //&& defined STATIC_BUILTIN_LEXER_FUNCTION
 #include "stdstream"
 #define my_ostream stdostream
 #else

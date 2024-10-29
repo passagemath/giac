@@ -1166,8 +1166,10 @@ Prg/Xcas/Mémoire/ans
 Prg/Xcas/Mémoire/assume: hypothese
 Prg/Xcas/Mémoire/entry
 Prg/Xcas/Mémoire/purge
+Prg/Xcas/Ensemble/complement
 Prg/Xcas/Ensemble/intersect
 Prg/Xcas/Ensemble/minus
+Prg/Xcas/Ensemble/symmetric_difference
 Prg/Xcas/Ensemble/union
 Prg/Xcas/Ensemble/est_element
 Prg/Xcas/Ensemble/est_inclus

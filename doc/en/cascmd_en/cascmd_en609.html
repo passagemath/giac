@@ -2,18 +2,18 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Colors and color functions</title>
 </head>
 <body >
-<a href="cascmd_en608.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en610.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en608.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en610.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="ssec:colors" class="subsection">19.1.3  Colors and color functions</h3>
 <p>
-<a id="hevea_default1161"></a></p><p><span style="font-variant:small-caps">Xcas</span> uses RGB565 color encoding from <span style="font-variant:small-caps">FLTK</span> and is therefore able to
+<a id="hevea_default1162"></a></p><p><span style="font-variant:small-caps">Xcas</span> uses RGB565 color encoding from <span style="font-variant:small-caps">FLTK</span> and is therefore able to
 use at most 65536 RGB colors in graphs.
 In RGB565 encoding, there are only 32 values for the red and blue
 channels and 64 values for the green channel.
@@ -44,7 +44,7 @@ or create color(s) by using the <span style="font-family:monospace">rgb</span>, 
 The above colors are portable since they are defined in the <span style="font-variant:small-caps">FLTK</span> colormap.</p>
 <h4 id="sec1481" class="subsubsection">RGB and HSV colors</h4>
 <p>
-The <span style="font-family:monospace">rgb</span><a id="hevea_default1162"></a> command converts between
+The <span style="font-family:monospace">rgb</span><a id="hevea_default1163"></a> command converts between
 color objects and their RGB (Red, Green, Blue) specifications.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">rgb</span> can take either
@@ -67,7 +67,7 @@ between 0 and 65535 (for unassigned indices, <span style="font-family:monospace"
 the black color).
 </li><li class="li-itemize"><span style="font-family:monospace">rgb(</span><span style="font-style:italic">rgb</span><span style="font-family:monospace">)</span> returns the color object which
 is closest to the given RGB specification.
-</li></ul><p>The <span style="font-family:monospace">hsv</span><a id="hevea_default1163"></a> command converts between color
+</li></ul><p>The <span style="font-family:monospace">hsv</span><a id="hevea_default1164"></a> command converts between color
 objects and their HSV (Hue, Saturation, Value) specifications.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">hsv</span> takes either <span style="font-style:italic">col</span>, a color object,
@@ -83,8 +83,8 @@ of <span style="font-style:italic">col</span> as a vector [<span style="font-sty
 </li><li class="li-itemize"><span style="font-family:monospace">hsv(</span><span style="font-style:italic">hsv</span><span style="font-family:monospace">)</span> returns the color object closest
 to the given HSV specification.
 </li></ul><p>You can convert from RGB to HSV and vice versa by using the
-<span style="font-family:monospace">rgb2hsv</span><a id="hevea_default1164"></a> and
-<span style="font-family:monospace">hsv2rgb</span><a id="hevea_default1165"></a> commands.
+<span style="font-family:monospace">rgb2hsv</span><a id="hevea_default1165"></a> and
+<span style="font-family:monospace">hsv2rgb</span><a id="hevea_default1166"></a> commands.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">rgb2hsv</span> takes <span style="font-style:italic">rgb</span>, a vector of three
 integers between 0 and 255 or three real numbers between 0 and 1.
@@ -135,7 +135,7 @@ equivalent to <span style="font-style:italic">hsv</span> as a vector [<span styl
 </div>
 <h4 id="ssec:colormap" class="subsubsection">Colormaps</h4>
 <p>
-The <span style="font-family:monospace">colormap</span><a id="hevea_default1166"></a> command returns built-in
+The <span style="font-family:monospace">colormap</span><a id="hevea_default1167"></a> command returns built-in
 continuous/discrete colormaps or individual colors from the corresponding palettes.
 Note that the colors obtained this way are not guaranteed to be portable.</p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">colormap</span> takes one to three arguments:
@@ -266,7 +266,7 @@ You could also try passing e.g. <span style="font-family:monospace">"very light
 These and similar color combinations can be useful for categorical data visualization techniques
 such as bar plots, pie charts, clustering etc.</p>
 <h4 id="ssec:color-interp" class="subsubsection">Color interpolation and RGB to XYZ conversion</h4>
-<p>The <span style="font-family:monospace">interp</span><a id="hevea_default1167"></a> command interpolates between
+<p>The <span style="font-family:monospace">interp</span><a id="hevea_default1168"></a> command interpolates between
 given colors in the CIE 1931 XYZ color space with the sRGB gamut
 (see <a href="https://en.wikipedia.org/wiki/CIE_1931_color_space">here</a> for details).
 In XYZ space, the Euclidean distance between two colors is roughly proportional to their
@@ -301,8 +301,8 @@ clamped to 16 bits in order to fit the RGB565 encoding. With a RGB input, <span 
 returns a RGB matrix which defines a list of RGB888 colors, thus avoiding the loss of
 channel information.
 </li></ul><p>You can access the routines for <span style="font-style:italic">RGB</span>↔<span style="font-style:italic">XYZ</span> conversion by using the
-<span style="font-family:monospace">rgb2xyz</span><a id="hevea_default1168"></a> and
-<span style="font-family:monospace">xyz2rgb</span><a id="hevea_default1169"></a> commands which take a
+<span style="font-family:monospace">rgb2xyz</span><a id="hevea_default1169"></a> and
+<span style="font-family:monospace">xyz2rgb</span><a id="hevea_default1170"></a> commands which take a
 list or sequence of three real numbers in [0,1] representing the RGB or XYZ triple
 and return the other color specification in the same form. The <span style="font-family:monospace">rgb2xyz</span> command
 can also take color objects as inputs. These routines apply chromatic adaptation with
@@ -376,8 +376,8 @@ To display the result with RGB888 colors, enter:
 
 </div>
 <hr>
-<a href="cascmd_en608.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en610.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en608.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en610.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

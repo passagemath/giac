@@ -185,7 +185,7 @@ namespace xcas {
     std::pair<Fl_Image *,Fl_Image *> * background_image; // 2-d only
     int x_axis_color,y_axis_color,z_axis_color;
     int tracemode;
-    int tracemode_n; double tracemode_i; string tracemode_add; giac::vecteur tracemode_disp; double tracemode_mark;    
+    int tracemode_n; double tracemode_i; string tracemode_add; giac::vecteur tracemode_disp; double tracemode_mark; int tracemaxdepth;
     void init_tracemode();
     void invert_tracemode();
     void tracemode_set(int operation=0); // operation==1 if user is setting the value of t on a parametric curve, operation==2 for root, operation==3 for extremum, operation==4 mark current position, operation=5 for area

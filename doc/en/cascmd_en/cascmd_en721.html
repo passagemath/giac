@@ -2,14 +2,14 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Empirical mode decomposition</title>
 </head>
 <body >
-<a href="cascmd_en720.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en722.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en720.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en722.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="ssec:emd" class="subsection">21.4.8  Empirical mode decomposition</h3>
 <p><em>Empirical mode decomposition</em> (EMD) is an adaptive method for
@@ -30,7 +30,7 @@ of the mean vector is below a predefined threshold <span style="font-style:itali
 the obtained IMF is subtracted from the original signal and the procedure
 is iteratively repeated until the number of local extrema goes below
 a predefined threshold (usually 2); the rest of the signal is
-called the <em>residue</em> or <em>trend</em> (it is not an IMF).</p><p>The <span style="font-family:monospace">emd</span><a id="hevea_default1449"></a> command computes empirical mode
+called the <em>residue</em> or <em>trend</em> (it is not an IMF).</p><p>The <span style="font-family:monospace">emd</span><a id="hevea_default1450"></a> command computes empirical mode
 decomposition (GSL is required for cubic spline interpolation).
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">emd</span> takes one mandatory argument and a sequence of
@@ -65,10 +65,10 @@ always sum up to <span style="font-style:italic">x</span>.
 <span style="font-family:monospace">emd(</span><span style="font-style:italic">x</span> ⟨,<span style="font-style:italic">opts</span> ⟩<span style="font-family:monospace">)</span> returns
 only the list of computed IMFs.
 </li></ul><p>A convenient way to visualize intrinsic mode functions is
-to use the <span style="font-family:monospace">plotimf</span><a id="hevea_default1450"></a>
+to use the <span style="font-family:monospace">plotimf</span><a id="hevea_default1451"></a>
 command, which plots (a selection of) IMFs in a stacked layout,
 optionally including the input signal and/or the residue.
-<span style="font-family:monospace">imfplot</span><a id="hevea_default1451"></a> is a synonym
+<span style="font-family:monospace">imfplot</span><a id="hevea_default1452"></a> is a synonym
 for <span style="font-family:monospace">plotimf</span>.
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">plotimf</span> takes one mandatory argument and a sequence of
@@ -149,8 +149,8 @@ The first IMF can be discarded by using the <span style="font-family:monospace">
 
 </div>
 <hr>
-<a href="cascmd_en720.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en722.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en720.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en722.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

@@ -557,7 +557,8 @@ libgiac_la_SOURCES = input_lexer.ll sym2poly.cc gausspol.cc threaded.cc \
 libgiac_la_LIBADD = $(NTL_LIBS) $(COCOA_LIBS) $(PARI_LIBS) $(GSL_LIBS) 
 giacincludedir = $(includedir)/giac
 giacinclude_HEADERS = dispatch.h fraction.h gen.h desolve.h misc.h ti89.h \
-mathml.h identificateur.h unary.h symbolic.h index.h modpoly.h modfactor.h permu.h \
+mathml.h identificateur.h unary.h symbolic.h index.h \
+modpoly.h modfactor.h modint.h permu.h \
 monomial.h poly.h threaded.h gausspol.h sym2poly.h ezgcd.h derive.h \
 solve.h quater.h subst.h usual.h intg.h intgab.h risch.h lin.h series.h \
 vecteur.h sparse.h vector.h csturm.h moyal.h tex.h global.h \
@@ -597,7 +598,7 @@ xcas_SOURCES = xcas.cxx
 xcas_LDADD = libxcas.la $(GSL_LIBS) $(LAPACK_LIBS)
 AM_YFLAGS = -p giac_yy -d
 EXTRA_DIST = .gdbinit xgiac pgiac prime.table gen_user \
-	input_parser.h softmath.h softmath.cc\
+	input_parser.h softmath.h softmath.cc pari.cc.old \
 	mkxcas mkwcas mkgcas mkaout Makefile.wince Makefile.osx Makefile.mingw64 README.mingw64 Makefile.w64 \
 	Makefile.rpm Makefile.ipaq Makefilenew.ipaq ipaq_usr.tgz \
 	Makefile.fast Makefile.win Makefile.win64 config.h.win64 Makefile.O3 Makefile.64 \
@@ -624,7 +625,7 @@ EXTRA_DIST = .gdbinit xgiac pgiac prime.table gen_user \
 	giac.i runme.java archive_java archive_java_linux32 archive_java_linux64  javascript.cxx giacjs.i README.javascript \
 	Makefile.jni README.jni README.nacl mkdylib mkdylib10 mkgiacpy mkgiacpy10 giac_wrap.cxx aspen_translate.h numworks_translate.h translate.cc \
 	itex2MML.* y_tab.h static_lexer_numworks.h static_lexer__numworks.h k_csdk.c \
-	qjscalcjs.js xcasjs.js tijs.js mklibjs mkjs.cc
+	qjscalcjs.js xcasjs.js tijs.js mklibjs mkjs.cc 
 
 bin_SCRIPTS = pgiac
 all: all-am

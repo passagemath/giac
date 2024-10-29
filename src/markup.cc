@@ -2837,15 +2837,6 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.scheme="(concat (around* \"<nobracket>\" "+tmp.scheme+" \"|\") (rsub "+ml.scheme+"))";
       return ml;
     }
-    if ((g.is_symb_of_sommet(at_union) || g.is_symb_of_sommet(at_intersect)) && vectarg) {
-      ml.priority=_PRIORITY_SET;
-      string op=(g.is_symb_of_sommet(at_union)?"&cup;":"&cap;");
-      string opc=(g.is_symb_of_sommet(at_union)?"<union/>":"<intersect/>");
-      string opt=(g.is_symb_of_sommet(at_union)?"\\cup ":"\\cap ");
-      string ops=(g.is_symb_of_sommet(at_union)?"<cup>":"<cap>");
-      assoc2markup(flatten_operands(g),ml,op,opc,opt,ops,flags,idc,contextptr);
-      return ml;
-    }
     if (g.is_symb_of_sommet(at_minus) && vectarg && isbinary) {
       ml.priority=_PRIORITY_SET;
       get_leftright(g._SYMBptr->feuille,&ml,left,right,flags,idc,contextptr);
@@ -2890,32 +2881,64 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.scheme=scm_concat(left.scheme+" \"<subseteq>\" "+right.scheme);
       return ml;
     }
-    if (g.is_symb_of_sommet(at_not)) {
+    if (g.is_symb_of_sommet(at_not) || g.is_symb_of_sommet(at_complement)) {
+      bool isnot=g.is_symb_of_sommet(at_not);
       ml.priority=_PRIORITY_NOT;
       tmp=gen2markup(g._SYMBptr->feuille,flags,idc,contextptr);
       prepend_minus(tmp,flags);
       if (tmp.priority>=ml.priority)
         parenthesize(tmp,flags);
       if (mml_content)
-        ml.content=mml_tag("apply","<not/>"+tmp.content,++idc);
+        ml.content=mml_tag("apply",(isnot?"<not/>":"<ssetmn/>")+tmp.content,++idc);
       if (mml_presentation)
-        ml.markup=mml_tag("mrow","<mo>&not;</mo>"+tmp.markup,idc);
+        ml.markup=mml_tag("mrow",string("<mo>")+(isnot?"&not;":"&#x2201;")+"</mo>"+tmp.markup,idc);
       if (tex)
-        ml.latex="\\neg "+tmp.latex;
-      if (scm)
-        ml.scheme="(concat \"<neg>\" "+tmp.scheme+")";
-      return ml;
+        ml.latex=isnot?("\\neg "+tmp.latex):("\\stcomp{"+tmp.latex+"}");
+      if (scm){
+        if (isnot){
+          ml.scheme="(concat \"<neg>\" "+tmp.scheme+")";
+          return ml;
+        }
+      }
+      else return ml;
     }
-    if ((g.is_symb_of_sommet(at_and) || g.is_symb_of_sommet(at_et) || g.is_symb_of_sommet(at_ou) ||
-         g.is_symb_of_sommet(at_xor)) && vectarg) {
-      ml.priority=(g.is_symb_of_sommet(at_xor)?_PRIORITY_XOR:(g.is_symb_of_sommet(at_ou)?_PRIORITY_OR:_PRIORITY_AND));
-      string op=(g.is_symb_of_sommet(at_xor)?"&veebar;":(g.is_symb_of_sommet(at_ou)?"&or;":"&and;"));
-      string opc=(g.is_symb_of_sommet(at_xor)?"<xor/>":(g.is_symb_of_sommet(at_ou)?"<or/>":"<and/>"));
-      string opt=(g.is_symb_of_sommet(at_xor)?"\\veebar ":(g.is_symb_of_sommet(at_ou)?"\\vee ":"\\wedge "));
-      string ops=(g.is_symb_of_sommet(at_xor)?"<veebar>":(g.is_symb_of_sommet(at_ou)?"<vee>":"<wedge>"));
+    // BP change, more set support
+    if (g.type==_SYMB){
+      const unary_function_ptr * andortab[]={at_and,at_et,at_ou,at_xor,at_union,at_intersect,at_symmetric_difference,0};
+      const int andorp[]={_PRIORITY_AND,_PRIORITY_AND,_PRIORITY_OR,_PRIORITY_XOR,_PRIORITY_SET,_PRIORITY_SET,_PRIORITY_SET};
+      const char * andors[]={"&and;","&and;","&or;","&veebar;","&cup;","&cap;","&Delta;"};
+      const char * andorsc[]={"<and/>","<and/>","<or/>","<xor/>","<union/>","<intersect/>","<Delta>"};
+      const char * andorst[]={"\\wedge ","\\wedge ","\\vee ","\\veebar ","\\cup ","\\cap ","\\Delta "};
+      const char * andorsp[]={"<wedge>","<wedge>","<vee>","<veebar>","<cup>","<cap>","<Delta>"};
+      int andorpos=-1;
+      for (int i=0;;++i){
+        if (andortab[i]==0)
+          break;
+        if (andortab[i]==g._SYMBptr->sommet){
+          andorpos=i;
+          break;
+        }
+      }
+      if (andorpos>=0 && vectarg) {
+        ml.priority=andorp[andorpos];
+        string op=andors[andorpos]; // (g.is_symb_of_sommet(at_xor)?"&veebar;":(g.is_symb_of_sommet(at_ou)?"&or;":"&and;"));
+        string opc=andorsc[andorpos]; //(g.is_symb_of_sommet(at_xor)?"<xor/>":(g.is_symb_of_sommet(at_ou)?"<or/>":"<and/>"));
+        string opt=andorst[andorpos]; // (g.is_symb_of_sommet(at_xor)?"\\veebar ":(g.is_symb_of_sommet(at_ou)?"\\vee ":"\\wedge "));
+        string ops=andorsp[andorpos];// (g.is_symb_of_sommet(at_xor)?"<veebar>":(g.is_symb_of_sommet(at_ou)?"<vee>":"<wedge>"));
+        assoc2markup(flatten_operands(g),ml,op,opc,opt,ops,flags,idc,contextptr);
+        return ml;
+      }
+    }
+    if ( 0 && (g.is_symb_of_sommet(at_union)||g.is_symb_of_sommet(at_intersect)) && vectarg ) {
+      ml.priority=_PRIORITY_SET;
+      string op=(g.is_symb_of_sommet(at_union)?"&cup;":"&cap;");
+      string opc=(g.is_symb_of_sommet(at_union)?"<union/>":"<intersect/>");
+      string opt=(g.is_symb_of_sommet(at_union)?"\\cup ":"\\cap ");
+      string ops=(g.is_symb_of_sommet(at_union)?"<cup>":"<cap>");
       assoc2markup(flatten_operands(g),ml,op,opc,opt,ops,flags,idc,contextptr);
       return ml;
     }
+    // end BP changes
     if (g.is_symb_of_sommet(at_interval) && vectarg && isbinary) {
       ml.priority=_PRIORITY_SET;
       get_leftright(g._SYMBptr->feuille,&ml,left,right,flags,idc,contextptr);

@@ -2,14 +2,14 @@
 <html >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="generator" content="hevea 2.29+5 of 2017-05-18">
+<meta name="generator" content="hevea 2.34">
 <link rel="stylesheet" type="text/css" href="cascmd_en.css">
 <title>Graph and geometric objects attributes</title>
 </head>
 <body >
-<a href="cascmd_en607.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en609.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en607.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en609.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
 <h3 id="ssec:indattr" class="subsection">19.1.2  Graph and geometric objects attributes</h3>
 <p>There are two kinds of attributes for graphs and geometric objects:
@@ -17,7 +17,6 @@ global attributes of a graphic scene and individual attributes for
 the specific geometric objects in the scene.</p>
 <h4 id="ssec:individual-attributes" class="subsubsection">Individual attributes</h4>
 <p>
-<a id="hevea_default1083"></a>
 <a id="hevea_default1084"></a>
 <a id="hevea_default1085"></a>
 <a id="hevea_default1086"></a>
@@ -54,7 +53,8 @@ the specific geometric objects in the scene.</p>
 <a id="hevea_default1117"></a>
 <a id="hevea_default1118"></a>
 <a id="hevea_default1119"></a>
-<a id="hevea_default1120"></a></p><p>Graphic attributes are optional arguments of the form
+<a id="hevea_default1120"></a>
+<a id="hevea_default1121"></a></p><p>Graphic attributes are optional arguments of the form
 <span style="font-family:monospace">display=</span><span style="font-style:italic">value</span>. They must be given as the last
 argument of a graphic instruction. Attributes are ordered in several
 categories: color, point shape, point width, line style, line
@@ -70,24 +70,24 @@ Attributes of different categories may be combined with <span style="font-family
 <span style="font-family:monospace">color=</span><span style="font-style:italic">value</span>, where <span style="font-style:italic">value</span> is a nonnegative integer.
 See Section <a href="cascmd_en609.html#ssec%3Acolors">19.1.3</a> for more details on colors.
 The predefined colors in <span style="font-variant:small-caps">Xcas</span> are:
-<span style="font-family:monospace">black</span><a id="hevea_default1121"></a>,
-<span style="font-family:monospace">white</span><a id="hevea_default1122"></a>,
-<span style="font-family:monospace">red</span><a id="hevea_default1123"></a>,
-<span style="font-family:monospace">blue</span><a id="hevea_default1124"></a>,
-<span style="font-family:monospace">green</span><a id="hevea_default1125"></a>,
-<span style="font-family:monospace">magenta</span><a id="hevea_default1126"></a>,
-<span style="font-family:monospace">cyan</span><a id="hevea_default1127"></a>,
-<span style="font-family:monospace">yellow</span><a id="hevea_default1128"></a>,
-<span style="font-family:monospace">brown</span><a id="hevea_default1129"></a>,
-<span style="font-family:monospace">purple</span><a id="hevea_default1130"></a>,
-<span style="font-family:monospace">violet</span><a id="hevea_default1131"></a>,
-<span style="font-family:monospace">pink</span><a id="hevea_default1132"></a>,
-<span style="font-family:monospace">orange</span><a id="hevea_default1133"></a>,
-<span style="font-family:monospace">grey</span><a id="hevea_default1134"></a>,
-<span style="font-family:monospace">teal</span><a id="hevea_default1135"></a>,
-<span style="font-family:monospace">olive</span><a id="hevea_default1136"></a>,
-<span style="font-family:monospace">navy</span><a id="hevea_default1137"></a>, and
-<span style="font-family:monospace">gold</span><a id="hevea_default1138"></a>.
+<span style="font-family:monospace">black</span><a id="hevea_default1122"></a>,
+<span style="font-family:monospace">white</span><a id="hevea_default1123"></a>,
+<span style="font-family:monospace">red</span><a id="hevea_default1124"></a>,
+<span style="font-family:monospace">blue</span><a id="hevea_default1125"></a>,
+<span style="font-family:monospace">green</span><a id="hevea_default1126"></a>,
+<span style="font-family:monospace">magenta</span><a id="hevea_default1127"></a>,
+<span style="font-family:monospace">cyan</span><a id="hevea_default1128"></a>,
+<span style="font-family:monospace">yellow</span><a id="hevea_default1129"></a>,
+<span style="font-family:monospace">brown</span><a id="hevea_default1130"></a>,
+<span style="font-family:monospace">purple</span><a id="hevea_default1131"></a>,
+<span style="font-family:monospace">violet</span><a id="hevea_default1132"></a>,
+<span style="font-family:monospace">pink</span><a id="hevea_default1133"></a>,
+<span style="font-family:monospace">orange</span><a id="hevea_default1134"></a>,
+<span style="font-family:monospace">grey</span><a id="hevea_default1135"></a>,
+<span style="font-family:monospace">teal</span><a id="hevea_default1136"></a>,
+<span style="font-family:monospace">olive</span><a id="hevea_default1137"></a>,
+<span style="font-family:monospace">navy</span><a id="hevea_default1138"></a>, and
+<span style="font-family:monospace">gold</span><a id="hevea_default1139"></a>.
 </dd><dt class="dt-description"><span style="font-weight:bold">Point shape</span></dt><dd class="dd-description"> which is set with <span style="font-family:monospace">display=</span><span style="font-style:italic">value</span>, where
 <span style="font-style:italic">value</span> can be one of:
 <span style="font-family:monospace">rhombus_point</span>, <span style="font-family:monospace">plus_point</span>,
@@ -118,7 +118,7 @@ The legend is not displayed if the attribute
 </dd><dt class="dt-description"><span style="font-weight:bold">Image texture</span></dt><dd class="dd-description">
 which is set <span style="font-family:monospace">gl_texture="</span><span style="font-style:italic">picture_filename</span><span style="font-family:monospace">"</span> and
 fills a surface with a texture. See the interface manual for a more
-complete description and for <span style="font-family:monospace">gl_material</span><a id="hevea_default1139"></a>
+complete description and for <span style="font-family:monospace">gl_material</span><a id="hevea_default1140"></a>
 options.
 </dd></dl><h4 id="sec1475" class="subsubsection">Examples</h4>
 <p>
@@ -149,7 +149,6 @@ By entering
 </table><p>we get the same result as above.</p>
 <h4 id="sec1476" class="subsubsection">Global attributes</h4>
 <p>
-<a id="hevea_default1140"></a>
 <a id="hevea_default1141"></a>
 <a id="hevea_default1142"></a>
 <a id="hevea_default1143"></a>
@@ -168,7 +167,8 @@ By entering
 <a id="hevea_default1156"></a>
 <a id="hevea_default1157"></a>
 <a id="hevea_default1158"></a>
-<a id="hevea_default1159"></a></p><p>The following attributes are pertinent to the scene as a whole:
+<a id="hevea_default1159"></a>
+<a id="hevea_default1160"></a></p><p>The following attributes are pertinent to the scene as a whole:
 </p><ul class="itemize"><li class="li-itemize">
 <span style="font-family:monospace">axes=true</span> or <span style="font-family:monospace">axes=false</span> shows or hides the axes.
 Alternatively, <span style="font-family:monospace">axes=</span><span style="font-style:italic">a</span> can be used, where <span style="font-style:italic">a</span> is a nonnegative integer.
@@ -230,7 +230,7 @@ available but not described here.
 </div>
 <h4 id="sec1478" class="subsubsection">Formatting textual annotations</h4>
 <p>
-<a id="hevea_default1160"></a>
+<a id="hevea_default1161"></a>
 There are several formatting options for the textual attributes
 (<span style="font-family:monospace">title</span>, <span style="font-family:monospace">labels</span>, and <span style="font-family:monospace">legend</span>). Note that they
 can be used only in 2D plots.
@@ -280,8 +280,8 @@ the entire text. The <span style="font-family:monospace">@</span>-option uses sp
 
 </div>
 <hr>
-<a href="cascmd_en607.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="cascmd_en609.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="cascmd_en607.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="cascmd_en609.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>
