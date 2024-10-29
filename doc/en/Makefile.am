@@ -1,10 +1,10 @@
-TEX_LOCAL = cascmd_en.tex casinter.tex cas.tex slipres.tex giacxcas.tex tutoriel.tex
+TEX_LOCAL = cascmd_en.tex casinter.tex cas.tex slipres.tex giacxcas.tex
 
 PDF_LOCAL = cascmd_en.pdf casinter.pdf cas.pdf
 
-HTML_DIRS_LOCAL = casinter cascmd_en tutoriel
+HTML_DIRS_LOCAL = casinter cascmd_en
 
-HTML_STAMPS = casinter.stamp cascmd_en.stamp tutoriel
+HTML_STAMPS = casinter.stamp cascmd_en.stamp
 
 info_TEXINFOS = giac_us.texinfo
 AM_MAKEINFOHTMLFLAGS = --no-split
