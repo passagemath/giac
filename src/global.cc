@@ -4652,6 +4652,10 @@ extern "C" void Sleep(unsigned int miliSecond);
       string s=getenv("XCAS_ROOT");
       return s;
     }
+    if (getenv("XCAS_ROOT")){
+      string s=getenv("XCAS_ROOT");
+      return s;
+    }
     if (xcasroot().size()>4 && xcasroot().substr(xcasroot().size()-4,4)=="bin/"){
       string s(xcasroot().substr(0,xcasroot().size()-4));
       s+="share/giac/";
