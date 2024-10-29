@@ -52,7 +52,7 @@ env:
   DIST_PREREQ:      automake autoconf gettext autopoint libtool pkg-config libreadline-dev libgmp-dev libmpfr-dev libmpfi-dev libntl-dev libgsl-dev pari-gp2c libpari-dev glpk-utils libglpk-dev curl libcurl4-openssl-dev cliquer libcliquer-dev gmp-ecm libecm-dev
   # Name of this project in the Sage distribution
   SPKG:             giac
-  REMOVE_PATCHES:
+  REMOVE_PATCHES:   "*"
 
 jobs:
 
