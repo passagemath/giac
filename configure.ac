@@ -591,7 +591,6 @@ check/Makefile
 doc/Makefile
 doc/en/Makefile
 doc/es/Makefile
-doc/fr/Makefile
 doc/el/Makefile
 doc/local/Makefile
 doc/pt/Makefile
