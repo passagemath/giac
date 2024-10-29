@@ -21,10 +21,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-         %{
-         #define YYPARSE_PARAM scanner
-         #define YYLEX_PARAM   scanner
-	 %}
+%lex-param   {void *scanner}
 /*
  *  Definitions
  */
