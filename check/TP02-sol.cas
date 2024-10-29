@@ -7,7 +7,7 @@ Cond(M);
 /* premiere methode: On prend la premiere ligne de la transpos\'ee. Seconde methode avec une suite indexee par la liste*/
  listecondi:=transpose(l)[1];
  listecondi:=[seq(k[1],k=l)];
-histogram(classes(listecondi,0,10));
+histogram(classes(listecondi,0,10),color=56);
  ml:=max(listecondi);# le max de la suite
  ecart_type(listecondi);#ou bien: stddev donne l'ecart type
  moyenne(listecondi);
