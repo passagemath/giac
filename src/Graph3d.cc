@@ -23,7 +23,7 @@
 #define __CARBONSOUND__
 #ifdef HAVE_LIBFLTK
 #ifdef HAVE_LIBFLTK_GL
-#include "gl2ps.h"
+#include <gl2ps.h>
 #else
 void gl_font(int fontid, int size){}
 void gl_draw(const char *){}
