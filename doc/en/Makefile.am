@@ -2,10 +2,6 @@ TEX_LOCAL = cascmd_en.tex casinter.tex cas.tex slipres.tex giacxcas.tex tutoriel
 
 PDF_LOCAL = cascmd_en.pdf casinter.pdf cas.pdf
 
-PS_LOCAL = cascmd_en.ps casinter.ps cas.ps
-
-DVI_LOCAL = cascmd_en.dvi casinter.dvi cas.dvi
-
 HTML_DIRS_LOCAL = casinter cascmd_en tutoriel
 
 HTML_STAMPS = casinter.stamp cascmd_en.stamp tutoriel
@@ -27,15 +23,13 @@ dist_thelangdoc_DATA = html_mall html_mtt html_vall xcasmenu xcasex keywords
 
 html-local: $(HTML_STAMPS) 
 pdf-local: $(PDF_LOCAL)
-dvi-local: $(DVI_LOCAL)
-ps-local: $(PS_LOCAL)
 
 $(srcdir)/cascmd_en: cascmd_en.stamp
 $(srcdir)/casinter: casinter.stamp
 $(srcdir)/tutoriel: tutoriel.stamp
 
 install-data-local: $(HTML_STAMPS) # $(PDF_LOCAL) # $(PS_LOCAL) $(DVI_LOCAL)
-all-local: html-local ps-local dvi-local
+all-local: html-local
 
 install-data-local: all-local
 	$(install_sh) -d $(DESTDIR)$(prefix)/share/giac/doc/$(the_LANG)
@@ -56,12 +50,11 @@ install-data-local: all-local
 LATEX2HTML_OPTIONS = -local_icons -no_math -html_version 3.2,math
 HEVEA_OPTIONS = -fix
 
-SUFFIXES = .tex .pdf .ps .dvi
+SUFFIXES = .tex .pdf
 
 if DOC_PROGS
 
 RUN_PDFLATEX = TEXINPUTS=$(srcdir):$$TEXINPUTS $(PDFLATEX)
-RUN_LATEX = TEXINPUTS=$(srcdir):$$TEXINPUTS $(LATEX)
 RUN_MAKEINDEX = TEXINPUTS=$(srcdir):$$TEXINPUTS $(MAKEINDEX)
 RUN_LATEX2HTML = TEXINPUTS=$(srcdir):$$TEXINPUTS $(LATEX2HTML) $(LATEX2HTML_OPTIONS)
 RUN_HEVEA = TEXINPUTS=$(srcdir):$$TEXINPUTS hevea $(HEVEA_OPTIONS)
@@ -73,17 +66,6 @@ RUN_HEVEA = TEXINPUTS=$(srcdir):$$TEXINPUTS hevea $(HEVEA_OPTIONS)
 		$(RUN_MAKEINDEX) `echo $@ | sed -e s/\.pdf/\.idx/` ; \
 	fi
 	$(RUN_PDFLATEX) $<
-
-.tex.dvi:
-	$(RUN_LATEX) $<
-	$(RUN_LATEX) $<
-	if $(EGREP) -q -e '\\makeindex' $<; then \
-		$(RUN_MAKEINDEX) `echo $@ | sed -e s/\.dvi/\.idx/` ; \
-	fi
-	$(RUN_LATEX) $<
-
-.dvi.ps:
-	$(DVIPS) -o $@ $<
 
 casinter.stamp: casinter.tex
 	$(RUN_HEVEA) $< 
@@ -120,18 +102,6 @@ dist-hook:
 else
 
 .tex.pdf:
-	if [ ! -f "$@" ]; then \
-		echo '*** Error: TeX is not installed, and $@ is missing' ; \
-		exit 1 ; \
-	fi
-
-.tex.dvi:
-	if [ ! -f "$@" ]; then \
-		echo '*** Error: TeX is not installed, and $@ is missing' ; \
-		exit 1 ; \
-	fi
-
-.tex.ps:
 	if [ ! -f "$@" ]; then \
 		echo '*** Error: TeX is not installed, and $@ is missing' ; \
 		exit 1 ; \
