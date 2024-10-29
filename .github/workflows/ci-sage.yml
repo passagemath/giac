@@ -89,7 +89,8 @@ jobs:
       targets: SAGE_CHECK=no SAGE_CHECK_PACKAGES="giac" giac
       # Standard setting: Test the current beta release of Sage:
       sage_repo: passagemath/passagemath
-      sage_ref: main
+      #sage_ref: main
+      sage_ref: refs/pull/221/merge
       upstream_artifact: upstream
       # Docker targets (stages) to tag
       docker_targets: "with-targets"
