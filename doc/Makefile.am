@@ -7,7 +7,7 @@ dist_pkgdata_DATA = aide_cas
 dist_doc_DATA = README index.html
 
 
-install-exec-hook: 
+install-exec-hook: testfr.html algoseconde.html
 	$(install_sh) -d $(DESTDIR)$(prefix)/share/giac/doc/dxcas
 	$(install_sh) -d $(DESTDIR)$(prefix)/share/giac/doc/pari
 	for dd in $(XCASHTML); do \
@@ -27,3 +27,9 @@ install-exec-hook:
 #	ln -sf $(DESTDIR)$(prefix)/share/giac/doc/en/xcasex $(DESTDIR)$(prefix)/share/giac/doc/local/xcasex
 #	ln -sf $(DESTDIR)$(prefix)/share/giac/doc/en/xcasmenu $(DESTDIR)$(prefix)/share/giac/doc/local/xcasmenu
 
+testfr.html:
+	hevea -fix testfr
+
+algoseconde.html:
+#	hevea -fix algoseconde
+	echo '<p>Unfortunately, this file <a href="https://xcas.univ-grenoble-alpes.fr/forum/viewtopic.php?f=4&t=1813">cannot yet be built</a> in Debian. See <a href="https://www-fourier.ujf-grenoble.fr/~parisse/algoseconde.html">here</a> for an on-line version, though it may be for a newer version than what'\''s installed in this package.</p>' > "$@"
