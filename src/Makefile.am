@@ -1,3 +1,4 @@
+BUILT_SOURCES = input_parser.h input_parser.cc input_parser.hh lexer.h
 lib_LTLIBRARIES = libgiac.la
 libgiac_la_SOURCES = input_lexer.ll sym2poly.cc gausspol.cc threaded.cc \
   moyal.cc maple.cc ti89.cc mathml.cc\
@@ -9,8 +10,8 @@ libgiac_la_SOURCES = input_lexer.ll sym2poly.cc gausspol.cc threaded.cc \
   pari.cc cocoa.cc unary.cc usual.cc identificateur.cc gen.cc tinymt32.cc first.cc \
   TmpLESystemSolver.C TmpFGLM.C \
   TmpFGLM.H TmpLESystemSolver.H \
-  path.h lexer.h \
-  input_lexer.h input_parser.h threaded.h vector.h \
+  path.h \
+  input_lexer.h threaded.h vector.h \
   help.cc  lpsolve.cc optimization.cc signalprocessing.cc \
   graphe.cc graphtheory.cc nautywrapper.c markup.cc kdisplay.cc kadd.cc \
   caseval.c cutils.c graphic.c libbf.c libregexp.c libunicode.c \
@@ -126,3 +127,11 @@ install-exec-hook:
 	cp -f config.h $(DESTDIR)$(includedir)/giac
 	cp -f input_lexer.h $(DESTDIR)$(includedir)/giac
 	cp -f input_parser.h $(DESTDIR)$(includedir)/giac
+
+input_parser.cc: input_parser.yy
+	bison -y $(AM_YFLAGS) "$<" -o "$@"
+
+input_parser.h: input_parser.hh
+	cp "$<" "$@"
+
+lexer.h: input_lexer.cc
