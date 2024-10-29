@@ -24,7 +24,7 @@ DP:=implicitplot(P,x=-1..4,y=-4..4,xstep=0.01,ystep=0.01,couleur=blue+line_width
  dernierfacteury:=quo(resultant(P,C1+t*C2,x),y^3*(y-1)^4,y);
  yt:=solve(dernierfacteury,y);
 /* On verifie graphiquement la parametrisation.*/
- paramplot(xt+I*yt,t=-75..75,tstep=0.01);
+ paramplot(xt+I*yt,t=-75..75,tstep=0.01,color=56);
 /* ----------------------------Exercice---------------------------------------------*/
  P:=x^4+x+1;
 A:=1/d*add(a[i]*x^i,i=0..degree(P)-1);
