@@ -982,7 +982,7 @@ void pgiac(std::string infile,std::string outfile,std::ostream * checkptr,std::o
 	  out.close();
 	  COUT << "File " << outfile << " created" << outfile << '\n' << "Then I will run pdflatex " << giac::remove_extension(outfile) << '\n' ;
 	  if (dohevea){
-	    std::string cmd="hevea2mml "+infile_;
+	    std::string cmd="hevea2mml "+infile_+" &";
 	    COUT << "Running " << cmd << '\n';
 	    giac::system_no_deprecation(cmd.c_str());
 	  }
@@ -1243,8 +1243,8 @@ void pgiac(std::string infile,std::string outfile,std::ostream * checkptr,std::o
 	if (pos>=0 && pos<ss){
 	  out << s << '\n';
 	  out.close();
-	  COUT << "File " << outfile << " created, now running hevea2mml and pgiac " << outfile << '\n' << "Then I will run pdflatex " << giac::remove_extension(outfile) << '\n' << "For HTML5 output, you can run\nhevea2mml " << giac::remove_extension(infile) << '\n';
-	  std::string cmd="hevea2mml "+giac::remove_extension(infile);
+	  COUT << "File " << outfile << " created, now running hevea2mml in background and pgiac " << outfile << '\n' << "Then I will run pdflatex " << giac::remove_extension(outfile) << '\n' << "For HTML5 output, you can run\nhevea2mml " << giac::remove_extension(infile) << '\n';
+	  std::string cmd="hevea2mml "+giac::remove_extension(infile)+" &";
 	  giac::system_no_deprecation(cmd.c_str());
 	  cmd=("pgiac "+outfile+" && pdflatex "+giac::remove_extension(outfile)+" && mv "+giac::remove_extension(outfile)+".pdf "+giac::remove_extension(infile)+".pdf");
 	  COUT << cmd << '\n';
