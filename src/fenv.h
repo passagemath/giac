@@ -6,3 +6,5 @@
 #define PTHREAD_MUTEX_INITIALIZER 0
 int fesetround(int round); //{return -1;}
 #endif
+
+int fesetround (int);
