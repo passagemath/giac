@@ -1,0 +1,9 @@
+*.orig
+*.bak
+*~
+/autom4te.cache
+/config.h.in
+/config
+/configure
+/intl
+/m4
