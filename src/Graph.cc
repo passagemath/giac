@@ -5978,7 +5978,7 @@ namespace xcas {
   }
 
   bool inputdouble(const char * msg,double & d,GIAC_CONTEXT){
-    const char * ch=fl_input(msg,print_DOUBLE_(d).c_str());
+    const char * ch=fl_input("%s",msg,print_DOUBLE_(d).c_str());
     if (!ch) return false;
     gen g(ch,contextptr);
     g=evalf_double(g,1,contextptr);
