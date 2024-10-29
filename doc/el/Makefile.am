@@ -1,5 +1,3 @@
-SUBDIRS = tutoriel casinter
-DIST_SUBDIRS = tutoriel casinter
 info_TEXINFOS = giac_el.texinfo
 AM_MAKEINFOHTMLFLAGS = --no-split
 
@@ -15,7 +13,7 @@ EXTRA_DIST = $(TEX_LOCAL) $(PS_LOCAL) $(DVI_LOCAL) $(PDF_LOCAL) $(HTML_LOCAL) $(
 
 the_LANG = el
 thelangdocdir = $(docdir)/$(the_LANG)
-dist_thelangdoc_DATA = html_mall html_mtt html_vall xcasmenu xcasex keywords 
+dist_thelangdoc_DATA = html_mall html_mtt html_vall xcasmenu xcasex keywords
 
 html-local: $(HTML_STAMPS)
 pdf-local: $(PDF_LOCAL)
@@ -76,7 +74,7 @@ RUN_HEVEA = TEXINPUTS=$(srcdir):$$TEXINPUTS hevea $(HEVEA_OPTIONS)
 
 .tex.stamp:
 #	$(RUN_LATEX2HTML) $< --address '$(GIAC_ADDRESS)'
-	$(RUN_HEVEA) $< 
+	$(RUN_HEVEA) $<
 	tdir=`echo $< | sed -e 's/\.tex//'`; \
 	imagen -png -pdf -mag 2000 $$tdir; \
 	$(install_sh) -d $$tdir ; \
