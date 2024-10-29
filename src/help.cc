@@ -66,6 +66,15 @@ extern "C" int xcas_python_eval;
 
 #include "input_lexer.h"
 
+#ifdef DT_DIR
+/* This should be supported on Linux and BSD */
+#define dirent_is_dir(d) ((d)->d_type == DT_DIR)
+#else
+/* This functionality simply will not work on other systems not
+ * supporting the d_type field. */
+#define dirent_is_dir(d) (0)
+#endif
+
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
@@ -1266,7 +1275,7 @@ namespace giac {
   static int dir_select (const struct dirent *d){
 #endif
     string s(d->d_name);
-    if (d->d_type==DT_DIR || equalposcomp(subdir_strings,s)){
+    if (dirent_is_dir(d) || equalposcomp(subdir_strings,s)){
       return s!="." && s!="..";
     }
     int t=s.size();
@@ -1434,8 +1443,7 @@ alphasort (const struct dirent **a, const struct dirent **b)
 	    index_done=find_index(subdir,s,mtt,mall);
 	}
 #else
-	unsigned char type=cnt>=0?eps[cnt]->d_type:0;
-	if (type==DT_DIR || equalposcomp(subdir_strings,s))
+	if ((cnt>=0 && dirent_is_dir(eps[cnt])) || equalposcomp(subdir_strings,s))
 	  find_all_index(s+"/",mtt,mall);
 	else {
 	  if (!index_done)
