@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% giac/hevea interaction code definitions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Use one of the environment \begin{giacjs}...\end{giacjs} or \begin{giacjsonline}...\end{giacjsonline}
+%% Use one of the environment \begin{giacjs}...\end{giacjs} or \begin{giacjshere}...\end{giacjshere}
 %% to load the javascript code (from hard disk or Internet)
 %% Commands \giacinput{} or \giacinputmath{} or \giacinputbigmath{} 
 %% \giaccmd{} or \giaccmdmath{} or \giaccmdbigmath{} 
@@ -20,7 +20,7 @@ if ((old_ie > -1) || (new_ie > -1) || Boolean(window.chrome)){
  (function () {
   var script = document.createElement("script");
   script.type = "text/javascript";
-  script.src  = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML";
+  script.src  = "file:///usr/share/javascript/mathjax/MathJax.js?config=TeX-MML-AM_CHTML";
   document.getElementsByTagName("head")[0].appendChild(script);
 })();
 }
@@ -958,7 +958,7 @@ Module['onRuntimeInitialized']=function(){ console.log('UI is ready'); Module.re
   if (UI.usemathjax){
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "file:///usr/share/javascript/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   }
   var elem= document.getElementById('controlindex');

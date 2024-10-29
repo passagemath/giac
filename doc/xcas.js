@@ -3958,7 +3958,7 @@ int main(int argc,const char ** argv){
 	  UI.mathjax_version=2;    
           var script = document.createElement("script");
           script.type = "text/javascript";
-          script.src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_CHTML";
+          script.src = "file:///usr/share/javascript/mathjax/MathJax.js?config=TeX-AMS_CHTML";
           document.getElementsByTagName("head")[0].appendChild(script);
           window.setTimeout(UI.setmathjax, 400);
         }
