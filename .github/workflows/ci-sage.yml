@@ -96,7 +96,7 @@ jobs:
       # https://github.com/passagemath/passagemath/tree/develop/build/pkgs
       extra_sage_packages: "patch cmake gfortran openblas"
       # Sage distribution packages to build
-      targets: SAGE_CHECK=no SAGE_CHECK_PACKAGES="giac" giac
+      targets: SAGE_CHECK=no SAGE_CHECK_PACKAGES="?giac" giac sagemath_giac
       # Standard setting: Test the current beta release of Sage:
       sage_repo: passagemath/passagemath
       #sage_ref: main
