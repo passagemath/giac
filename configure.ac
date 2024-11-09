@@ -25,7 +25,7 @@ AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([src/index.h])
 dnl XXX: gettext hard-codes location of config.h. f@#$!
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([gnu 1.8 dist-bzip2])
+AM_INIT_AUTOMAKE([gnu 1.8 dist-bzip2 tar-ustar])
 
 dnl AM_MAINTAINER_MODE
 
