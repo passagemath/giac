@@ -260,7 +260,7 @@ namespace giac {
     bool is_integer() const ;
     bool is_constant() const;
     std::string print(giac::context * contextptr) const;
-    const char * printcharptr() const ;
+    // const char * printcharptr() const ;
     // if sptr==0, return length required, otherwise print at end of *sptr
     int sprint(std::string * sptr,giac::context * contextptr) const; 
     std::string print_universal(giac::context * contextptr) const;
@@ -418,11 +418,12 @@ namespace giac {
   gen collect(const gen & g,giac::context *);
 
   gen select_root(const giac::vecteur & v,giac::context * );
-  bool is_known_rootof(const giac::vecteur & v,gen & symroot,giac::context * );
-  gen alg_evalf(const gen & a,const gen &b,giac::context * );
+  bool is_known_rootof(const giac::vecteur & v,const giac::vecteur & lv,gen & symroot,giac::context * );
+  gen alg_evalf(const gen & a,const gen &b,const gen & c,giac::context * );
+
   gen approx_rootof(const gen & e,giac::context * );
   gen common_EXT(gen & a,gen & b,const giac::vecteur * l,giac::context * );
-  gen common_minimal_POLY(const gen & ga,const gen & gb, gen & a,gen & b,int &k,giac::context * );
+  gen common_minimal_POLY(const gen & ga,const gen & gb, gen & a,gen & b,int &k,const giac::vecteur *l,giac::context *);
   gen ext_add(const gen & a,const gen & b,giac::context * );
   gen ext_sub(const gen & a,const gen & b,giac::context * );
   gen ext_mul(const gen & a,const gen & b,giac::context * );
@@ -553,8 +554,9 @@ namespace giac {
   gen invexptoexpneg(const gen& g,giac::context * );
   bool is_rewritable_as_f_of(const gen & fu,const gen & u,gen & fx,const gen & gen_x,giac::context * );
   bool intgab_ratfrac(const gen & e,const gen & x,gen & value,giac::context * );
-  gen integrate_gen_rem(const gen & e, const gen & x, gen & remains_to_integrate,giac::context * );
-  gen integrate_id_rem(const gen & e, const gen & x, gen & remains_to_integrate,giac::context * );
+
+  gen integrate_gen_rem(const gen & e, const gen & x, gen & remains_to_integrate,int intmode,giac::context *);
+  gen integrate_id_rem(const gen & e, const gen & x, gen & remains_to_integrate, giac::context *,int intmode);
   gen linear_integrate(const gen & e,const gen & x,gen & remains_to_integrate,giac::context * );
   gen integrate_id(const gen & e,const giac::identificateur & x,giac::context * );
   gen integrate_gen(const gen & e,const gen & f,giac::context * );
@@ -649,8 +651,8 @@ namespace giac {
   gen _Nullspace(const gen & g,giac::context * );
   gen _assign(const gen & g,giac::context * );
   gen _implicitplot3d(const gen & g,giac::context * );
-  gen _readwav(const gen & g,giac::context * );
-  gen _writewav(const gen & g,giac::context * );
+  //gen _readwav(const gen & g,giac::context * );
+  //gen _writewav(const gen & g,giac::context * );
   gen _animate(const gen & g,giac::context * );
   gen _animate3d(const gen & g,giac::context * );
   gen _even(const gen & g,giac::context * );

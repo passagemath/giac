@@ -262,6 +262,7 @@ namespace giac {
     _TABLE__VECT=30,
     _GRAPH__VECT =31,
     _PRG__VECT=32,
+    _REALSET__VECT=33,
   } ;
 
   enum symb_subtypes {
@@ -476,7 +477,7 @@ namespace giac {
   };
 
   enum color_values {
-#if defined KHICAS || defined GIAC_HAS_STO_38
+#if defined KHICAS || defined SDL_KHICAS || defined GIAC_HAS_STO_38
     _BLACK=0,
     _RED=0xf800,
     _GREEN=0x07e0,

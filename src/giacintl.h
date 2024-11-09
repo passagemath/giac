@@ -1,6 +1,11 @@
 #ifndef _GIACINTL_H
 #define _GIACINTL_H
 
+#if defined __APPLE__ && !defined HAVE_GETTEXT
+inline const char * gettext(const char * s) { return s; };
+
+#else
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -31,4 +36,6 @@ inline const char * gettext(const char * s) { return s; };
 #endif // _LIBINTL_H
 
 #endif // HAVE_GETTEXT
+
+#endif // __APPLE__
 #endif // _GIACINTL_H

@@ -70,12 +70,13 @@ namespace xcas {
     std::vector<Fl_Text_Display::Style_Table_Entry> styletable;
     bool gchanged,locked;
     int pythonjs;
+    char * tooltipptr;
     void set_gchanged();
     void clear_gchanged();
     giac::gen g() ;
     void set_g(const giac::gen & g);
     Xcas_Text_Editor(int X, int Y, int W, int H, Fl_Text_Buffer * b,const char* l = 0);
-    virtual ~Xcas_Text_Editor() { if (Xcas_input_focus==this) Xcas_input_focus=0;}
+    virtual ~Xcas_Text_Editor() { if (Xcas_input_focus==this) Xcas_input_focus=0; if (tooltipptr) free(tooltipptr);}
     virtual int handle(int event);
     virtual void draw();
     int completion();

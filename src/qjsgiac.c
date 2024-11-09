@@ -173,8 +173,11 @@ int interrupt_handler(JSRuntime *rt, void *opaque){
     return 1;
   return 0;
 }
-void process_freeze(){
-}
+#ifdef SDL_KHICAS
+void process_freeze();
+#else
+void process_freeze(){}
+#endif
 #endif
 
 

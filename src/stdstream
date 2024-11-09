@@ -6,6 +6,7 @@
 #include <map>
 #include "string.h"
 #include <stdio.h>
+#include <complex>
 
 // Numworks: python/port/mphalport.h
 extern "C" {
@@ -42,7 +43,18 @@ struct stdostream {
 struct stdistream {
 };
 
+#ifdef SDL_KHICAS
+#include <emscripten.h>
+#endif
+
 inline void do_print(const char * buf){
+#if 0 // def SDL_KHICAS
+  EM_ASM({
+      var value = UTF8ToString($0);
+      console.log(value);
+    },buf);
+  return;
+#endif
   xcas::dConsolePut(buf);
   //xcas::Console_NewLine(1, 1);
 #ifdef GIAC_LINKED
@@ -93,6 +105,11 @@ inline stdostream & operator << (stdostream & os,double d){
 
 inline stdostream & operator << (stdostream & os,const char * s){
   do_print(s);
+  return os;
+}
+
+inline stdostream & operator << (stdostream & os,const std::complex<double> & c){
+  os << c.real() << "+i*" << c.imag();
   return os;
 }
 

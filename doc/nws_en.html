@@ -6,7 +6,7 @@
   <meta name=viewport content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="keywords" content="xcas Numworks">
-  <title>Outils Numworks</title>
+  <title>Numworks tools</title>
   <link rel="stylesheet" href="w3.css">
   <style type="text/css">
     body, h1, h2, h3, h4, h5, h6 {
@@ -60,6 +60,7 @@
   <a class="w3-bar-item w3-button"
   onclick="document.getElementById('top').scrollIntoView()">↑</a>
   <a class="w3-bar-item w3-button" href="#giac" >Python</a>
+  <a class="w3-bar-item w3-button" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnwen.html">Doc</a>
   <a class="w3-bar-item w3-button" href="#install" >Install</a>
   <a class="w3-bar-item w3-button w3-hide-small" href="#report" >Log</a>
   <a class="w3-bar-item w3-button w3-hide-small" href="#exam" >Exam</a>
@@ -80,26 +81,35 @@
     <div class="w3-margin-left">
         <b class="w3-xlarge">KhiCAS/XCAS</b>
         <br>
-        <i class="w3-large">Connexion kit for unlocked Numworks</i>
+        <i class="w3-large">Connexion kit for Numworks calculators</i>
         
     </div>
 </div>
+<br>
 
+<div id="divcontent" class="w3-container w3-section w3-padding-large w3-light-gray" style="margin:30px;">
 <div class="w3-panel w3-margin w3-lime" uk-alert>
-  <em>Beware, don't upgrade from Numworks site!</em><a class="w3-bar-item interface" onclick="let field=$id('update'); if (field.style.display=='block')
+  <em>Beware, don't upgrade your N0110 calculator from Numworks site!</em><a class="w3-bar-item interface" onclick="let field=$id('update'); if (field.style.display=='block')
     field.style.display='none'; else field.style.display='block'">+
     More info</a>
 
   <div id='update' style="display:none">
     If you have upgraded from Numworks site, your calculator is locked
-  and therefore incompatible with KhiCAS. Thanks to M4x1m3,
+  and therefore partially incompatible with KhiCAS. Thanks to M4x1m3,
   there is temporarily a
-  workaround to unlock your Numworks, follow instructions <a class="w3-link" href="https://phi.getomega.dev/">here</a>.
+  workaround to unlock your N0110 Numworks, 
+follow instructions <a class="w3-link" href="https://phi.getomega.dev/">here</a>.
   If the workaround fails (if you made an update from Numworks site
   after 22/03/28), the locking process is (almost) irreversible,
-  the only known workaround is explained 
+  the only known workaround for N0110 is explained 
     <a class="w3-link" href="https://tiplanet.org/forum/viewtopic.php?f=113&t=25191">here (French)</a>
-    it requires some additional hardware and opening the calculator.
+    it requires some additional hardware and opening the calculator (<b>beware
+it does not work on N0115 and N0120</b>).
+   <br>
+    If your calc is a locked N0110 or a N0115 or a N0120
+    you can still install a version of KhiCAS from
+    <a href="#install">this page</a>, but it will need partial reinstallation
+    after any RESET or crash.
     <br>
     If you install Khi+KhiCAS from this site, it will protect
     your calc against lock from USB connection.
@@ -121,20 +131,36 @@
 
 
 <!-- CORPS DE LA PAGE -->
-<div id="body" class="w3-container w3-section w3-padding-large w3-light-gray" style="margin:30px;">
-  <h4 class="w3-margin">
-    <a class="w3-bar-item interface" onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">Detect</a>
-  the Numworks.
-  </h4>
-  Click here if the buttons below do not work.
-  If your N0110 calculator screen is off, go to the <a
-  href="#rescue">rescue</a> section.
-  If your N0110 is locked, follow instructions <a href="https://phi.getomega.dev/">here</a> then install <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,2);">Khi slot 1</a>.
+
+  <b>&#128712;Connect your calculator to the computer. 
+    If the calculator connection does not work:</b>
+  <ul>
+    <li> If the calculator screen remains black, even after you have pressed the Power black button on the calculator:
+      <ul>
+        <li> Unlocked N0110 model: go to the <a href="#rescue">rescue</a> section.
+        <li> Other models: go to <a href="https://my.numworks.com/">Numworks site</a>
+      </ul>
+    <li>
+      If the calculator is on and the calc does not display
+      "Calculator connected", unplug and plug the calc
+    </li>
+    <li>
+      If the calculator is on and the calc displays
+      "Calculator connected", try the 
+        <a class="w3-bar-item interface" onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">Detect</a>
+        button.
+    </li>
+
+  </ul>
+  
       
   <div class="w3-border-bottom"></div>
   <h3 id="giac" class="w3-margin">Python scripts</h3>
   <div class="w3-margin w3-row">
     <ul>
+      <li>     
+        <a class="w3-bar-item interface" onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">Detect</a>
+        the Numworks.
       <li>
         <a class="w3-bar-item interface" id="numworks_load" onclick="UI.numworks_load(false)">Numworks→</a>
         ou
@@ -159,41 +185,84 @@
   
 
     <div class="w3-border-bottom"></div>
-    <h3 class="w3-margin" id="install">Install, upgrade on your N0110 calculator</h3>
+    <h3 class="w3-margin" id="install">Install, upgrade ...</h3>
     <ul id="main">
+      <li><a class="w3-link"
+             href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnwen.html">Documentation (English)</a>,
+        <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnwen.html#sec37">Licences</a>,
+        <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnwen.html#sec38">Source</a>.
+      <li> Installation on a locked N0110, or a N0115/N0120 (recent models):
+	<b>tested with Epsilon 22.2 and Epsilon 23</b>
+	<ul>
+	  <li>step 1:     <a class="w3-bar-item interface"
+  onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">
+  Detect</a> the calc.
+          <li> step 2: install KhiCAS 
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(0,0)">short version</a> or
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(1,0)">complete version</a>
+	    on your calculator. <br>
+            For the short version, you can optionnaly install
+	    <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(0,1)">examples scripts</a>.      <br>
+            On N0120 models, RESET the calculator.
+	  <li> step 3: if step 2 did not work (or if you want
+            to upgrade Epsilon),
+            press the 6 key and RESET at the back simultaneously
+            keeping the 6 key pressed, then release. Now make
+            a firmware upgrade from 
+            <a href="https://my.numworks.com" target="_blank">Numworks site</a>
+            and run step 2 again.
+          <li>step 4 : if you do not have other external apps,
+            you can install the
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(0,-1)">launcher</a> (<b>compatible with Epsilon 22 (N0110/N0115/N0120), Epsilon 23 (N0120), but not compatible with Epsilon 23 on N0110/N0115</b>).
+            <br>
+	    Otherwise download 
+          <a class="w3-bar-item interface" onclick='UI.download("khicas.nwa","khicas.nwa");window.open("https://my.numworks.com/apps")'>khicas.nwa</a>,
+          <b>close this tab</b> (this will free the calculator).
+          and install khicas.nwa from
+	  <a href="https://my.numworks.com/apps" target="_blank">external apps (Numworks page</a>.
+	  <li> step 5: you should see KhiCAS from the calculator Home screen.
+	  <b>Note that KhiCAS will be partially erased at each RESET/crash. 
+            You will have to reinstall khicas.nwa (step 4) every time the
+            calculator RESETs or crashes (keep this page in your bookmarks).</b>
+	</ul>
       <li> 
-        Install :
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,4)">multi-boot</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta();">
-          Khi+KhiCAS (19.0.27, 11/03/2022)</a> : <a class="w3-link"
-          href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html">Documents</a>,
-          <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec45">Licences</a>,
-          <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec47">Source</a>.
+        Installation for unlocked N0110 (old models) 
+        <ul>
+          <li>  <a class="w3-bar-item interface"
+  onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">
+  Detect</a> the calc.
+          <li>
+          <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,4)">multi-boot</a>,
+          <a class="w3-bar-item interface" onclick="UI.numworks_install_delta();">
+            Khi+KhiCAS (19.0.99, 2024/07/07)</a> 
+          </li>
+          <li>
+            Update (type on the calculator Power ln OK):
+            <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(0);">KhiCAS stable</a>,
+            <!--- <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(1);">KhiCAS alpha</a>, --->
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,1);">Khi slot 1</a>,
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,5)">Khi slot 2</a>
+            <br> Latest version (alpha)
+            <a href="khialpha.zip">khialpha.zip</a>.
+          </li>
+          <li> Press reset-1 or 2 or Power ln OK Back 1 or 2 in order to boot from slot 1 or 2.
+            Run KhiCAS from slot 2 if you need more memory.
+          </li>
+        </ul>
+      <li>
+        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive('nwsflash.tar',0)">Archive flash </a>from your Numworks 
       </li>
       <li>
-        Update (type on the calculator Power ln OK):
-        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(0);">KhiCAS stable</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(1);">KhiCAS alpha</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,1);">Khi slot 1</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,5)">Khi slot 2</a>
-      </li>
-      <li> Press reset-1 or 2 or Power ln OK Back 1 or 2 in order to boot from slot 1 or 2.
-        Run KhiCAS from slot 2 if you need more memory.
-      </li>
-      <li>
-        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive('nwsflash.tar',0)">Archive
-            flash </a>from your Numworks 
-      </li>
-      <li>
-        <a class="w3-bar-item interface" onclick="if (confirm(UI.langue==-1?'Veuillez confirmer que l\'installation de cette archive personnalisee est sous votre responsabilite.':'Please confirm that installing a custom archive is under your responsability.')) $id('persoinit').style.display='inline'">Customize flash</a> (<a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,1);">Khi</a> must be
-        installed)
+        <a class="w3-bar-item interface" onclick="if (confirm('Please confirm that installing a custom archive is under your responsability.')) $id('persoinit').style.display='inline'">Customize flash</a> 
         <br>
         <span id="persoinit" style="display:none"> Init from
           <a class="w3-bar-item interface" onclick="UI.numworks_gettar(1)">calculator→</a>
           or
-          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(0)">KhiCAS</a>
+          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(-2)">script examples (all models except unlocked N0110)</a>
           or
-          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(-1)">KhiCAS alpha</a>
+          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(0)">KhiCAS (unlocked N0110 with Khi)</a>
+          <!--- or
+          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(-1)">KhiCAS alpha (unlocked N0110 with Khi)</a>--->
           or
           <input id="loadtarinput" class="w3-input-2" accept=".tar" type="file"
             title="Cliquer ici pour charger un fichier archive (.tar)"
@@ -226,7 +295,7 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
     <br>
     <div class="w3-border-bottom"></div>
     <div id="output" style="max-height: 200px; overflow:auto"></div>
-    <h3 class="w3-margin" id="exam">Exam mode :</h3>
+    <h3 class="w3-margin" id="exam">Unlocked N0110 exam mode :</h3>
     <div class="w3-col-x">
         If you want to certify that a N0110 calculator firmware  is
         a genuine version of Khi+KhiCAS, click here
@@ -244,7 +313,7 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
           smartphone-Numworks link</a>.
     </div>
     <div class="w3-border-bottom"></div>
-    <h3 class="w3-margin" id="rescue"><strong>Calculator blocked:</strong></h3>
+    <h3 class="w3-margin" id="rescue"><strong>Unlocked N0110 calculator blocked:</strong></h3>
     <div class="w3-col-x">
       -<a class="w3-bar-item interface" onclick="UI.numworks_rescue();">Rescue</a> :
       Click here if your N0110 is stuck.<br>
@@ -260,32 +329,6 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
           <tt>Connect</tt>.
           <br>
           -If rescue does not work, try with Xcas PC. On windows, check that you have a driver for STM32 BOOTLOADER, you can install one from <a href="https://zadig.akeo.ie">Zadig</a>.
-    </div>
-    <div class="w3-border-bottom"></div>
-    <div class="w3-panel w3-margin w3-lime" uk-alert>
-      <p><strong>&#128712; If the calculator connection does not work:</strong> </p>
-      
-    </div>
-    <ul>
-      <li>
-        If the calculator is on and the calc does not display
-  "Calculator connected", unplug and plug the calc
-      </li>
-      <li>
-        If the calculator is on and the calc displays
-  "Calculator connected", try the Detect button.
-      </li>
-      <li>
-        If the calculator is off even after unplug and plug,
-  try the Rescue button
-      </li>
-
-    </ul>
-    <div class="w3-col-x">
-        In case of persistent connection problem, try with dfu-util as explained here in the
-      <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec3">Manual Installation section</a>
-      or with
-      <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/install_fr">Xcas</a>.
     </div>
 
     <div class="w3-border-bottom"></div>
@@ -314,6 +357,7 @@ from the directory where you have unzipped
     <a class="w3-link" href="https://stuk.github.io/jszip/">JSZip</a> to read
     zip files and <a class="w3-link" href="https://github.com/eligrey/FileSaver.js/blob/master/src/FileSaver.js">FileSaver.js</a>
     to save files.
+    <br> Thanks to Yaya.Cout for insightfull discussions about locked firmwares slot informations.
     <br>Thanks to Zexi Ru and Elio Poletti for the initial page style.</b>
   </div>
   
@@ -331,6 +375,7 @@ from the directory where you have unzipped
     }
   }
   window.onload = function (e) {
-    if (!navigator.usb) alert(UI.langue == -1 ? 'Utilisez un navigateur compatible usb comme Chromium ou Chrome ou Edge' : 'Requires a webusb browser like Chromium or Chrome or Edge');
+    if (!navigator.usb) alert('Requires a webusb browser like Chromium or Chrome or Edge');
   }
+  UI.langue=0;
 </script>

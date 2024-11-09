@@ -24,6 +24,10 @@ using namespace giac;
 context * caseval_context(){
   return (context *) caseval("caseval contextptr");
 }
+
+#ifdef SDL_KHICAS
+#else
+
 void c_draw_rectangle(int x,int y,int w,int h,int c){
   giac::freeze=true;
   context * contextptr=caseval_context();
@@ -411,3 +415,4 @@ void c_turtle_getposition(double * x,double * y){
     *y=b._DOUBLE_val;
   }
 }
+#endif

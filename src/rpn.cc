@@ -751,7 +751,17 @@ namespace giac {
   }
 #endif
 
-  gen _VARS(const gen & args,const context * contextptr) {
+  gen _VARS(const gen & args_,const context * contextptr) {
+    gen args(args_);
+    bool assume=false;
+    if (args.type==_VECT && args._VECTptr->size()==2 && args._VECTptr->back()==at_assume){
+      assume=true;
+      args=args._VECTptr->front();
+    }
+    if (args==at_assume){
+      assume=true;
+      args=gen(vecteur(0),_SEQ__VECT);
+    }
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     bool val=is_one(args);
     bool valonly=args==-2;
@@ -762,12 +772,17 @@ namespace giac {
     if (contextptr){
       if (contextptr->globalcontextptr && contextptr->globalcontextptr->tabptr){
 	sym_tab::const_iterator it=contextptr->globalcontextptr->tabptr->begin(),itend=contextptr->globalcontextptr->tabptr->end();
-#if defined FXCG || defined GIAC_HAS_STO_38 || defined KHICAS
+#if defined FXCG || defined GIAC_HAS_STO_38 || defined KHICAS || defined SDL_KHICAS 
 	vecteur * keywordsptr=0;
 #else
 	vecteur * keywordsptr=keywords_vecteur_ptr();
 #endif
 	for (;it!=itend;++it){
+          if (assume){
+            gen tmp=it->second;
+            if (tmp.type!=_VECT || tmp.subtype!=_ASSUME__VECT)
+              continue;
+          }
 	  lastprog_name(it->first,contextptr);
 	  gen g=identificateur(it->first);
 	  if (keywordsptr==0 || !equalposcomp(*keywordsptr,g)){
@@ -882,8 +897,13 @@ namespace giac {
     }
     // purge a global variable
     sym_tab::iterator it=contextptr->tabptr->find(ch),itend=contextptr->tabptr->end();
-    if (it==itend)
+    if (it==itend){
+#if 1 //def GIAC_HAS_STO_38
+      if (contextptr && contextptr->previous!=contextptr)
+        return purgenoassume(args,contextptr->previous);
+#endif
       return string2gen("No such variable "+args.print(contextptr),false);
+    }
     gen res=it->second;
     if (it->second.type==_POINTER_ && it->second.subtype==_THREAD_POINTER)
       return gentypeerr(args.print(contextptr)+" is locked by thread "+it->second.print(contextptr));
@@ -990,7 +1010,7 @@ namespace giac {
 	return val;
       }
     }
-    if (args._IDNTptr->value){
+    if (args._IDNTptr->value && args._IDNTptr->ref_count_ptr!=(int *)-1){
 #if !defined RTOS_THREADX && !defined BESTA_OS && !defined FREERTOS && !defined FXCG
       if (variables_are_files(contextptr))
 	unlink((args._IDNTptr->name()+string(cas_suffixe)).c_str());
@@ -1009,7 +1029,8 @@ namespace giac {
       return res;
     }
     else
-      return string2gen(args.print(contextptr)+" not assigned",false);
+      return string2gen("No such variable "+args.print(contextptr),false);
+    //return string2gen(args.print(contextptr)+" not assigned",false);
   }
   static const char _purge_s []="purge";
   static define_unary_function_eval_quoted (__purge,&_purge,_purge_s);

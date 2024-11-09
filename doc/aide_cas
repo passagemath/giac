@@ -7428,7 +7428,7 @@ linear_interpolate([[1,2,6,9],[3,4,6,7]],1,9,1)
 -2 power_regression
 -3 linear_regression
 logistic_regression(evalf([1,2,4,6,8,7,5]),1,2)
-logistic_regression([0.0,1.0,2.0,3.0,4.0],0.0,1.0)
+logistic_regression([2.,3.,4.,5.,4.5],0.0,4.0)
 
 # logistic_regression_plot
 1 Renvoie le graphe de la fonction logistique y telle que y(x0)=y0 et dont le y' approche au mieux les valeurs de L pour x=x0, x0+1...x0+k.
@@ -7587,6 +7587,9 @@ convert(9976/6961,confrac,'l');l
 convert(sqrt(2),confrac,'dev');dev
 convert(123,base,8)
 convert([3,7,1],base,8)
+convert(129,2,8)
+ restart;GF(2,8);convert(129,g);
+ restart;GF(2,8);convert(1027,g,2);
 convert([1,2,3],set[])
 convert(pi,interval,20)
  A[2,1]:=1;convert(A,array)
@@ -10945,7 +10948,7 @@ incenter(0,1,1+i)
 excenter(0,1,1+i)
 
 # int integrate integrer
-1 Primitive (la variable d'intégration est le 2ème argument) ou valeur de l'intégrale (bornes a et b).
+1 Primitive (la variable d'intégration est le 2ème argument) ou valeur de l'intégrale (bornes a et b). Peut aussi calculer une intégrale curviligne avec la syntaxe integrate([champ_vecteur],[variables],courbe_parametree) ou integrate([champ_vecteur],[variables],courbe_parametree,tmin,tmax)
 2 Indefinite integral, you can specify a variable of integration or calculate the integral (bounds a and b).
 3 Integral indefinida, hay que especificar la variable de integración (entre a y b).
 4 Αόριστο ολοκλήρωμα, (η μεταβλητή ολοκλήρωσης είναι το 2ο όρισμα) ή η τιμή του ολοκληρώματος (με όρια a και b).
@@ -10956,9 +10959,11 @@ excenter(0,1,1+i)
 -3 plotarea
 -4 romberg
 -5 gaussquad
-int(1/x)
-int(1/(4+t^2),t)
-int(1/(1-x^4),x,2,3)
+integrate(1/x)
+integrate(1/(4+t^2),t)
+integrate(1/(1-x^4),x,2,3)
+ G:=plotparam([2*cos(t),sin(t)],t=0..2*pi):; integrate([-y,0],[x,y],G);
+ G:=plotparam([2*cos(t),sin(t)],t):; integrate([0,x],[x,y],G,0,2*pi);
 
 # inter
 1 Avec 2 arguments (resp 3 arguments) donne l'intersection de 2 courbes ou surfaces sous la forme d'un vecteur (resp d'un point proche du point donné en 3iéme argument ou non présent dans la liste donnée en 3ième argyment).
@@ -13924,7 +13929,7 @@ sto("salut",b)
 -3 subs
 -4 ()
 subst(1/(4+x^2),x=2)
-subst(1/(x^2+y^2),x=2,y=3)
+subst(1/(x^2+y^2),[x,y],[2,3])
 subst(1/(x^2+y^2+z^2),[x=2,y=3,z=1])
 subst(x-2/(4+x^2),x=1)
 subst('integrate(sin(x^2)*x,x)',x=sqrt(t))
@@ -14823,15 +14828,26 @@ dwt([[15,25,5,70],[21,33,12,7],[64,18,50,10],[5,17,35,28]])
 f2nd(42/12)
 f2nd((x^2+2*x+1)/(x^2-1))
 
+# syzygy
+1 Base de Groebner de l'idéal des syzygyies de la liste des polynômes, pour l'ordre degré reverse lexicographique. Renvoie la base et une liste de variables complétée par des variables nommées A0...Ak (si A est libre) qui représentent la liste des polynômes.
+2 Groebner basis of the ideal of syzygyies of a list of polynomials, for degree reverse lexicographic ordering. Returns the basis and a list of variables extended by variables named A0..Ak (if A is free) that represent the list of polynomials
+0 List
+-1 gbasis
+syzygy([x*y,x^2-y^3])
+syzygy([x*y,x^2-y^3] mod 7)
+ c5:=[x1*x2+x2*x3+x3*x4+x4*x5+x5*x1,x1+x2+x3+x4+x5,x1*x2*x3+x2*x3*x4+x3*x4*x5+x4*x5*x1+x5*x1*x2,x1*x2*x3*x4+x2*x3*x4*x5+x3*x4*x5*x1+x4*x5*x1*x2+x5*x1*x2*x3,x1*x2*x3*x4*x5-1]; S,V,A,X:=syzygy(c5);G,M:=gbasis(c5,X,coeffs);for m in M do m:=dot(m,A); m:=greduce(m,S mod p,V); od; 
+ p:=prevprime(2^29);c5:=[x1*x2+x2*x3+x3*x4+x4*x5+x5*x1,x1+x2+x3+x4+x5,x1*x2*x3+x2*x3*x4+x3*x4*x5+x4*x5*x1+x5*x1*x2,x1*x2*x3*x4+x2*x3*x4*x5+x3*x4*x5*x1+x4*x5*x1*x2+x5*x1*x2*x3,x1*x2*x3*x4*x5-1] mod p; S,V,A,X:=syzygy(c5);G,M:=gbasis(c5,X,coeffs);for m in M do m:=dot(m,A); m:=greduce(m,S mod p,V); od; 
+
 # gbasis
-1 Base de Groebner de l'idéal engendré par la liste de polynômes. L'argument optionnel rur permet de calculer une representation rationnelle univariée (on peut avoir en plus la base de Groebner en ajoutant gbasis). L'argument optionnel matrix ou coeffs permet de calculer la matrice donnant la base de Groebner en fonction des générateurs initiaux respectivement avec ou sans inter-réduction.
-2 Groebner basis of the ideal spanned by the list of polynomials. The optional rur argument may be used to compute a rational univariate representation (add gbasis to also get the Groebner basis). The optional argument matrix or coeffs may be used to compute the matrix giving the Groebner basis in terms of the initial generators, respectively with or without inter-reduction.
+1 Base de Groebner de l'idéal engendré par la liste de polynômes. L'argument optionnel rur permet de calculer une representation rationnelle univariée (on peut avoir en plus la base de Groebner en ajoutant gbasis). L'argument optionnel matrix ou coeffs permet de calculer la matrice donnant la base de Groebner en fonction des générateurs initiaux respectivement avec ou sans chercher à diminuer le degré des coefficients. La variable lastgb contient le dernier résultat calculé.
+2 Groebner basis of the ideal spanned by the list of polynomials. The optional rur argument may be used to compute a rational univariate representation (add gbasis to also get the Groebner basis). The optional argument matrix or coeffs may be used to compute the matrix giving the Groebner basis in terms of the initial generators, respectively with or without trying to reduce the degree of the coefficients. The lastgb variable contains the last comouted Groebner basis.
 3 Base Groebner del ideal generado por la lista de polinomios.
 4 Βάση Groebner του ιδεώδους που παράγεται από τη λίστα των πολυωνύμων.
 0 LstPoly,LstVar,[order]
 -1 greduce
 -2 gbasis_max_pairs
 -3 gbasis_simult_primes
+-4 gbasis_vars
 gbasis([x^2-y^3,x+y^2],[x,y])
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3])
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],tdeg)
@@ -14839,6 +14855,13 @@ gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],plex)
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1] mod 29,[x1,x2,x3])
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],rur)
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],rur,gbasis)
+
+# gbasis_vars
+1 Recherche la liste des variables d'une liste de générateurs polynomiaux d'un idéal, triée par ordre croissant des produits des degrés partiels+1 (adapté à l'ordre revlex).
+2 Find the list of variables of a list of polynomial generators of an ideal, sorted by product of partial degrees+1 (suited for revlex ordering)
+0 List
+gbasis_vars([x*y,x^3-y^2])
+-1 gbasis
 
 # gbasis_max_pairs
 1 Reglage expert de gbasis: nombre maximal de S-paires reduites simultanement au cours de l'algorithme F4 (par defaut 32768, utiliser 0 pour ne pas le limiter). A diminuer si la memoire manque.
