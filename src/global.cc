@@ -3902,7 +3902,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   void ctrl_c_signal_handler(int signum){
     ctrl_c=true;
 #if !defined KHICAS && !defined SDL_KHICAS && !defined NSPIRE_NEWLIB && !defined WIN32 && !defined BESTA_OS && !defined NSPIRE && !defined FXCG && !defined POCKETCAS && !defined __MINGW_H
-    if (child_id)
+    if (child_id && child_id != 1)
       kill(child_id,SIGINT);
 #endif
 #if defined HAVE_SIGNAL_H && !defined HAVE_NO_SIGNAL_H
