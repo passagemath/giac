@@ -519,7 +519,7 @@ AC_ARG_ENABLE([gettext],
 
 if test "$CONFIG_GETTEXT" = "yes"; then 
    AC_CHECK_LIB(intl, main) 
-   AM_GNU_GETTEXT
+   dnl AM_GNU_GETTEXT
    AM_GNU_GETTEXT_VERSION([0.14.5])
    fi
 dnl for Slowlaris comment next line
