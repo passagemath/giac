@@ -150,6 +150,7 @@
       border-color: magenta;
     }
   </style>
+  <script type="text/javascript" src="qrcode.js"></script>
   <script>
       // Redirect to HTTPS page if not testing locally
       if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -371,6 +372,9 @@
   <table>
     <tr>
       <td>
+	Taille QRcode  :<input class="bouton" type="number" name="qrcode_size" title="Nombre de pixels de la zone d'affichage du QR code de session" value=354>
+        Type : <input class="bouton" type="number" name="qrcode_type" title="Type de QR code. 0: Xcas web, 1: calculatrice, 2: XcasJS" value=0>
+        <br>
         E-mail personnel <input class="bouton" type="text" name="from"
                                 title="Indiquez ici votre adresse e-mail" value="">
         correspondant <input class="bouton" type="text" name="to"
@@ -484,6 +488,7 @@
         <button id="exportbutton" class="bouton" title="Cliquer ici pour exporter pour calculatrices (Casio Graph 35eii&90, Numworks ou TI Nspire CX, &agrave; configurer dans les pr&eacute;f&eacute;rences) avec le nom de fichier du champ texte qui pr&eacute;c&egrave;de. Utilisez .py comme extension pour concatener tous les niveaux en un unique script." onclick='UI.savesession(1);'>Export</button>
   </span>
 <span id="historyload" style="display:none">
+  <button class="bouton" onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure); ">D&eacute;tecter</button>
   <button id="numworks_load" class="bouton" title="Cliquer ici pour charger un script depuis une calculatrice Numworks" onclick="UI.numworks_load()">Numworks→</button>
 <button id="loadbutton_cookie" class="bouton" title="Cliquer ici pour charger une session sauvegard&eacute;e" onclick="$id('loadfile_cookie').innerHTML=UI.listCookies();">Charge</button>
 </span>
@@ -3765,6 +3770,11 @@ Pour avoir des informations pendant le d&eacute;roulement des calculs, tapez la 
   <button class="bouton" title="Diminuer le nombre de lignes" onclick="var field=$id('output');var s=field.style.maxHeight; s=s.substr(0,s.length-2);s=Math.max(eval(s)-20,40) ;s=s+'px';field.style.maxHeight =s ;">-</button>
 </div>
 <div id="output" style="max-height: 200px; overflow:auto"></div>
+<div id="qrcode" style="margin-top:15px; margin-left: 30px;">
+  Xcas pour navigateur, (c) 2024 B. Parisse et al
+  (<a href="https://davidshimjs.github.io/qrcodejs/" target="_blank">QRcode</a>, <a href="https://kazuhikoarase.github.io/" target="_blank">for JavaScript (c) 2009 Kazuhiko Aras </a>).
+</div>
+<textarea id="qrtxt" rows=2 cols=80 onkeypress="if (event.keyCode!=13) return true; UI.makeqr(value); return false;">texte du QRcode</textarea>
 <div id="table_3d" style="display:none">
   <hr>
   <table border="0" align="left" summary="">
@@ -3969,9 +3979,10 @@ Pour avoir des informations pendant le d&eacute;roulement des calculs, tapez la 
       webAssemblyAvailable =!!window.WebAssembly;
     } */
     if (webAssemblyAvailable) {
+        var form = $id('config');
+	form.wasm_mode.checked = 1;
         var ck = UI.readCookie('xcas_wasm');
         if (ck) {
-            var form = $id('config');
             form.wasm_mode.checked = (ck == '1');
             webAssemblyAvailable = form.wasm_mode.checked;
         }
@@ -4058,7 +4069,7 @@ Pour avoir des informations pendant le d&eacute;roulement des calculs, tapez la 
         //console.log(window.location.href);
         var mobile = UI.detectmob();
         if (mobile) {
-            $id('historyload').style.display = 'none';
+            $id('historyload').style.display = 'inline';
             $id('loadbutton_cookie').style.display = 'inline';
             $id('loadbutton_file').style.display = 'none';
             $id('bouton_js').style.display = 'none';
@@ -4105,6 +4116,10 @@ Pour avoir des informations pendant le d&eacute;roulement des calculs, tapez la 
         }
         ck = UI.readCookie('xcas_digits');
         if (ck) form.digits_mode.value = eval(ck);
+        ck = UI.readCookie('xcas_qrcode_size');
+        if (ck) form.qrcode_size.value = eval(ck);
+        ck = UI.readCookie('xcas_qrcode_type');
+        if (ck) form.qrcode_type.value = eval(ck);
         ck = UI.readCookie('xcas_angle_radian');
         if (ck) form.angle_mode.checked = (ck == '1');
         ck = UI.readCookie('xcas_warnpy');

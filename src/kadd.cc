@@ -1,6 +1,6 @@
 #include "config.h"
 #include "giacPCH.h"
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
 #include "kdisplay.h"
 #include <string.h>
 #include <stdio.h>
@@ -105,6 +105,7 @@ const int C20=20;
 unsigned short mmind_col[]={COLOR_BLUE,COLOR_RED,COLOR_MAGENTA,COLOR_GREEN,COLOR_CYAN,COLOR_YELLOW};
 #endif
 
+#ifndef NUMWORKS_SLOTB
 void mastermind_disp(const vector<int> & solution,const vector< vector<int> > & essais,const vector<int> & essai,bool fulldisp,GIAC_CONTEXT){
   int x0=C20*3/2,y0=C20/2;
   if (fulldisp)
@@ -223,7 +224,7 @@ int do_mastermind(GIAC_CONTEXT){
       if (essai.size()==4){
         if (essai==solution){
           char buf[16]; giac::sprint_int(buf,essais.size());
-          confirm(lang==1?"Solution found! Tries:":"Vous avez trouve. Essais:",buf);
+          confirm(lang!=1?"Solution found! Tries:":"Vous avez trouve. Essais:",buf);
           return i;
         }
         fulldisp=true;
@@ -233,7 +234,7 @@ int do_mastermind(GIAC_CONTEXT){
           mastermind_disp(solution,essais,essai,true,contextptr);
           for (int i=0;i<solution.size();++i)
             draw_filled_circle(30+C20*i+C20/2,190+C20,C20/2,mmind_col[solution[i]],true,true,contextptr);
-          confirm(lang==1?"Game over!":"Vous avez perdu.",lang==1?"Solution was":"La solution etait",false,140);
+          confirm(lang!=1?"Game over!":"Vous avez perdu.",lang!=1?"Solution was":"La solution etait",false,140);
           return -1;
         }
       }
@@ -246,7 +247,6 @@ int do_mastermind(GIAC_CONTEXT){
   }
   return 0;
 }
-
 #ifdef HP39
 int mastermind(GIAC_CONTEXT){
   int k=khicas_1bpp;
@@ -262,11 +262,14 @@ int mastermind(GIAC_CONTEXT){
 }
 #endif
 
+#endif // NUMWORKS_SLOTB
+
+
 // Newton iteration for polynomial
 // with simult Horner evaluation of p and p' at x
-complex<double> horner_newton(const vector<std::complex<double>> & p,const std::complex<double> &x){
+complex<double> horner_newton(const vector<std::complex<double> > & p,const std::complex<double> &x){
   complex<double> num,den;
-  vector<std::complex<double>>::const_iterator it=p.begin(),itend=p.end();
+  vector<std::complex<double> >::const_iterator it=p.begin(),itend=p.end();
   int n=itend-it-1; 
   for (;n;--n,++it){
     num *= x;
@@ -306,7 +309,7 @@ int do_fractale(GIAC_CONTEXT){
 #endif
     Nmax=16,Nmaxmin=5,Nmaxmax=50;
   bool mandel=do_confirm("EXE: Mandelbrot, Back: bassins racines");
-  vecteur P; vector<complex<double>> p,Z;
+  vecteur P; vector<complex<double> > p,Z;
   double np=0; complex<double> na;
   // if the polynomial is x^np+a=0
   // Newton iteration is x-(x^n+a)/(n*x^(n-1))=((n-1)*x-a)/(n*x^(n-1))
@@ -515,6 +518,10 @@ int fractale(GIAC_CONTEXT){
 }
 #else
 int fractale(GIAC_CONTEXT){
+#if defined NUMWORKS_SLOTB && !defined NUMWORKS_SLOTBFR && !defined NUMWORKS_SLOTBEN
+  do_confirm("Not available in short version");
+  return 0;
+#endif
   return do_fractale(contextptr);
 }
 #endif
@@ -684,9 +691,15 @@ int khicas_addins_menu(GIAC_CONTEXT){
   smallmenuitems[3].text = (char*)((lang==1)?"Pret":"Mortgage");
   smallmenuitems[4].text = (char*)((lang==1)?"Epargne":"TVM");
   smallmenuitems[5].text = (char*)((lang==1)?"Table caracteres":"Char table");
+#ifdef NUMWORKS_SLOTB
+  smallmenuitems[6].text = (char*)"Not in short version";
+  smallmenuitems[7].text = (char*)"Not in short version";
+  smallmenuitems[8].text = (char*)"Not in short version";
+#else
   smallmenuitems[6].text = (char*)((lang==1)?"Exemple simple: Syracuse":"Simple example; Syracuse");
   smallmenuitems[7].text = (char*)((lang==1)?"Exemple de jeu: Mastermind":"Game example: Mastermind");
   smallmenuitems[8].text = (char*)((lang==1)?"Exemples de fractales":"Fractals examples");
+#endif
   // smallmenuitems[8].text = (char*)"Mon application"; // adjust numitem !
   // smallmenuitems[9].text = (char*)"Autre application";
   // smallmenuitems[10].text = (char*)"Encore une autre";
@@ -769,6 +782,7 @@ int khicas_addins_menu(GIAC_CONTEXT){
 	}
 	break;
       }
+#ifndef NUMWORKS_SLOTB
       if (smallmenu.selection==7){
 	// Exemple simple d'application tierce: la suite de Syracuse
 	// on entre la valeur de u0
@@ -802,6 +816,7 @@ int khicas_addins_menu(GIAC_CONTEXT){
       if (smallmenu.selection==9){
         fractale(contextptr);
       }
+#endif
     } // end sres==menu_selection
     Console_Disp(1,contextptr);
     break;
@@ -815,6 +830,10 @@ int khicas_addins_menu(GIAC_CONTEXT){
 #ifdef NUMWORKS
 
 void flash_info(const char * buf,std::vector<fileinfo_t> &v,size_t & first_modif,bool modif,int initpos,GIAC_CONTEXT){
+  if (v.empty()){
+    do_confirm(lang==1?"Pas de fichier.":"No file found");
+    return;
+  }
   Menu smallmenu;
   smallmenu.numitems=v.size();
   MenuItem smallmenuitems[smallmenu.numitems];
@@ -862,10 +881,6 @@ void flash_info(const char * buf,std::vector<fileinfo_t> &v,size_t & first_modif
     if (sres == MENU_RETURN_SELECTION  || sres==KEY_CTRL_EXE) {
       if (modif){
 	flash_synchronize(buf,v,&first_modif);
-#if defined NUMWORKS && !defined DEVICE
-	// debug
-	file_savetar("file.tar",(char *)buf,tar_totalsize(buf,0));
-#endif
 	break;
       }
       string msg1=vs[i];
@@ -892,7 +907,7 @@ void flash_info(const char * buf,std::vector<fileinfo_t> &v,size_t & first_modif
     }
     if (sres==KEY_CHAR_ANS){
       if (i>=0 && i<v.size()){
-	if (modif && i>10){
+	if (modif && (v[0].filename!="KhiCAS" || i>10)){
 	  smallmenuitems[i].value=!smallmenuitems[i].value;
 	  int m=v[i].mode;
 	  if (smallmenuitems[i].value)
@@ -926,26 +941,36 @@ void flash_info(const char * buf,size_t & first_modif,bool modif,GIAC_CONTEXT){
   flash_info(buf,v,first_modif,modif,initpos,contextptr);
 }
 
+extern "C" int filesize(const char *);
 // copy text file from ram scriptstore
-int flash_from_ram(const char * buf,size_t & first_modif,GIAC_CONTEXT){
+int flash_from_ram(const char * buf,const char * ext,size_t & first_modif,GIAC_CONTEXT){
   char filename[MAX_FILENAME_SIZE+1];
-  int n=giac_filebrowser(filename,"py",(lang==1?"Choisir fichier a copier":"Select file to copy"),0);
+  int n=giac_filebrowser(filename,ext,(lang==1?"Choisir fichier a copier":"Select file to copy"),0);
   if (n==0) return 0;
   const char * data=read_file(filename);
-  n=flash_adddata(buf,filename,data,strlen(data),0);
+#ifdef DEVICE
+  int l=strlen(data);
+#else
+  int l=filesize(filename);
+#endif
+  if (l)
+    n=flash_adddata(buf,filename,data,l,0);
   return n;
 }
 
 void handle_flash(GIAC_CONTEXT){
-  const char flash_fr[]="Cette application, disponible hors mode examen, permet de sauvegarder et gerer des scripts en memoire flash. Elle a besoin de 70K de memoire RAM, lancez-la tout de suite apres avoir ouvert KhiCAS.\nPour eviter une usure trop rapide de la flash, il est conseille de l'utiliser le moins souvent possible et de ne pas vider la corbeille avant que cela ne soit necessaire (ainsi les nouveaux fichiers s'ecriront sur d'autres secteurs).\nL'auteur decline toute responsabilite en cas d'usure prematuree de votre memoire flash.";
-  const char flash_en[]="This app (not available if exam mode is on) lets you save and handle scripts in flash memory. It requires 70K of free RAM, you should run it immediatly after launching KhiCAS.\nIn order to avoid premature wear of your flash, run this app only when required. Don't empty the trash unless it's necessary (that way new files will be written in other sectors).\nThe author declines all responsability in the event of premature wear of your flash memory.";
+#if 0 // def NUMWORKS_SLOTB
+  return ; // disabled to save roomX
+#endif
+  const char flash_fr[]="Application de sauvegarde et gestion des scripts en memoire flash. Necessite 70K de memoire libre (a lancer tout de suite apres avoir ouvert KhiCAS). Attention a l'usure de la flash: utiliser avec parcimonie! Ne pas vider la corbeille avant que cela ne soit necessaire (ainsi les nouveaux fichiers s'ecriront sur d'autres secteurs). L'auteur decline toute responsabilite en cas d'usure prematuree de votre memoire flash.";
+  const char flash_en[]="This app lets you save and handle scripts in flash memory. Requires 70K of free RAM (run it immediatly after launching KhiCAS). In order to avoid premature wear of your flash, run this app only when required. Don't empty the trash unless it's necessary (that way new files will be written in other sectors). The author declines all responsability in the event of premature wear of your flash memory.";
   textArea text;
   text.editable=false;
   text.clipline=-1;
   text.title =(lang==1)?"EXIT: annuler, EXE: ok":"EXIT: cancel, EXE: run";
   add(&text,(lang==1)?flash_fr:flash_en);
   int key=doTextArea(&text,contextptr);
-  if (key!=1
+  if ( (key!=1 && key!=KEY_CTRL_EXE && key!=KEY_CTRL_OK)
 #ifdef DEVICE
       || inexammode()
 #endif
@@ -957,22 +982,31 @@ void handle_flash(GIAC_CONTEXT){
     confirm(lang==1?"Pas assez de memoire RAM.":"RAM Memory full",lang==1?"Purgez et relancez KhiCAS":"Purge and restart KhiCAS");    
     return;
   }
-#ifndef NUMWORKS
+#ifndef DEVICE
   char * freeptr=0;
   const char * flash_buf=file_gettar_aligned("apps.tar",freeptr);
 #endif
+  // skip user apps
+  while (numworks_maxtarsize>0 && (
+                                   ((unsigned char) *flash_buf)==0xba ||
+                                   ((unsigned char) flash_buf[1])==0xbe)
+         ){
+    flash_buf += 0x10000;
+    numworks_maxtarsize -= 0x10000;
+  }
   Menu smallmenu;
-  smallmenu.numitems=5;
+  smallmenu.numitems=6;
   MenuItem smallmenuitems[smallmenu.numitems];
   smallmenu.items=smallmenuitems;
   smallmenu.height=12;
   smallmenu.scrollbar=1;
   smallmenu.scrollout=1;
   smallmenuitems[0].text = (char*)(lang==1?"Informations flash":"Flash informations");
-  smallmenuitems[1].text = (char*)(lang==1?"Copier RAM->flash":"Copy RAM->flash");
-  smallmenuitems[2].text = (char*)(lang==1?"Modifier infos fichiers":"Modify file infos");
-  smallmenuitems[3].text = (char*)(lang==1?"Vider la corbeille":"Empty trash");
-  smallmenuitems[4].text = (char*)(lang==1?"Quitter":"Leave");
+  smallmenuitems[1].text = (char*)(lang==1?"KhiCAS RAM->flash":"KhiCAS RAM->flash");
+  smallmenuitems[2].text = (char*)(lang==1?"Python RAM->flash":"Python RAM->flash");
+  smallmenuitems[3].text = (char*)(lang==1?"Modifier infos fichiers":"Modify file infos");
+  smallmenuitems[4].text = (char*)(lang==1?"Vider la corbeille":"Empty trash");
+  smallmenuitems[5].text = (char*)(lang==1?"Quitter":"Leave");
   while (1){
     size_t first_modif=tar_totalsize(flash_buf,numworks_maxtarsize);
     string title=(lang==1?"Flash libre ":"Free flash ");
@@ -981,17 +1015,25 @@ void handle_flash(GIAC_CONTEXT){
     smallmenu.selection = 1;
     int sres = doMenu(&smallmenu);
     if (sres==MENU_RETURN_EXIT){
-      break;
+#if defined NUMWORKS && !defined DEVICE
+      if (do_confirm(lang==1?"Quitter sans synchroniser?":"Leave without synchronization"))
+#endif
+        break;
     } 
     if (sres == MENU_RETURN_SELECTION  || sres==KEY_CTRL_EXE) {
-      if (smallmenu.selection == smallmenu.numitems)
+      if (smallmenu.selection == smallmenu.numitems){
+#if defined NUMWORKS && !defined DEVICE
+        if (do_confirm(lang==1?"Synchroniser apps.tar?":"Synchronize apps.tar?"))
+          file_savetar("apps.tar",(char *)flash_buf,tar_totalsize(flash_buf,0));
+#endif
 	break;
+      }
       if (smallmenu.selection == 1){
 	flash_info(flash_buf,first_modif,false,contextptr); // info only, no erase
 	continue;
       }
-      if (smallmenu.selection == 2){
-	if (flash_from_ram(flash_buf,first_modif,contextptr)){
+      if (smallmenu.selection==2 || smallmenu.selection==3){
+	if (flash_from_ram(flash_buf,smallmenu.selection==3?"py":"xw",first_modif,contextptr)){
 	  // uncheck files having the same filename
 	  std::vector<fileinfo_t> v=tar_fileinfo(flash_buf,0);
 	  int n=v.size();
@@ -1013,11 +1055,11 @@ void handle_flash(GIAC_CONTEXT){
 	}
 	continue;
       }
-      if (smallmenu.selection == 3){
+      if (smallmenu.selection == 4){
 	flash_info(flash_buf,first_modif,true,contextptr); // erase files
 	continue;
       }
-      if (smallmenu.selection==4){
+      if (smallmenu.selection==5){
 	if (numworks_maxtarsize-first_modif>65536 && do_confirm(lang==1?"Il reste de la place, etes-vous sur?":"There's still room, are you sure?"))
 	  flash_emptytrash(flash_buf,&first_modif);
       }
@@ -1980,8 +2022,9 @@ giac::gen sheet(GIAC_CONTEXT){
     case KEY_CTRL_R:
       copy_right(t,contextptr);
       continue;
+    case KEY_CTRL_CATALOG:
 #endif
-    case KEY_CTRL_CATALOG: case KEY_BOOK: case '\t':
+    case KEY_BOOK: case '\t':
       {
 	if (t.cmd_pos>=0)
 	  sheet_help_insert(t,0,contextptr);
@@ -1991,7 +2034,7 @@ giac::gen sheet(GIAC_CONTEXT){
     if ( (key >= KEY_CTRL_F1 && key <= KEY_CTRL_F6) ||
 	  (key >= KEY_CTRL_F7 && key <= KEY_CTRL_F14) 
 	 ){
-      const char tmenu[]= "F1 stat1d\nsum(\nmean(\nstddev(\nmedian(\nhistogram(\nbarplot(\nboxwhisker(\nF2 stat2d\nlinear_regression_plot(\nlogarithmic_regression_plot(\nexponential_regression_plot(\npower_regression_plot(\npolynomial_regression_plot(\nsin_regression_plot(\nscatterplot(\npolygonscatterplot(\nF3 seq\nrange(\nseq(\ntableseq(\nplotseq(\ntablefunc(\nrandvector(\nrandmatrix(\nF4 edt\n$\n:\nedit_cell\nundo\ncopy_down\ncopy_right\ninsert_row\ninsert_col\nF6 graph\nreserved\nF= poly\nproot(\npcoeff(\nquo(\nrem(\ngcd(\negcd(\nresultant(\nGF(\nF: arit\n mod \nirem(\nifactor(\ngcd(\nisprime(\nnextprime(\npowmod(\niegcd(\nF8 list\nmakelist(\nrange(\nseq(\nlen(\nappend(\nranv(\nsort(\napply(\nF; plot\nplot(\nplotseq(\nplotlist(\nplotparam(\nplotpolar(\nplotfield(\nhistogram(\nbarplot(\nF7 real\nexact(\napprox(\nfloor(\nceil(\nround(\nsign(\nmax(\nmin(\nF< prog\n:\n&\n#\nhexprint(\nbinprint(\nf(x):=\ndebug(\npython(\nF> cplx\nabs(\narg(\nre(\nim(\nconj(\ncsolve(\ncfactor(\ncpartfrac(\nF= misc\n!\nrand(\nbinomial(\nnormald(\nexponentiald(\n\\\n % \n\n";
+      const char tmenu[]= "F1 stat1d\nsum(\nmean(\nstddev(\nmedian(\nhistogram(\nbarplot(\nboxwhisker(\nF2 stat2d\nlinear_regression_plot(\nlogarithmic_regression_plot(\nexponential_regression_plot(\npower_regression_plot(\npolynomial_regression_plot(\nsin_regression_plot(\nscatterplot(\npolygonscatterplot(\nF3 seq\nrange(\nseq(\ntableseq(\nplotseq(\ntablefunc(\nrandvector(\nrandmatrix(\nF4 edt\n$\n:\nedit_cell\nundo\ncopy_down\ncopy_right\ninsert_row\ninsert_col\nF6 graph\nreserved\nF= poly\nproot(\npcoeff(\nquo(\nrem(\ngcd(\negcd(\nresultant(\nGF(\nF: arit\nF9 mod \nirem(\nifactor(\ngcd(\nisprime(\nnextprime(\npowmod(\niegcd(\nF8 list\nmakelist(\nrange(\nseq(\nlen(\nappend(\nranv(\nsort(\napply(\nF; plot\nplot(\nplotseq(\nplotlist(\nplotparam(\nplotpolar(\nplotfield(\nhistogram(\nbarplot(\nF7 real\nexact(\napprox(\nfloor(\nceil(\nround(\nsign(\nmax(\nmin(\nF< prog\n:\n&\n#\nhexprint(\nbinprint(\nf(x):=\ndebug(\npython(\nF> cplx\nabs(\narg(\nre(\nim(\nconj(\ncsolve(\ncfactor(\ncpartfrac(\nF= misc\n!\nrand(\nbinomial(\nnormald(\nexponentiald(\n\\\n % \n\n";
       const char * s=console_menu(key,(char *)tmenu,0);
       if (s && strlen(s)){
 	if (strcmp(s,"undo")==0){
@@ -2118,11 +2161,12 @@ int geoapp(GIAC_CONTEXT){
       text->filename=fign[0];
     }
     else {
-      const char * tab[figs.size()+3]={0};
+      const char * tab[figs.size()+3];
       for (int i=0;i<figs.size();++i)
 	tab[i]=fign[i].c_str();
       tab[figs.size()]=lang==1?"Nouvelle figure 2d":"New 2d figure";
       tab[figs.size()+1]=lang==1?"Nouvelle figure 3d":"New 3d figure";
+      tab[figs.size()+2]=0;
       int s=select_item(tab,lang==1?"Choisir figure":"Choose figure",true);
       if (s>=0 && s<sizeof(tab)/sizeof(char *) && tab[s]){
 	text->elements.clear();

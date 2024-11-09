@@ -20,7 +20,7 @@
  while l<>{} do
  i:=l[1];
  o:={i};a:=(3*i) mod n;
- while a<>i do o:=o union {a};a:= (3*a) mod n; od;
+ while a<>i do o:=o union {a};  a:= (3*a) mod n; od;
  l:= (l minus o); liste:=[op(liste),o]; 
  od;
  fi;

@@ -59,6 +59,7 @@
   <a class="w3-bar-item w3-button"
   onclick="document.getElementById('top').scrollIntoView()">↑</a>
   <a class="w3-bar-item w3-button" href="#python" >Python</a>
+  <a class="w3-bar-item w3-button" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html" >Doc</a>
   <a class="w3-bar-item w3-button" href="#install" >Install</a>
   <a class="w3-bar-item w3-button w3-hide-small" href="#report" >Rapport</a>
   <a class="w3-bar-item w3-button" href="#exam" >Examen</a>
@@ -82,26 +83,48 @@
 <div class="w3-margin-left">
   <b class="w3-xlarge">KhiCAS/XCAS</b>
   <br>
-  <i class="w3-large">Kit de connection Numworks non verrouillée</i>
+  <i class="w3-large">Kit de connection Numworks</i>
   
 </div>
 </div>
 <br>
 <div id="divcontent" class="w3-container w3-section w3-padding-large w3-light-gray" style="margin:30px;">
 <div class="w3-panel w3-margin w3-lime" uk-alert>
-  <em>Attention, ne faites pas de mise &agrave; jour depuis le site de
-    Numworks! </em><a class="w3-bar-item interface" onclick="let field=$id('update'); if (field.style.display=='block')
-    field.style.display='none'; else field.style.display='block'">cliquer ici pour +
+  <em>Attention, ne faites pas de mise &agrave; jour d'une N0110 ancienne 
+    depuis le site de Numworks! </em><a class="w3-bar-item interface" onclick="let field=$id('update'); if (field.style.display=='block')
+    field.style.display='none'; else field.style.display='block'">cliquez ici pour +
     d'infos</a>
   <div id='update' style="display:none">
-    Toute mise &agrave; jour sur le site de Numworks verrouille
-    votre calculatrice et la rend incompatible avec Xcas.
-    Grace aux efforts de la communaut&eacute;,
-    il est souvent possible  de revenir en arri&egrave;re en
-    utilisant une faille du verrouillage mis en place par Numworks,
-    rendez-vous <a class="w3-link" href="https://tiplanet.org/forum/viewtopic.php?f=113&t=25784">ici</a>.
+    Attention, ceci ne concerne pas les modèles N0115 et N0120 
+    (le nom de modèle
+    est visible au dos de la calculatrice ou depuis l'application Paramètres).
     <br>
-    Depuis le 3 avril 2022, l'installation de Khi+KhiCAS depuis ce site
+    Les Numworks de numéro de modèle N0110 étaient vendues d'origine avec 
+    de très larges possibilités pour l'utilisateur d'installer des extensions
+    logicielles créées par des auteurs indépendants de Numworks. 
+    Mais en 2021, Numworks a décidé de verrouiller ses calculatrices
+    pour pouvoir mieux se vendre à l'étranger.
+    Depuis l'été 2021, toute mise &agrave; jour sur le site de Numworks 
+    verrouille votre calculatrice N0110 et la rend incompatible avec Xcas 
+    en mode examen.
+    Si vous avez fait une mise à jour vers une version d'Epsilon 
+    supérieure ou égale à 16, votre calculatrice est verrouillée,
+    en principe de manière irréversible.
+    Grâce aux efforts de la communaut&eacute;,
+    il est parfois possible de revenir en arri&egrave;re sur les N0110 en
+    utilisant une faille du verrouillage mis en place par Numworks,
+    rendez-vous <a class="w3-link" href="https://tiplanet.org/forum/viewtopic.php?f=113&t=25784">ici</a>
+    <b>Attention, cela ne fonctionne pas sur les N0115 et N0120</b> 
+    <br>
+    Si votre calculatrice N0110 est verrouillée ou est 
+    une N0115 ou N0120, vous pouvez quand même
+    installer une version de KhiCAS depuis la section 
+    <a href="#install">installation</a> ci-dessous.
+    Mais l'application sera désactivée à chaque reset
+    et ne fonctionnera pas en mode examen.
+    <br>
+    Depuis le 3 avril 2022, l'installation de Khi+KhiCAS sur N0110 
+    non verrouillée depuis ce site
     prot&egrave;ge contre une tentative de verrouillage par
     liaison cable USB. Pour acc&eacute;der &agrave; la flash de la
     calculatrice, il faut avoir activ&eacute; le secteur d'amorcage.
@@ -111,14 +134,6 @@
       comme celui-ci</b>. Si vous faites reset+4 ou reset+6 depuis
     le site de Numworks, vous risquez de verrouiller votre
     calculatrice.
-    <br>
-    Si votre calculatrice est verrouillée, vous pouvez quand même
-    installer une version dégradée de KhiCAS, rendez-vous sur la page 
-    <a href="https://www.nwagyu.com/apps">Nwagyu!</a>
-    Mais l'application ne peut pas charger/sauvegarder/échanger
-    de sessions ni de scripts et est désactivée en cas de reset
-    et ne fonctionne
-    pas en mode examen.
   </div>
   <div><b>Si cette page ne fonctionne pas normalement,
     <a class="w3-link" href="https://fr.wikipedia.org/wiki/Aide:Purge_du_cache_du_navigateur" target="_blank">videz le cache du
@@ -126,22 +141,41 @@
   
 </div>
 
-  <h4 class="w3-margin">
-    <a class="w3-bar-item interface"
-  onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">
-  D&eacute;tecter</a> la Numworks.
-  </h4>
-  A faire si les boutons ci-dessous ne fonctionnent pas. Si
-      l'&eacute;cran de votre Numworks N0110 est &eacute;teint,
-consultez la section <a href="#rescue">R&eacute;cup&eacute;ration</a>.
-Si votre calculatrice est
-      verrouill&eacute;ee, rendez-vous <a href="https://phi.getomega.dev/">ici</a> pour la
-      d&eacute;verrouiller, puis installez <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,2);">Khi slot 1</a>.
-      
+  <b>&#128712; Branchez la calculatrice sur l'ordinateur.
+  Si la connexion avec la calculatrice ne fonctionne pas:</b>      
+  <ul>
+    <li>Si l'&eacute;cran de la calculatrice reste &eacute;teint même si vous appuyez sur la touche Power noire:
+      <ul>
+        <li> si votre calculatrice est une N0110 non verrouillée: 
+          consultez la section <a href="#rescue">R&eacute;cup&eacute;ration</a>.
+        <li> autre cas: rendez-vous sur le <a href="https://my.numworks.com/">
+            site de Numworks</a>
+      </ul>
+    <li>
+     si la calculatrice est allumée mais n'affiche pas La calculatrice est connectée, débranchez et rebranchez la calculatrice.
+    </li>
+    <li>
+      si la calculatrice est allumée et affiche La calculatrice est connectée, commencez par         <a class="w3-bar-item interface"
+           onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">
+          D&eacute;tecter</a> votre calculatrice.
+    </li>
+    <li>
+      En cas de probl&egrave;me persistant de connexion, essayez avec dfu-util
+      comme expliqu&eacute; ici dans la section
+      <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec7">Installation manuelle</a>
+      ou avec
+      <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/install_fr">Xcas</a>.
+  </ul>
+  
+  
   <div class="w3-border-bottom"></div>
   <h3 class="w3-margin" id="giac"><a name=python> Scripts Python et Backups</a></h3>
   <div class="w3-margin w3-row">
     <ul>
+      <li>
+        <a class="w3-bar-item interface"
+           onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">
+          D&eacute;tecter</a> la Numworks.
       <li>
         <a class="w3-bar-item interface" id="numworks_load" onclick="UI.numworks_load(false)">Numworks→</a>
         ou
@@ -166,57 +200,123 @@ Si votre calculatrice est
   
 
     <div class="w3-border-bottom"></div>
-    <h3 class="w3-margin" id="install"><a name=install> Installation, mise &agrave; jour, ... pour Numworks N0110.</a></h3>
+    <h3 class="w3-margin" id="install"><a name=install> Installation, mise &agrave; jour, ...</a></h3>
     <ul id="main">
+      <li>  <a class="w3-link"  href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html">Documentation</a>, 
+        <a class="w3-link"
+           href="https://github.com/Yaya-Cout/KhiCAS_guide/blob/626b9786ff19504152628cfa42447c87ab73f648/KhiCAS_guide.pdf">Tutoriel (par fmOOmf et Yaya-Cout)</a>,
+        <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec53">Licences</a>,
+        <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec55">Source</a>.
+      <li> Installation Numworks N0110 verrouillée, N0115/N0120 (calculatrices récentes ou/et mises à jour)
+	<b>version testée avec Epsilon 22.2 et 23</b>
+	<ul>
+	  <li>étape 1:     
+            <a class="w3-bar-item interface"
+               onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">
+              D&eacute;tecter</a> la Numworks.
+          <li> étape 2: installez la version 
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(0,0)">allégée</a> ou
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(1,0)">complète</a>
+	    sur votre calculatrice. <br>
+            Avec la version allégée, vous pouvez installer 
+	    <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(0,1)">les scripts examples</a>. <br>
+	    Sur les N0120,
+            effectuez un RESET de la calculatrice (appuyer avec un trombone
+	    au dos de la calculatrice).<br>
+	  <li> étape 3: si l'étape 2 a échoué (ou si vous voulez faire 
+            une mise à jour de Epsilon), 
+            enfoncez la touche 6 de la calculatrice et 
+            appuyez avec un trombone sur la touche Reset au dos 
+            sans relacher 6, puis relachez la touche 6. 
+            Faites une mise à jour depuis le 
+            <a href="https://my.numworks.com" target="_blank">site de Numworks</a> 
+            puis recommencez l'étape 2.
+          <li> étape 4: si vous n'avez pas d'autres applications 
+            externes installées, vous pouvez installer le
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_slotb(0,-1)">lanceur</a> (<b>compatible avec Epsilon 22 (N0110/N0115/N0120), Epsilon 23 (N0120), mais pas avec Epsilon 23 sur les N0110/N0115</b>)
+          <br> Sinon cliquez sur 
+          <a class="w3-bar-item interface" onclick='UI.download("khicas.nwa","khicas.nwa");window.open("https://my.numworks.com/apps")'>khicas.nwa</a>,
+            <b>fermez cet onglet</b> pour libérer la calculatrice. 
+            puis utilisez le ficher khicas.nwa téléchargé sur la
+            <a href="https://my.numworks.com/apps" target="_blank">page
+              des applications externes Numworks</a>, 
+	  <li> étape 5: vous devriez retrouver KhiCAS dans le menu principal.
+	    <b>Attention, cette version de KhiCAS n'est pas utilisable 
+              en mode examen et est désactivée
+	      en cas de RESET ou de crash. Il faut alors 
+              réinstaller le lanceur (étape 4), conservez cette page
+              dans vos favoris</b>.
+	    Numworks a promis d'améliorer le support des applications externes,
+            dans une prochaine mise à jour il ne devrait plus être nécessaire
+            de réinstaller le lanceur après un crash. Mais il n'y
+            a pas d'avancée sur la possibilité d'utiliser KhiCAS
+            en mode examen en France, alors que le calcul formel
+            est autorisé (au bac par exemple).
+            Si vous aussi vous souhaitez
+	    pouvoir utiliser le calcul formel en mode examen comme 
+            vos camarades équipés de modèles haut
+	    de gamme (TI Nspire CX2, HP Prime) ou qui ont la chance de 
+            posséder une Numworks N0110 non verrouillée,
+            faites-le savoir! 
+            <b>Il n'est pas normal que des élèves soient
+	      défavorisés en examen/concours parce qu'ils ont un 
+              modèle de calculatrice moins cher!</b>
+	</ul>
       <li> 
-        Installation :
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,4)">multi-boot</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta();">
-          Khi+KhiCAS (19.0.27, 03/11/2022)</a> : <a class="w3-link"
-          href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html">Documentation</a>,
-          <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec45">Licences</a>,
-          <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec47">Source</a>.
-      </li>
+        Installation Numworks N0110 non verrouillée (calculatrice ancienne qui n'a pas été mise à jour):
+        <ul>
+          <li><a class="w3-bar-item interface"
+                 onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure)">
+              D&eacute;tecter</a> la Numworks.
+          <li>
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,4)">multi-boot</a>,
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_delta();">
+              Khi+KhiCAS (19.0.99, 07/07/2024)</a>
+          </li>
+          <li>
+            Mise &agrave; jour (tapez Power ln sur la calculatrice)
+            <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(0);">KhiCAS stable</a>,
+            <!--- <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(1);">KhiCAS alpha</a>, --->
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,1);">Khi slot 1</a>,
+            <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,5)">Khi slot 2</a>. 
+            <br> Version en cours de tests (non certifiée),
+<a href="khialpha.zip">khialpha.zip</a>.
+          </li>
+          <li> Pour passer du slot 1 au slot 2 faire reset-1 ou 2 ou
+            Power ln OK Back 1 ou 2. Le
+            slot 2 lance KhiCAS avec plus de m&eacute;moire.
+          </li>
+        </ul>
       <li>
-        Mise &agrave; jour (tapez Power ln sur la calculatrice)
-        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(0);">KhiCAS stable</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive(1);">KhiCAS alpha</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,1);">Khi slot 1</a>,
-        <a class="w3-bar-item interface" onclick="UI.numworks_install_delta(0,5)">Khi slot 2</a>
-      </li>
-      <li> Pour passer du slot 1 au slot 2 faire reset-1 ou 2 ou
-      Power ln OK Back 1 ou 2. Le
-        slot 2 lance KhiCAS avec plus de m&eacute;moire.
-      </li>
-      <li>
-        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive('nwsflash.tar',0)">Archiver la
-          flash </a>de la Numworks
+        <a class="w3-bar-item interface" onclick="UI.numworks_getarchive('nwsflash.tar',0)">
+          Archiver la flash </a>de la Numworks
       </li>
       <li>
         <a class="w3-bar-item interface" onclick="if (confirm(UI.langue==-1?'Veuillez confirmer que l\'installation de cette archive personnalisee est sous votre responsabilite.':'Please confirm that installing a custom archive is under your responsability.')) $id('persoinit').style.display='inline'">Flash
-        personnalis&eacute;e</a> (<a class="w3-bar-item interface" onclick="UI.numworks_install_delta(1,1);">Khi</a> doit etre
-        install&eacute;)
+          personnalis&eacute;e</a> 
         <br>
         <span id="persoinit" style="display:none"> Initialiser depuis la
           <a class="w3-bar-item interface" onclick="UI.numworks_gettar(1)">calculatrice→</a>
           ou
-          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(0)">KhiCAS</a>
+          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(-2)">exemples de scripts (tous modèles sauf N0110 non verrouillées)</a>
           ou
-          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(-1)">KhiCAS alpha</a>
+          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(0)">KhiCAS (N0110 non verrouillée)</a>
+          <!--- ou
+          <a class="w3-bar-item interface" onclick="UI.numworks_gettar(-1)">KhiCAS alpha (N0110 non verrouillée)</a>--->
           ou
           <input id="loadtarinput" class="w3-input-2" accept=".tar" type="file"
-            title="Cliquer ici pour charger un fichier archive (.tar)"
-            onchange="UI.file_gettar((this.files)[0]); $id('perso').style.display='inline';">
+                 title="Cliquer ici pour charger un fichier archive (.tar)"
+                 onchange="UI.file_gettar((this.files)[0]); $id('perso').style.display='inline';">
           <!-- <button
-onclick="UI.file_gettar(($id('loadtarinput').files)[0]);$id('perso').style.display='inline';">sauvegarde tar</button>-->
+               onclick="UI.file_gettar(($id('loadtarinput').files)[0]);$id('perso').style.display='inline';">sauvegarde tar</button>-->
           ou <a class="w3-bar-item interface" onclick="UI.tar_clear(UI.numworks_buffer)">Effacer</a>
           <br>
           <span id="perso" style="display:none">
             Ajouter des fichiers:
             <input class="w3-input-2" id="addtarinput" type="file" title="Cliquer ici pour ajouter un fichier"
-              onchange="UI.tar_addfile((this.files)[0]);">
+                   onchange="UI.tar_addfile((this.files)[0]);">
             <!--    <button
-onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
+                    onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
             <hr>
             <div id="listtarfiles">
             </div>
@@ -224,21 +324,22 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
             <a class="w3-bar-item interface" onclick="UI.numworks_sendtar();">Installer</a> ou
             <a class="w3-bar-item interface" onclick="UI.file_savetar(UI.numworks_buffer,'myapps.tar')">sauvegarder</a> la
             personnalisation.
-
+            
           </span>
         </span>
       </li>
     </ul>
-
+        
     <div class="w3-border-bottom"></div>
     <h3 class="w3-margin" id="report">Rapport sur l'installation ou la certification <font size='4'><a class="w3-bar-item interface" onclick="$id('output').innerHTML=''">Effacer</a></font></h3>
     <div class="w3-border-bottom"></div>
     <div id="output" style="max-height: 200px; overflow:auto"></div>
     <br>
     <div class="w3-border-bottom"></div>
-    <h3 id="exam" class="w3-margin">Mode examen :</h3>
+    <h3 id="exam" class="w3-margin">Mode examen N0110 non verrouillée:</h3>
     <div class="w3-col-x">
-      Pour certifier que le firmware d'une calculatrice Numworks N0110 est
+      Pour certifier que le firmware d'une calculatrice Numworks N0110 
+      non verrouillée est
         une version non modifi&eacute;e de Khi+KhiCAS, compatible avec la
         r&eacute;glementation francaise du mode examen, cliquez sur le bouton
         <a class="w3-bar-item interface" onclick="UI.numworks_certify(nws_sig,false);">Certification</a><br>
@@ -251,7 +352,7 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
           smartphone-Numworks</a>.
     </div>
     <div class="w3-border-bottom"></div>
-    <h3 class="w3-margin" id="rescue"><strong>Calculatrice bloquée:</strong></h3>
+    <h3 class="w3-margin" id="rescue"><strong>Calculatrice bloquée (N0110 non verrouillée):</strong></h3>
     <div class="w3-col-x">
       -<a class="w3-bar-item interface" onclick="UI.numworks_rescue();">R&eacute;cup&eacute;ration</a> :
           Connectez la calculatrice, appuyez sur la touche 6 de la
@@ -268,30 +369,6 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
           <br>
           -Si la r&eacute;cup&eacute;ration ne fonctionne pas, essayez avec
           Xcas PC. Si vous utilisez Windows, il faut installer un driver pour le STM32 BOOTLOADER, que vous pouvez trouver <a href="https://zadig.akeo.ie">ici</a>.
-    </div>
-    <div class="w3-border-bottom"></div>
-    <div class="w3-panel w3-margin w3-lime" uk-alert>
-      <p><strong>&#128712; Si la connexion avec la calculatrice ne fonctionne pas:</strong> </p>
-      
-    </div>
-    <ul>
-      <li>
-        si la calculatrice est allumée mais n'affiche pas La calculatrice est connectée, débranchez et rebranchez la calculatrice.
-      </li>
-      <li>
-        si la calculatrice est allumée et affiche La calculatrice est connectée, commencez par détecter votre calculatrice (bouton Détecter ci-dessus).
-      </li>
-      <li>
-        Si la calculatrice est connectée mais ne s'allume pas meme apres l'avoir débranchée et rebranchée, cliquez sur le bouton Récupération.
-      </li>
-
-    </ul>
-    <div class="w3-col-x">
-      En cas de probl&egrave;me persistant de connexion, essayez avec dfu-util
-      comme expliqu&eacute; ici dans la section
-      <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html#sec3">Installation manuelle</a>
-      ou avec
-      <a class="w3-link" href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/install_fr">Xcas</a>.
     </div>
 
     <div class="w3-border-bottom"></div>
@@ -323,6 +400,9 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
     <a class="w3-link" href="https://stuk.github.io/jszip/">JSZip</a> pour lire
     des fichiers zip et <a class="w3-link" href="https://github.com/eligrey/FileSaver.js/blob/master/src/FileSaver.js">FileSaver.js</a>
     pour sauvegarder des fichiers.
+    <br>
+    Remerciements à Yaya.Cout pour des discussions éclairantes sur les 
+    informations des firmwares de calculatrices verrouillées.
     <br> Remerciements &agrave; Zexi Ru et Elio Poletti pour le style de la page</b>
   </div>
   
@@ -342,4 +422,5 @@ onclick="UI.tar_addfile(($id('addtarinput').files)[0]);">Ajouter</button> -->
   window.onload = function (e) {
     if (!navigator.usb) alert(UI.langue == -1 ? 'Utilisez un navigateur compatible usb comme Chromium ou Chrome ou Edge' : 'Requires a webusb browser like Chromium or Chrome or Edge');
   }
+  UI.langue=-1;
 </script>

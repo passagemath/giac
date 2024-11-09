@@ -1,8 +1,8 @@
 // -*- mode:C++ ; compile-command: "g++ -I.. -I../include -DHAVE_CONFIG_H -DIN_GIAC -DGIAC_GENERIC_CONSTANTS -fno-strict-aliasing -g -c gen.cc -Wall" -*-
 #include "giacPCH.h"
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
 #include "kdisplay.h"
-#if defined DEVICE && !defined NSPIRE_NEWLIB && !defined N0120
+#if defined DEVICE && !defined NUMWORKS_SLOTAB && !defined NUMWORKS_SLOTB && !defined NSPIRE_NEWLIB 
 size_t stackptr=0x20036000;
 #else
 #if defined x86_64
@@ -67,7 +67,8 @@ using namespace std;
 #include "solve.h"
 #include "csturm.h"
 #include "sparse.h"
-#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS || defined KHICAS
+#include "quater.h"
+#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS || defined KHICAS || defined SDL_KHICAS
 inline bool is_graphe(const giac::gen &g){ return false; }
 #else
 #include "graphtheory.h"
@@ -85,6 +86,7 @@ extern "C" uint32_t mainThreadStack[];
 #endif
 
 #if (defined EMCC || defined EMCC2) && !defined GIAC_GGB
+#include "kdisplay.h"
 
 #if 0 // def EMCC_GLUT
 #include <GL/glut.h>
@@ -1125,7 +1127,11 @@ namespace giac {
 #if 1 // def NSPIRE
       g.__MAPptr = new ref_gen_map;
 #else
+#ifdef CPP11
+    g.__MAPptr = new ref_gen_map(islesscomplexthanf);
+#else      
     g.__MAPptr = new ref_gen_map(ptr_fun(islesscomplexthanf));
+#endif // CPP11
 #endif
 #endif
     g.type=_MAP;
@@ -2001,12 +2007,12 @@ namespace giac {
       if (evaled.type==_VECT && evaled.subtype==_SEQ__VECT){
 	jt=evaled._VECTptr->begin(); jtend=evaled._VECTptr->end();
 	for (;jt!=jtend;++jt){
-	  if ((subtype!=_SET__VECT) || (!equalposcomp(vptr->v,*jt)))
+	  //if ((subtype!=_SET__VECT) || (!equalposcomp(vptr->v,*jt)))
 	    vptr->v.push_back(*jt);
 	}
       }
       else {
-	if ( subtype!=_SET__VECT || (!equalposcomp(vptr->v,evaled)))
+	//if ( subtype!=_SET__VECT || (!equalposcomp(vptr->v,evaled)))
 	  vptr->v.push_back(evaled);
       }
       ++it;
@@ -2019,15 +2025,17 @@ namespace giac {
       if (ansptr->type==_VECT && ansptr->subtype==_SEQ__VECT){
 	jt=ansptr->_VECTptr->begin(); jtend=ansptr->_VECTptr->end();
 	for (;jt!=jtend;++jt){
-	  if ((subtype!=_SET__VECT) || (!equalposcomp(vptr->v,*jt)))
+	  //if ((subtype!=_SET__VECT) || (!equalposcomp(vptr->v,*jt)))
 	    vptr->v.push_back(*jt);
 	}
       }
       else {
-	if ( subtype!=_SET__VECT || (!equalposcomp(vptr->v,*ansptr)))
+	//if ( subtype!=_SET__VECT || (!equalposcomp(vptr->v,*ansptr)))
 	  vptr->v.push_back(*ansptr);
       }
     }
+    if (evaled.type==_VECT && subtype==_SET__VECT)
+      chk_set(*evaled._VECTptr);
     // CERR << "End " << v << " " << w << '\n';
     return true;
   }
@@ -2467,8 +2475,13 @@ namespace giac {
       return gen(accurate_evalf(*g._VECTptr,nbits),g.subtype);
     if (g.type==_SYMB)
       return symbolic(g._SYMBptr->sommet,accurate_evalf(g._SYMBptr->feuille,nbits));
-    if (g.type==_IDNT)
+    if (g.type==_IDNT){
+      if (g==cst_pi)
+	return m_pi(nbits);
+      if (g==cst_euler_gamma)
+	return m_gamma(nbits);
       return g;
+    }
     gen r,i;reim(g,r,i,context0); // only called for numeric values
     if (is_exactly_zero(i))
       return set_precision(r,nbits);
@@ -3406,7 +3419,7 @@ namespace giac {
       reim(f,r,i,contextptr);
       return;
     }
-    if ( (u==at_re) || (u==at_im) || (u==at_abs) || (u==at_surd) || (u==at_NTHROOT) || (u==at_innertln)){
+    if ( (u==at_re) || (u==at_im) || (u==at_abs) || (u==at_surd) || (u==at_NTHROOT) || (u==at_innertln) || (u==at_LambertW && !do_lnabs(contextptr))){
       r=s;
       i=0;
       return;
@@ -4495,6 +4508,13 @@ namespace giac {
   }
 
   gen chkmod(const gen& a,const gen & b){
+#ifndef NO_RTTI
+    if (is_integer(a) && b.type==_USER){
+      if (galois_field * ptr=dynamic_cast<galois_field *>(b._USERptr)){
+        return makemodquoted(a,ptr->p);
+      }
+    }
+#endif
     if  ( (b.type!=_MOD) || ((a.type==_MOD) && (*(a._MODptr+1)==*(b._MODptr+1)) ))
       return a;
     return makemodquoted(a,*(b._MODptr+1));
@@ -4524,7 +4544,7 @@ namespace giac {
     if (is_exactly_zero(b)) 
       return a;
     if (a.type==_DOUBLE_ || a.type==_REAL || a.type==_FLOAT_)
-      return gensizeerr(context0);
+      return gensizeerr(gettext("Mod expects integers not floats. Hint: check that you are in exact mode."));
     gen res=makemodquoted(0,0);
     if ( (b.type==_INT_) || (b.type==_ZINT) )
       *res._MODptr=smod(a,b);
@@ -5221,9 +5241,9 @@ namespace giac {
       return chkmod(zero,a);
     if (a.is_symb_of_sommet(at_neg) && b==a._SYMBptr->feuille)
       return chkmod(zero,b);
-    if (is_exactly_zero(a))
+    if (is_exactly_zero(a) && !(a.type==_MOD && b.type==_INT_))
       return b;
-    if (is_exactly_zero(b))
+    if (is_exactly_zero(b) && !(b.type==_MOD && a.type==_INT_))
       return a;
     if (a.type==_STRNG)
       return string2gen(*a._STRNGptr+b.print(context0),false);
@@ -6779,6 +6799,9 @@ namespace giac {
   }
 
   gen pow(const gen & base,const gen & exponent,GIAC_CONTEXT){
+    if (base.type==_VECT && exponent.type==_VECT && (base.subtype==_SET__VECT || exponent.subtype==_SET__VECT)){
+      return _symmetric_difference(makesequence(base,exponent),contextptr);
+    }
     // if (!( (++control_c_counter) & control_c_counter_mask))
 #ifdef TIMEOUT
     control_c();
@@ -7336,6 +7359,8 @@ namespace giac {
     if (is_one(b) && ((b.type!=_MOD) || (a.type==_MOD) ))
       return a;
     if ((a.type==_SYMB) && equalposcomp(plot_sommets,a._SYMBptr->sommet)){
+      if (a._SYMBptr->sommet==at_curve)
+        return gensizeerr(gettext("Unable to multiply two graphic objects"));
       gen tmp=remove_at_pnt(a);
       if (tmp.type==_VECT && tmp.subtype==_VECTOR__VECT){
 	if (b.type==_SYMB && equalposcomp(plot_sommets,b._SYMBptr->sommet)){
@@ -7345,6 +7370,8 @@ namespace giac {
 	return _vector(vector2vecteur(*tmp._VECTptr)*b,contextptr);
       }
       if ((b.type==_SYMB) && equalposcomp(plot_sommets,b._SYMBptr->sommet)){
+        if (b._SYMBptr->sommet==at_curve)
+          return gensizeerr(gettext("Unable to multiply two graphic objects"));
 	gen tmpb=complex2vecteur(remove_at_pnt(b),contextptr);
 	tmp=complex2vecteur(tmp,contextptr);
 	if (tmpb._VECTptr->size()==tmp._VECTptr->size())
@@ -7731,7 +7758,7 @@ namespace giac {
 	  return midn(int(base._VECTptr->size()));
 	if (base.type==_USER)
 	  return base*inv(base,context0);
-	return 1;
+	return base.type==_MOD?makemod(1,*(base._MODptr+1)):1;
       }
       inpow(base,exponent,res);
       return(res);
@@ -7819,6 +7846,7 @@ namespace giac {
       return e;
     }
 #endif
+    mpz_set_si(e->z,base);
     mpz_ui_pow_ui(e->z,base,exponent);
     return e;
   }
@@ -8867,8 +8895,10 @@ namespace giac {
       return gen(v,b.subtype);
     }
     gen res=symbolic(at_equal,makesequence(a,b));
-    if (a.type==_INT_ && a.subtype==_INT_PLOT && io_graph(contextptr))
+    if (a.type==_INT_ && a.subtype==_INT_PLOT && io_graph(contextptr)){
+      history_plot(contextptr).push_back(res);
       __interactive.op(res,contextptr);
+    }
     return res;
   }
 
@@ -10036,6 +10066,8 @@ namespace giac {
   }
 
   gen operator && (const gen & a,const gen & b){
+    if (a.type==_VECT && b.type==_VECT && (a.subtype==_SET__VECT || b.subtype==_SET__VECT))
+      return _intersect(makesequence(a,b),context0);
     if (is_zero(a,context0)){
       if (b.type==_DOUBLE_)
 	return 0.0;
@@ -10082,6 +10114,8 @@ namespace giac {
   }
 
   gen operator || (const gen & a,const gen & b){
+    if (a.type==_VECT && b.type==_VECT && (a.subtype==_SET__VECT || b.subtype==_SET__VECT))
+      return _union(makesequence(a,b),context0);
     if (is_zero(a,context0))
       return change_subtype(!is_zero(b),_INT_BOOLEAN);
     if (is_zero(b,context0))
@@ -10484,8 +10518,11 @@ namespace giac {
   }
 
   int absint(int a){
-    if (a<0)
+    if (a<0){
+      if (a==-2147483648)
+        return 2147483647; // better than returning -2147483648
       return -a;
+    }
     else
       return a;
   }
@@ -12523,7 +12560,8 @@ namespace giac {
 #ifdef HAVE_SSTREAM
     ostringstream warnstream;
 #endif // HAVE_SSTREAM
-#ifndef NSPIRE
+
+#if !defined NSPIRE && !defined SDL_KHICAS
     my_ostream * oldptr = logptr(contextptr);
 #ifdef WITH_MYOSTREAM
     my_ostream newptr(&warnstream);
@@ -12553,7 +12591,7 @@ namespace giac {
 #endif
       type=_STRNG;
     }
-#ifndef NSPIRE
+#if !defined NSPIRE && !defined SDL_KHICAS
     logptr(oldptr,contextptr);
 #endif
 #if !defined HAVE_SSTREAM || defined NSPIRE
@@ -12720,7 +12758,7 @@ void sprint_double(char * s,double d){
 	return "undef";
       if (my_isinf(d))
 	return "infinity";
-      char s[256];
+      char s[512];
       string f2=string("%.")+forme.substr(1,forme.size()-1)+ch;
       sprintfdouble(s,f2.c_str(),d);
       return s;
@@ -13121,6 +13159,9 @@ void sprint_double(char * s,double d){
     case _ASSUME__VECT:
       s = "assume[";
       break;
+    case _REALSET__VECT:
+      s = "realset[";
+      break;
     case _FOLDER__VECT:
       s = "folder[";
       break;
@@ -13281,6 +13322,29 @@ void sprint_double(char * s,double d){
     }
 #endif
     string s;
+    if (subtype==_REALSET__VECT && v.size()>=2){
+      // print as a union of intervals
+      gen v1=v[v.size()-2],v2=v.back();
+      if (v1.type==_VECT && !v1._VECTptr->empty() && v2.type==_VECT){
+        vecteur & interv=*v1._VECTptr;
+        vecteur & excl=*v2._VECTptr;
+        for (int i=0;i<interv.size();++i){
+          if (i)
+            s += " ∪ ";
+          gen cur=interv[i];
+          gen a=cur[0],b=cur[1];
+          bool lopen=binary_search(excl.begin(),excl.end(),a,set_sort);
+          bool ropen=binary_search(excl.begin(),excl.end(),b,set_sort);
+          s += a.print(contextptr);
+          if (lopen)
+            s += ropen?"!.!":"!!.";
+          else 
+            s += ropen?"..!":"..";
+          s += b.print(contextptr);
+        }
+        return s;
+      }
+    }
     if (subtype==_SPREAD__VECT && !v.empty() && v.front().type==_VECT){
 #if defined(EMCC) || defined(EMCC2)
       bool add_quotes=true;
@@ -14122,6 +14186,8 @@ void sprint_double(char * s,double d){
 	return "list";
       case _SET__VECT:
 	return "set";
+      case _REALSET__VECT:
+	return "realset";
       case _MATRIX__VECT:
 	return "matrix";
       case _POLY1__VECT:
@@ -14324,7 +14390,7 @@ void sprint_double(char * s,double d){
   }
 
   string print_FLOAT_(const giac_float & f,GIAC_CONTEXT){
-    char ch[64];
+    char ch[1024];
 #ifdef BCD
 #ifndef CAS38_DISABLED
     int i=get_int(f);
@@ -14389,6 +14455,8 @@ void sprint_double(char * s,double d){
 	return hexa_print_ZINT(*_ZINTptr);
       case 8:
 	return octal_print_ZINT(*_ZINTptr);
+      case 2:
+	return binary_print_ZINT(*_ZINTptr);
       default:
 	return print_ZINT(*_ZINTptr);
       }
@@ -14571,7 +14639,7 @@ void sprint_double(char * s,double d){
 #endif
 #endif
 
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
  stdostream & operator << (stdostream & os,const gen & a){
    return os << a.print(context0); 
  }
@@ -16665,7 +16733,20 @@ void sprint_double(char * s,double d){
       warn_symb_program_sto=true;
       return "warn on";
     }
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
+    if (!strcmp(s,"save session")){
+      xcas::save_session(contextptr);
+      return "Done";
+    }
+#endif
+#ifdef SDL_KHICAS
+    if (!strcmp(s,"*")){
+      int res=xcas::console_main(contextptr);
+      S=printint(res);
+      return S.c_str();
+    }
+#endif
+#if defined KHICAS || defined SDL_KHICAS
     if (!turtleptr){
       turtle();
       _efface_logo(vecteur(0),contextptr);
@@ -16862,7 +16943,7 @@ void sprint_double(char * s,double d){
       // COUT << "hout " << g << '\n';
     }
 #endif
-#if defined(EMCC) || defined(EMCC2)
+#if (defined(EMCC) || defined(EMCC2)) && !defined SDL_KHICAS
     // compile with -s LEGACY_GL_EMULATION=1
     gen last=g;
     while (last.type==_VECT && last.subtype!=_LOGO__VECT && !last._VECTptr->empty()){
@@ -16877,7 +16958,7 @@ void sprint_double(char * s,double d){
       return S.c_str();
     }
     if (calc_mode(&C)!=1 && (last.is_symb_of_sommet(at_pnt) || last.is_symb_of_sommet(at_pixon))){
-#if !defined(GIAC_GGB) && (defined(EMCC) || defined EMCC2)
+#if !defined(GIAC_GGB) && (defined(EMCC) || defined EMCC2) && !defined SDL_KHICAS
       if (is3d(last)){
 	int worker=0;
 	worker=EM_ASM_INT_V({
@@ -16917,7 +16998,7 @@ void sprint_double(char * s,double d){
 	else
 	  last=tmp;
       }
-#ifdef KHICAS // replace ],[ by ][
+#if defined KHICAS || defined SDL_KHICAS // replace ],[ by ][
       if (last.is_symb_of_sommet(at_pnt)){
 	if (os_shell || nspirelua)
 	  xcas::displaygraph(g,gp,&C);
@@ -17015,6 +17096,13 @@ const char * nws_caseval(const char * s){
   string & S=*sptr;
   static context * contextptr=0;
   if (!contextptr) contextptr=new context;
+  int pc=python_compat(contextptr);
+  python_compat(0,contextptr);
+  logptr(0,contextptr);
+#if defined KHICAS || defined SDL_KHICAS
+  int dc=xcas::dconsole_mode;
+  xcas::dconsole_mode=0;
+#endif
   calc_mode(110,contextptr); // print pi, don't use 38 (breaks Poincare)
   gen g(s,contextptr);
   g=equaltosto(g,contextptr);
@@ -17022,6 +17110,14 @@ const char * nws_caseval(const char * s){
     gen ff=g._SYMBptr->feuille; // skip regroup()
     if (ff.type==_SYMB){
       gen f=ff._SYMBptr->feuille; // workaround for args of command in matrix
+      if (f.type==_VECT && f._VECTptr->size()==2){
+	vecteur v=*f._VECTptr;
+        if (v.front().type==_FUNC){
+	  ff=symbolic(*v.front()._FUNCptr,v[1]);
+	  f=ff._SYMBptr->feuille;
+	  g=symbolic(g._SYMBptr->sommet,ff);
+	}
+      }
       if (f.type==_VECT && f._VECTptr->size()==1){
         f=f._VECTptr->front();
         if (f.type==_VECT){
@@ -17099,6 +17195,10 @@ const char * nws_caseval(const char * s){
         S += (char) 0xe2; S+= (char) 0x86; S+= (char) 0x92;
         S += name.print(contextptr);
         S +="(x)";
+        python_compat(pc,contextptr);
+#if defined KHICAS || defined SDL_KHICAS
+        xcas::dconsole_mode=dc;
+#endif
         return S.c_str();
       }
     }
@@ -17115,6 +17215,10 @@ const char * nws_caseval(const char * s){
       }
       S += ']';
       //confirm("matrix",S);
+      python_compat(pc,contextptr);
+#if defined KHICAS || defined SDL_KHICAS      
+      xcas::dconsole_mode=dc;
+#endif
       return S.c_str();
     }
     else {
@@ -17144,6 +17248,10 @@ const char * nws_caseval(const char * s){
     S += name.print(contextptr);
   }    
   // confirm("evaled",S.c_str());
+  python_compat(pc,contextptr);
+#if defined KHICAS || defined SDL_KHICAS
+  xcas::dconsole_mode=dc;
+#endif
   return S.c_str();
 }
 

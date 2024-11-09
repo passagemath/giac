@@ -4320,6 +4320,11 @@ const char * gettext(const char * s) {
   return s;
 }
 #else // GIAC_GGB
+
+#ifdef SDL_KHICAS
+extern "C" int xcas_python_eval;
+extern "C" char * python_heap;
+#else
 #include "aspen_translate.h"
 bool tri2(const char4 & a,const char4 & b){
   int res= strcmp(a[0],b[0]);
@@ -4360,11 +4365,18 @@ const char * gettext(const char * s) {
 
 int xcas_python_eval=0;
 char * python_heap=0;
+
+#endif // ndef SDL_KHICAS
+
 #ifdef MICROPY_LIB
 extern "C" {
   int do_file(const char *file){
     return 0;
   }
+#ifdef SDL_KHICAS
+  char * micropy_init(int stack_size,int heap_size);
+  int micropy_eval(const char * line);
+#else
   char * mp_js_init(int heap_size);
   char * micropy_init(int stack_size,int heap_size){
     return mp_js_init(heap_size);
@@ -4373,6 +4385,7 @@ extern "C" {
   int micropy_eval(const char * line){
     return mp_js_do_str(line);
   }
+#endif
   void  mp_deinit();
   void mp_stack_ctrl_init();
   extern int parser_errorline,parser_errorcol;
@@ -4410,7 +4423,7 @@ int micropy_ck_eval(const char *line){
 #endif
   return micropy_eval(line);
 }
-#endif
+#endif // MICROPY_LIB
 
 
 #endif // GIAC_GGB

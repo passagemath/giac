@@ -383,6 +383,7 @@
       {"quadrant4"         ,1, _QUADRANT4 , _INT_COLOR ,T_NUMBER},
       {"rational"              ,0, _FRAC, _INT_TYPE, T_TYPE_ID},
       {"rational_det"         ,1, _RATIONAL_DET, _INT_SOLVER,T_NUMBER},
+      {"realset"         ,0,_REALSET__VECT , _INT_MAPLECONVERSION ,T_TYPE_ID},
       {"rectangle_droit"         ,1, _RECTANGLE_DROIT, _INT_SOLVER,T_NUMBER},
       {"rectangle_gauche"         ,1, _RECTANGLE_GAUCHE, _INT_SOLVER,T_NUMBER},
       {"red"         ,1, _RED, _INT_COLOR ,T_NUMBER},

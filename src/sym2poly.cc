@@ -2100,7 +2100,15 @@ namespace giac {
 	res->v.push_back(e);
     }
     for (;it!=itend;++it,++l_it){
-      if ((*it))
+      if (!*it)
+        continue;
+      if (*it==1){
+        res->v.push_back(*l_it);
+        continue;
+      }
+      if (l_it->type==_IDNT)
+        res->v.push_back(new_ref_symbolic(symbolic(at_pow,gen(makenewvecteur(*l_it,*it),_SEQ__VECT))));  
+      else 
 	res->v.push_back(pow(*l_it,*it,contextptr)); // change for normal(abs(z)^2), was pow(*l_it,*it)
     }
     if (res->v.empty()){
@@ -2764,7 +2772,7 @@ namespace giac {
       if (!equalposcomp(l,x))
 	break;
     }
-    gen f=x*x-d*x+e;
+    gen f=_numer(x*x-d*x+e,contextptr);
     f=factor(f,x,false,contextptr);
     if (f.type!=_SYMB)
       return false;
@@ -5162,6 +5170,9 @@ namespace giac {
 
   // detect if e is in an algebraic extension of Q, simplifies
   bool algnum_normal(gen & e,GIAC_CONTEXT){
+#ifdef USE_GMP_REPLACEMENTS
+    return false;
+#endif
     e=normalize_sqrt(e,contextptr); 
     gen E,G;
     vecteur syst,vars,v,varapprox;
@@ -5802,6 +5813,8 @@ namespace giac {
   }
 
   gen ratfactor(const gen & ee,bool with_sqrt,GIAC_CONTEXT){
+    if (has_num_coeff(ee))
+      return ee;
     gen e(normalize_sqrt(ee,contextptr));
     if (has_num_coeff(ee))
       e=e.evalf(1,contextptr);
@@ -6087,7 +6100,7 @@ namespace giac {
   gen _factor(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (is_integer(args)){
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
       return _ifactor(args,contextptr);
 #else
       *logptr(contextptr) << "Run ifactor(" << args << ") for integer factorization." << "\n";

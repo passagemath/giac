@@ -1980,7 +1980,40 @@ id="matr_case' + i + '_' + j + '">' + oldval + '</textarea><div class="matrixcel
     cons.style.display = 'none';
     //cmentree.focus();
   },
+  qrcodegen: 0,
+  qrsize:354,
+  qrtype:0,
+  dolink:1,
+  makeqr: function(texte){
+      let qrel=document.getElementById("qrcode");
+      let qtxt=document.getElementById("qrtxt");
+      qrel.innerHTML="";
+      if (UI.qrcodegen==0)
+	;
+      else
+	UI.qrcodegen.clear();
+	console.log('UI.qrsize',UI.qrsize);
+	UI.qrcodegen= new QRCode(document.getElementById("qrcode"), {
+	  width : UI.qrsize,
+	  height : UI.qrsize,
+          correctLevel : QRCode.CorrectLevel.L,
+	  //typeNumber : 4,
+          
+	});
+      qrel.style.width=UI.qrsize+"px";
+      qrel.style.height=UI.qrsize+"px";
+      console.log('QRcode',texte.length);
+      if (qrtxt!=undefined)
+	qrtxt.value=texte;
+      try { UI.qrcodegen.makeCode(texte); } catch (error) {
+	qrel.style.width="200px";
+	qrel.style.height="20px";
+	qrel.innerHTML=error;
+      }
+  },
   link: function (start) {
+    if (!UI.dolink)
+      return ;
     var s = UI.makelink(start);
     if ($id('variables').style.display != 'none') UI.listvars(3);
     //console.log(s);
@@ -1988,7 +2021,11 @@ id="matr_case' + i + '_' + j + '">' + oldval + '</textarea><div class="matrixcel
     if (s.length > 0) {
       var s2 = "#exec&" + s;
       var smail;
-      if (UI.langue == -1)
+      if (UI.qrtype==1)
+        smail = UI.base_url + "kcasfr.html#exec&";
+      else if (UI.qrtype==2)
+        smail = "https://xcas.univ-grenoble-alpes.fr/xcasjs/#exec&";
+      else if (UI.langue == -1)
         smail = UI.base_url + "xcasfr.html#exec&";
       else
         smail = UI.base_url + "xcasen.html#exec&";
@@ -2005,6 +2042,7 @@ id="matr_case' + i + '_' + j + '">' + oldval + '</textarea><div class="matrixcel
       s = filename + s;
       //console.log(s);
       smail = smail + s;
+      UI.makeqr(smail);
       var sforum,stableau;
       if (UI.langue == -1) {
         sforum = UI.base_url + "xcasfr.html#exec&" + s;
@@ -2243,7 +2281,7 @@ id="matr_case' + i + '_' + j + '">' + oldval + '</textarea><div class="matrixcel
 	  else
 	    tmp=encodeURIComponent(tmp);
 	  // if mode is the same as UI.micropy from beginning use old format
-	  // console.log(field.firstChild.classList);
+	  console.log(field);
 	  let evaluator=UI.classlist2evaluator(field.firstChild.classList);
 	  if (evaluator=='micropy')
 	    evaluator='py';
@@ -2492,6 +2530,8 @@ id="matr_case' + i + '_' + j + '">' + oldval + '</textarea><div class="matrixcel
     var form = $id('config');
     UI.from = form.from.value;
     UI.mailto = form.to.value;
+    UI.qrsize=form.qrcode_size.value;
+    UI.qrtype=form.qrcode_type.value;
     //console.log(UI.from);
     if (form.qa.checked) UI.qa = true; else UI.qa = false;
     if (form.usecm.checked) UI.usecm = true; else UI.usecm = false;
@@ -2609,6 +2649,8 @@ id="matr_case' + i + '_' + j + '">' + oldval + '</textarea><div class="matrixcel
     UI.createCookie('xcas_from', form.from.value, 10000);
     UI.createCookie('xcas_to', form.to.value, 10000);
     UI.createCookie('xcas_digits', form.digits_mode.value, 10000);
+    UI.createCookie('xcas_qrcode_size', form.qrcode_size.value, 10000);
+    UI.createCookie('xcas_qrcode_type', form.qrcode_type.value, 10000);
     UI.createCookie('xcas_angle_radian', form.angle_mode.checked ? 1 : -1, 10000);
     UI.warnpy = form.warnpy_mode.checked;
     UI.createCookie('xcas_warnpy', form.warnpy_mode.checked ? 1 : -1, 10000);
@@ -2885,6 +2927,7 @@ int main(int argc,const char ** argv){
     if (UI.calculator==0 || !UI.calculator_connected){
       if (UI.calculator) UI.calculator.stopAutoConnect();
       UI.nws_detect(UI.numworks_retry,UI.nws_detect_failure);
+      alert('Try again');
       return;
     }
     if (filename.length>3 && filename.substr(filename.length-3,3)==".py")
@@ -2927,6 +2970,7 @@ int main(int argc,const char ** argv){
   },
   nws_detect_success:function(){
     alert('Success');
+    UI.set_calc_type(2);
   },
   nws_detect_failure:function(error){
     console.log(error);
@@ -3876,10 +3920,16 @@ int main(int argc,const char ** argv){
     var cur = field.firstChild;
     var i = 0;
     for (; cur; i++) {
+      let nxt=cur.nextSibling;
+      if (nxt)
+	UI.dolink=0;
+      else
+	UI.dolink=1;
       if (i >= start)
         UI.eval_level(cur);
-      cur = cur.nextSibling;
+      cur = nxt;
     }
+    UI.dolink=1;
     if (UI.focusaftereval) UI.focused.focus();
   },
   eval_below: function (field, name, value) {

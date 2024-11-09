@@ -21,7 +21,8 @@ libgiac_la_LIBADD = $(NTL_LIBS) $(COCOA_LIBS) $(PARI_LIBS) $(GSL_LIBS)
 
 giacincludedir = $(includedir)/giac
 giacinclude_HEADERS = dispatch.h fraction.h gen.h desolve.h misc.h ti89.h \
-mathml.h identificateur.h unary.h symbolic.h index.h modpoly.h modfactor.h permu.h \
+mathml.h identificateur.h unary.h symbolic.h index.h \
+modpoly.h modfactor.h modint.h permu.h \
 monomial.h poly.h threaded.h gausspol.h sym2poly.h ezgcd.h derive.h \
 solve.h quater.h subst.h usual.h intg.h intgab.h risch.h lin.h series.h \
 vecteur.h sparse.h vector.h csturm.h moyal.h tex.h global.h \

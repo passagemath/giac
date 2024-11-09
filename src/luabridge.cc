@@ -48,7 +48,7 @@ void luagiac_init(){
   freeze=true;
   python_heap=0;
   xcas::sheetptr=0;
-  shutdown=do_shutdown;
+  khicas_shutdown=do_shutdown;
   // SetQuitHandler(save_session); // automatically save session when exiting
   if (!turtleptr){
     turtle();

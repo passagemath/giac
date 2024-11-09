@@ -11272,6 +11272,8 @@ static char *i64toa(char *buf_end, int64_t n, unsigned int base)
 
 #ifdef NSPIRE_NEWLIB
 void fesetround(int p){}
+#else
+int fesetround(int);
 #endif
 
 /* buf1 contains the printf result */

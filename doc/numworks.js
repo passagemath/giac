@@ -321,8 +321,8 @@ DFU.Device = class {
 	  if (done>=total){
 	    UI.nws_progress.style.display='none';
 	    UI.nws_progresslegend.innerHTML='';
-	    //mainview=document.getElementById('giac');
-	    //if (typeof mainview!=='undefined') mainview.scrollIntoView();	    
+	    let mainview=document.getElementById('giac');
+	    if (typeof mainview!=='undefined') mainview.scrollIntoView();	    
 	  }
 	}
       }
@@ -1261,6 +1261,14 @@ class Numworks {
                         erasable: false,
                         writable: true
                     });
+                    device.memoryInfo.segments.unshift({
+                        start: 0x24000000,
+                        sectorSize: 1024,
+                        end: 0x24040000,
+                        readable: true,
+                        erasable: false,
+                        writable: true
+                    });
                 }
             }
         }
@@ -1364,18 +1372,25 @@ class Numworks {
       this.device.startAddress = tab[j];
       const blobk = await this.device.do_upload(this.transferSize, 0x20);
       let dv=new DataView(await blobk.arrayBuffer()),res;
-      console.log('getplatfrominfo 1',tab[j],dv.getUint32(0x0,false),dv.getUint32(0x4,false),dv.getUint32(0x8,false),dv.getUint32(0xc,false));
+      console.log('getplatfrominfo 1 at',tab[j].toString(16),dv); //dv.getUint32(0x0,false).toString(16),dv.getUint32(0x4,false).toString(16),dv.getUint32(0x8,false).toString(16),dv.getUint32(0xc,false).toString(16));
       if (dv.getUint32(0x8,false)===0xF00DC0DE){ // f0 0d c0 de
 	this.device.startAddress += 0x10000;
-	const blob = await this.device.do_upload(this.transferSize, 0x48);
-	const blobb = await blob.arrayBuffer();
+	let blob = await this.device.do_upload(this.transferSize, 0x48);
+	let blobb = await blob.arrayBuffer();
 	let dvb=new DataView(blobb);
-	console.log('getplatfrominfo 2',tab[j],dv.getUint32(0x0,false),dv.getUint32(0x4,false),dv.getUint32(0x8,false),dv.getUint32(0xc,false));
+	console.log('getplatfrominfo 2 at',tab[j].toString(16),dvb,dvb.getUint32(0x0,false).toString(16),'transfertsize',dvb.getUint32(0x4,false).toString(16),dvb.getUint32(0x8,false).toString(16),'startaddress',dvb.getUint32(0xc,false).toString(16));
+	if (dvb.getUint32(0,false)!=0xfeedc0de){
+	  this.device.startAddress += 0x10000;
+	  blob = await this.device.do_upload(this.transferSize, 0x48);
+	  blobb = await blob.arrayBuffer();
+	  dvb=new DataView(blobb);
+	  console.log('getplatfrominfo 3 at',tab[j].toString(16),dvb,dvb.getUint32(0x0,false).toString(16),'transfertsize',dvb.getUint32(0x4,false).toString(16),dvb.getUint32(0x8,false).toString(16),'startaddress',dvb.getUint32(0xc,false).toString(16));
+	}
 	this.device.startAddress=dvb.getUint32(0xc, true)
 	const blob2 = await this.device.do_upload(this.transferSize, 0x4);
 	const blobb2 = await blob2.arrayBuffer();
 	let dv2b=new DataView(blobb2);
-	console.log(dv2b.getUint32(0x00, false));
+	console.log('startaddress',this.device.startAddress.toString(16),dv2b.getUint32(0x00, false).toString(16));
 	if (dv2b.getUint32(0x00, false) === 0xbadd0bee){
           res=this.__parsePlatformInfo(blobb,false);
 	  res["bootloader"]=1;
@@ -1787,6 +1802,7 @@ DFUse.Device = class extends DFU.Device {
     console.log('erase',startAddr,length,segment);
     if (!segment.erasable){
       if (segment.writable) return 1;
+      alert('Segment can not be erased!');
       return 0;
     }
     let addr = this.getSectorStart(startAddr, segment);
@@ -2092,12 +2108,20 @@ class Recovery {
 
             if ((desc.DFUVersion === 0x100 || desc.DFUVersion === 0x011a) && device.settings.alternate.interfaceProtocol === 0x02) {
                 device = new DFUse.Device(device.device_, device.settings);
-                if (device.memoryInfo) {
+              if (device.memoryInfo) {
                     // We have to add RAM manually, because the device doesn't expose that normally
                     device.memoryInfo.segments.unshift({
                         start: 0x20000000,
                         sectorSize: 1024,
                         end: 0x20040000,
+                        readable: true,
+                        erasable: false,
+                        writable: true
+                    });
+                    device.memoryInfo.segments.unshift({
+                        start: 0x24000000,
+                        sectorSize: 1024,
+                        end: 0x24040000,
                         readable: true,
                         erasable: false,
                         writable: true

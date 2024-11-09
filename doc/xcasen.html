@@ -149,6 +149,7 @@
       border-color: magenta;
     }
   </style>
+<script type="text/javascript" src="qrcode.js"></script>
   <script>
       // Redirect to HTTPS page if not testing locally
       if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -363,6 +364,9 @@
   <table>
     <tr>
       <td>
+	QRcode  size :<input class="bouton" type="number" name="qrcode_size" title="Number of pixels of the session QRcode" value=354>
+        Type : <input class="bouton" type="number" name="qrcode_type" title="QR code type. 0: Xcas web, 1: calculator, 2: XcasJS" value=0>
+        <br>
         personal e-mail <input class="bouton" type="text" name="from"
                                title="Fill with your personal email address"
                                value="">
@@ -519,6 +523,7 @@
                 onclick='UI.savesession(1);'>Export</button>
         </span>
 <span id="historyload" style="display:none">
+  <button class="bouton" onclick="UI.nws_detect(UI.nws_detect_success,UI.nws_detect_failure); ">Detect</button>
   <button id="numworks_load" class="bouton" title="Click here to load a script from a Numworks calculator" onclick="UI.numworks_load()">Numworks→</button>
 <button id="loadbutton_cookie" class="bouton"
         title="Load session"
@@ -658,7 +663,7 @@
 	      public forums (mail button and F button).
 	      <br>
 	      <a
-	      href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnw.html"
+	      href="https://www-fourier.univ-grenoble-alpes.fr/~parisse/numworks/khicasnwen.html"
 	      target="_blank">KhiCAS</a> is a version of Xcas for the
 	      Numworks calculator Xcas, it can be
 	      <a href="nws_en.html"
@@ -3568,6 +3573,10 @@ If you want to see informations while a computation is running, run first
   <button class="bouton" title="Decrease line number" onclick="var field=$id('output');var s=field.style.maxHeight; s=s.substr(0,s.length-2);s=Math.max(eval(s)-20,40) ;s=s+'px';field.style.maxHeight =s ;">-</button>
 </div>
 <div id="output" style="max-height: 200px; overflow:auto"></div>
+<div id="qrcode" style="margin-top:15px; margin-left: 30px;">
+  This message will be replaced by a QRcode that you can scan to duplicate this session (QRCode MIT License, <a href="https://davidshimjs.github.io/qrcodejs/" target="_blank">@author davidshimjs</a>, <a href="https://kazuhikoarase.github.io/" target="_blank">QRCode for JavaScript, Copyright (c) 2009 Kazuhiko Aras</a>)
+</div>
+<textarea id="qrtxt" rows=2 cols=80 onkeypress="if (event.keyCode!=13) return true; UI.makeqr(value); return false;">QRcode text</textarea>
 <div id="table_3d" style="display:none">
   <hr>
   <table border="0" align="left" summary="">
@@ -3767,8 +3776,9 @@ If you want to see informations while a computation is running, run first
     } */
     if (webAssemblyAvailable) {
         var ck = UI.readCookie('xcas_wasm');
+        var form = $id('config');
+        form.wasm_mode.checked = true;
         if (ck) {
-            var form = $id('config');
             form.wasm_mode.checked = (ck == '1');
             webAssemblyAvailable = form.wasm_mode.checked;
         }
@@ -3851,7 +3861,7 @@ If you want to see informations while a computation is running, run first
         //console.log(window.location.href);
         var mobile = UI.detectmob();
         if (mobile) {
-            $id('historyload').style.display = 'none';
+            $id('historyload').style.display = 'inline';
             $id('loadbutton_cookie').style.display = 'inline';
             $id('loadbutton_file').style.display = 'none';
             $id('bouton_js').style.display = 'none';
@@ -3899,6 +3909,10 @@ If you want to see informations while a computation is running, run first
         }
         ck = UI.readCookie('xcas_digits');
         if (ck) form.digits_mode.value = eval(ck);
+        ck = UI.readCookie('xcas_qrcode_size');
+        if (ck) form.qrcode_size.value = eval(ck);
+        ck = UI.readCookie('xcas_qrcode_type');
+        if (ck) form.qrcode_type.value = eval(ck);
         ck = UI.readCookie('xcas_angle_radian');
         if (ck) form.angle_mode.checked = (ck == '1');
         ck = UI.readCookie('xcas_warnpy');

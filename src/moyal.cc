@@ -4238,6 +4238,10 @@ namespace giac {
   complex<double> LambertW(complex<double> z,int n){
     // n!=0 is not implemented yet
     if (z==0) return z;
+    if (is_undef(z))
+      return z;
+    if (is_inf(z.real()) && z.real()>0)
+      return 703.217754008;
     complex<double> w; 
     // initial guess
     w=2.0*(M_E*z+1.0);
@@ -4271,16 +4275,17 @@ namespace giac {
       w = -((complex<double>(2.2591588985 ,4.22096) * (complex<double>(-14.073271 ,-33.767687754) * z - complex<double>(12.7127,-19.071643) * (1. + 2.*z))) / (2. - complex<double>(17.23103,-10.629721) * (1. + 2.*z)));// (1,1) Pade
     if (z.imag()==0 && w.imag()==0){
       double Z=z.real(),W=w.real();
-      while (1){
+      for (int count=1;count<SOLVER_MAX_ITERATE;++count){
 	// wnext=w-(w*exp(w)-z)/(exp(w)*(w+1)-(w+2)*(w*exp(w)-z)/(2*w+2))
 	double expw(std::exp(W)),wexpwz(W*expw-Z),w1(W+1.0);
 	double wnext(W-wexpwz/(w1*expw-(W+2.0)*wexpwz/w1/2.0));
-	if (abs(wnext-W)<1e-13*std::abs(W))
+	if (abs(wnext-W)<1e-13*count*std::abs(W))
 	  return wnext;
 	W=wnext;
       }
+      return W;
     }
-    while (1){
+    for (int count=1;count<SOLVER_MAX_ITERATE;++count){
       // wnext=w-(w*exp(w)-z)/(exp(w)*(w+1)-(w+2)*(w*exp(w)-z)/(2*w+2))
       complex<double> expw(std::exp(w)),wexpwz(w*expw-z),w1(w+1.0);
       complex<double> wnext(w-wexpwz/(w1*expw-(w+2.0)*wexpwz/w1/2.0));
@@ -4288,6 +4293,7 @@ namespace giac {
 	return wnext;
       w=wnext;
     }
+    return w;
   }
 
 #ifdef HAVE_LIBMPFR
@@ -4301,8 +4307,9 @@ namespace giac {
       nbits=mpfr_get_prec(z._CPLXptr->_REALptr->inf);
     // initial guess
     gen w=evalf_double(z,1,context0);
-    if (w.type==_DOUBLE_)
+    if (w.type==_DOUBLE_){
       w=LambertW(complex<double>(w._DOUBLE_val,0),n);
+    }
     else {
       if (w.type!=_CPLX || w.subtype!=3)
 	return gensizeerr("Unable to convert to float");

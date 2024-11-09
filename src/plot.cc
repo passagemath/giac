@@ -34,7 +34,7 @@
 #include "giacPCH.h"
 
 using namespace std;
-#if !defined NSPIRE && !defined FXCG && !defined KHICAS
+#if !defined NSPIRE && !defined FXCG && !defined KHICAS 
 #ifdef VISUALC13
 #undef clock
 #undef clock_t
@@ -101,7 +101,7 @@ extern "C" {
 #include "lin.h"
 #include "quater.h"
 #include "giacintl.h"
-#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS || defined KHICAS 
+#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS || defined KHICAS || defined SDL_KHICAS
 #else
 #include "signalprocessing.h"
 #endif
@@ -131,7 +131,7 @@ extern "C" {
 #include <sys/wait.h>
 #endif
 
-#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS || defined KHICAS
+#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS || defined KHICAS || defined SDL_KHICAS
 inline bool is_graphe(const giac::gen &g){ return false; }
 inline giac::gen _graph_vertices(const giac::gen &g,const giac::context *){ return g;}
 inline giac::gen _is_planar(const giac::gen &g,const giac::context *){ return g;}
@@ -171,7 +171,7 @@ namespace giac {
   double global_window_xmin(gnuplot_xmin),global_window_xmax(gnuplot_xmax),global_window_ymin(gnuplot_ymin),global_window_ymax(gnuplot_ymax);
   double x_tick(1.0),y_tick(1.0);
   double class_minimum(0.0),class_size(1.0);
-#if defined RTOS_THREADX || defined EMCC || defined EMCC2 || defined KHICAS
+#if defined RTOS_THREADX || defined EMCC || defined EMCC2 || defined KHICAS || defined SDL_KHICAS
   int gnuplot_pixels_per_eval=128;
 #else
   int gnuplot_pixels_per_eval=401;
@@ -1065,7 +1065,7 @@ namespace giac {
 
   string print_DOUBLE_(double d,unsigned ndigits){
     char s[256];
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
     sprint_double(s,d);
     // search for a decimal point in s
     int l=strlen(s),i;
@@ -1098,7 +1098,8 @@ namespace giac {
     return s;
   }
 
-#if defined KHICAS || defined GIAC_HAS_STO_38
+#if defined KHICAS || defined SDL_KHICAS || defined GIAC_HAS_STO_38 || defined USE_GMP_REPLACEMENTS
+#ifndef SDL_KHICAS
   void arc_en_ciel(int k,int & r,int & g,int & b){
     k += 21;
     k %= 126;
@@ -1127,6 +1128,7 @@ namespace giac {
       }
     }
   }
+#endif
 
   static const int arc_en_ciel_colors=15;
   int density(double z,double fmin,double fmax,int pal){
@@ -1179,7 +1181,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
       gen D(x,ymin);
       int rgb;
       int r,g,b,c;
-#if defined KHICAS || defined POCKETCAS
+#if defined KHICAS || defined SDL_KHICAS || defined POCKETCAS
       arc_en_ciel(i*double(126.0)/n,r,g,b);
       rgb=(((r*32)/256)<<11) | (((g*64)/256)<<5) | (b*32/256);
       vecteur attrib(1,rgb+_FILL_POLYGON+(i?_QUADRANT4:_QUADRANT3));
@@ -1329,7 +1331,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 #endif
         {
         for (int i=0;i<arc_en_ciel_colors;++i){
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
           int r,g,b;
           arc_en_ciel(126.0/(arc_en_ciel_colors-1)*i,r,g,b);
           attr[i]=_FILL_POLYGON + (((r*32)/256)<<11) | (((g*64)/256)<<5) | (b*32/256);
@@ -1715,7 +1717,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 	nu=int(std::sqrt(double(nstep)));
 	nv=int(std::sqrt(double(nstep)));
       }
-#if defined KHICAS || defined GIAC_HAS_STO_38
+#if defined KHICAS || defined SDL_KHICAS || defined GIAC_HAS_STO_38
       if (nu*nv>900 && densityplot!=2){
 #if 1 // def DEVICE
 	nu=nv=30;
@@ -1835,7 +1837,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 	    if (fval._DOUBLE_val>fmax)
 	      fmax=fval._DOUBLE_val;
 	  }
-#if defined KHICAS || defined GIAC_HAS_STO_38 // || defined HYPERSURFACE3 FIXME format is not translatable, etc.
+#if defined KHICAS || defined SDL_KHICAS || defined GIAC_HAS_STO_38 // || defined HYPERSURFACE3 FIXME format is not translatable, etc.
 	  if (!densityplot){
 	    tmp.push_back(x); tmp.push_back(y); tmp.push_back(fval);
 	  } 
@@ -3528,7 +3530,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
     gen ee(e);
     ee.subtype=gnuplot_show_pnt(e,contextptr);
     history_plot(contextptr).push_back(ee);
-#ifndef KHICAS
+#if !defined KHICAS && !defined SDL_KHICAS
     if (io_graph(contextptr))
       __interactive.op(ee,contextptr);
 #endif
@@ -3545,7 +3547,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
     gen ee(e);
     ee.subtype=gnuplot_show_pnt(*e._SYMBptr,contextptr);
     history_plot(contextptr).push_back(ee);
-#ifndef KHICAS
+#if !defined KHICAS && !defined SDL_KHICAS
     if (io_graph(contextptr))
       __interactive.op(ee,contextptr);
 #endif
@@ -3559,7 +3561,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 #else
     ee.subtype=-1;
 #endif
-#ifndef KHICAS
+#if !defined KHICAS && !defined SDL_KHICAS
     history_plot(contextptr).push_back(ee);
     if (io_graph(contextptr))
       __interactive.op(ee,contextptr);
@@ -5536,9 +5538,15 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
   static define_unary_function_eval (__barycentre,&_barycentre,_barycentre_s);
   define_unary_function_ptr5( at_barycentre ,alias_at_barycentre,&__barycentre,0,true);
 
+  void unvect(gen & a){
+    if (a.type==_VECT && a.subtype==_VECTOR__VECT && a._VECTptr->size()==2)
+      a=a._VECTptr->back()-a._VECTptr->front();
+  }
+
   gen scalar_product(const gen & a0,const gen & b0,GIAC_CONTEXT){
     gen a=remove_at_pnt(a0);
     gen b=remove_at_pnt(b0);
+    unvect(a); unvect(b);
     if (a.type==_VECT && b.type==_VECT)
       return scalarproduct(*a._VECTptr,*b._VECTptr,contextptr);
     gen ax,ay; reim(a,ax,ay,contextptr);
@@ -6200,7 +6208,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
         bool loop=true;
         if (res.type==_VECT && res.subtype==_POINT__VECT)
           loop=false;
-        else if (res.type<_IDNT)
+        else if (res.type<_IDNT || res.type==_FRAC)
           loop=false;
         else if (res.type==_SYMB && has_i(res))
           loop=false;
@@ -6259,11 +6267,24 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
       return 0; // so that a single point has area 0
     vecteur v=*g._VECTptr;
     int s=int(v.size());
+    if (s==3 && v[0].type==_VECT  && !v[0]._VECTptr->empty() && remove_at_pnt(v[0]._VECTptr->front()).is_symb_of_sommet(at_curve))
+      v[0]=v[0]._VECTptr->front();
     v[0]=remove_at_pnt(v[0]);
     if (s==3 && v[0].is_symb_of_sommet(at_curve)){
       v[1]=symb_interval(v[1],v[2]);
       v.pop_back();
       --s;
+    }
+    if (s==3 && v[0].type==_VECT && v[0]._VECTptr->size()==2 && !v[1].is_symb_of_sommet(at_pnt) && v[1].type!=_VECT && !v[2].is_symb_of_sommet(at_pnt) && v[2].type!=_VECT){ // segment,x1,x2, workaround for e.g. area(plotfunc(x),1,2)
+      gen A=v[0][0],B=v[0][1],Ax,Ay,Bx,By,x1=v[1],x2=v[2];
+      if (A.type!=_VECT && !A.is_symb_of_sommet(at_pnt) && B.type!=_VECT && !B.is_symb_of_sommet(at_pnt)){
+        reim(A,Ax,Ay,contextptr);
+        reim(B,Bx,By,contextptr);
+        gen m=(By-Ay)/(Bx-Ax);
+        gen b=Ay-m*Ax;
+        // y=m*x+b -> 1/2*m*x^2+b*x
+        return m/2*(x2*x2-x1*x1)+b*(x2-x1);
+      }
     }
     // search for a numeric integration method
     if (s==2 && (v[1].is_symb_of_sommet(at_equal) || v[1].is_symb_of_sommet(at_interval)) ){
@@ -6294,6 +6315,11 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
     if (v[0].is_symb_of_sommet(at_curve))
       return gensizeerr(contextptr);
     if (s>3){
+      if (v[s-1]==at_rectangle){
+        *logptr(contextptr) << gettext("Using left_rectangle\n");
+        v[s-1]=_RECTANGLE_GAUCHE;
+        v[s-1].subtype=_INT_SOLVER;
+      }
       for (int i=0;i<s;++i){
 	if (v[i].type==_INT_ && v[i].subtype==_INT_SOLVER){
 	  int method=v[i].val,n;
@@ -6451,25 +6477,33 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 	res=angle(nf,ne,contextptr);	
       }
       else {
-	if (e.type!=_VECT || e._VECTptr->size()!=2)
+	if (e.type!=_VECT || e._VECTptr->size()!=2){
+          angle_mode(mode,contextptr);
 	  return gensizeerr(gettext("angle plan with unknown"));
+        }
 	gen de=e._VECTptr->back()-e._VECTptr->front();
-	if (de.type!=_VECT)
+	if (de.type!=_VECT){
+          angle_mode(mode,contextptr);
 	  return gensizeerr(contextptr);
+        }
 	res=angle(nf,*de._VECTptr,contextptr);
       }
     }
     else {
       if (e.type==_VECT && e._VECTptr->size()!=3){
-	if ((e._VECTptr->size()!=2) || (f._VECTptr->size()!=2))
+	if ((e._VECTptr->size()!=2) || (f._VECTptr->size()!=2)){
+          angle_mode(mode,contextptr);
 	  return gensizeerr(gettext("angle"));
+        }
 	if (e._VECTptr->front().type==_VECT 
 	    // check added 12/8/2014 for angle(droite(y=x),droite(y=1-x),"") 
 	    || (e.subtype==_LINE__VECT || e.subtype==_HALFLINE__VECT)
 	    ){	
 	  vecteur w=inter(v.front(),v[1],0); // context does not apply for lines
-	  if (w.empty())
+	  if (w.empty()){
+            angle_mode(mode,contextptr);
 	    return gensizeerr(gettext("Lines must intersect"));
+          }
 	  gen w0=remove_at_pnt(w.front());
 	  g=f._VECTptr->back();
 	  if (g==w0)
@@ -6487,8 +6521,10 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
       }
       else {
 	if (f.type==_VECT && f._VECTptr->size()!=3){
-	  if (f._VECTptr->size()!=2)
+	  if (f._VECTptr->size()!=2){
+            angle_mode(mode,contextptr);
 	    return gensizeerr(gettext("angle"));
+          }
 	  if (v.size()==3){
 	    f=e+f._VECTptr->back()-f._VECTptr->front();
 	    g=remove_at_pnt(v[2]);
@@ -6501,8 +6537,10 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 	  }
 	}
 	else {
-	  if (v.size()!=3)
+	  if (v.size()!=3){
+            angle_mode(mode,contextptr);
 	    return gensizeerr(gettext("angle"));
+          }
 	  g=remove_at_pnt(v[2]);
 	  if (g.type==_VECT && g._VECTptr->size()==2)
 	    g=e+g._VECTptr->back()-g._VECTptr->front();
@@ -7988,7 +8026,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 	}
 	if (bf1v.size()==6)
 	  bf1v.pop_back();
-	bf1v[0]=symetrie_droite(w,v[0],bf1v[0],contextptr);
+	bf1v[0]=ratnormal(symetrie_droite(w,v[0],bf1v[0],contextptr),contextptr);
 	bf1=gen(bf1v,bf1.subtype);
       }
       if (bf2.type==_VECT){
@@ -9066,8 +9104,6 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
       vars=makevecteur(vars,symbolic(at_equal,makesequence(v__IDNT_e,symbolic(at_interval,makesequence(vmin,vmax)))));
       curve3d=true;
     }
-    if (tstep<0)
-      tstep=(tmax-tmin)/gnuplot_pixels_per_eval;
     if (vars.type==_VECT && vars._VECTptr->size()>=2){
       vecteur v=*vars._VECTptr;
       if (v.size()!=2)
@@ -9083,6 +9119,8 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
     }
     if (!readrange(vars,tmin,tmax,vars,tmin,tmax,contextptr))
       return gensizeerr(gettext("2nd arg must be a free variable"));
+    if (tstep<0)
+      tstep=(tmax-tmin)/gnuplot_pixels_per_eval;
     return plotparam(f,vars,attributs,densityplot,xmin,xmax,ymin,ymax,tmin,tmax,tstep,eq,parameq,vparam,contextptr);
   }
   gen _plotparam(const gen & args,const context * contextptr){
@@ -9699,6 +9737,12 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 	  // return _resultant(makevecteur(xt-x,yt-y,v[1]),contextptr);
 	  return symbolic(at_equal,makesequence(rationalparam2equation(v[0],v[1],x,y,contextptr),0));
 	}
+        if (v[1]==x || v[1]==y){
+          gen t(t__IDNT_e);
+          xt=subst(xt,v[1],t,0,contextptr);
+          yt=subst(yt,v[1],t,0,contextptr);
+          v[1]=t;
+        }
 	vecteur w(solve(xt-x,v[1],0,contextptr));
 	if (w.empty())
 	  return gensizeerr(gettext("Can't isolate"));
@@ -11335,7 +11379,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 
   gen _couleur(const gen & a,GIAC_CONTEXT){
     if (is_undef(a)) return a;
-#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS || defined KHICAS || defined EMCC || defined EMCC2
+#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS ||defined KHICAS || defined SDL_KHICAS || defined EMCC || defined EMCC2
 #else    
     /* display image, addition by L. Marohnić */
     rgba_image *img;
@@ -11403,7 +11447,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
     v[1]=c;
     gen e=symbolic(at_pnt,gen(v,_PNT__VECT));
     history_plot(contextptr).push_back(e);
-#ifndef KHICAS
+#if !defined KHICAS && !defined SDL_KHICAS
     if (io_graph(contextptr))
       __interactive.op(e,contextptr);    
 #endif
@@ -11487,7 +11531,7 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
     read_tmintmaxtstep(v,t,3,tmin,tmax,tstep,tminmax_defined,tstep_defined,contextptr);
     if (tmin>tmax || tstep<=0)
       return gensizeerr(gettext("Time"));
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
     int maxstep=80;
 #else
     int maxstep=500;
@@ -11842,7 +11886,11 @@ static vecteur densityscale(double xmin,double xmax,double ymin,double ymax,doub
 #if 1 // def NSPIRE
     gen_map m;
 #else
+#ifdef CPP11
+    gen_map m(islesscomplexthanf);
+#else
     gen_map m(ptr_fun(islesscomplexthanf));
+#endif
 #endif
     int taille;
     is >> taille;
@@ -13362,12 +13410,13 @@ int find_plotseq_args(const gen & args,gen & expr,gen & x,double & x0d,double & 
       return gensizeerr(gettext("Variables must be free"));
     gen a,b,c,d;
     if (cklinear && is_linear_wrt(f_orig,y,a,b,contextptr) && a!=0){
-      if (is_linear_wrt(b,x,c,d,contextptr)){
+      if (is_linear_wrt(b,x,c,d,contextptr) && is_constant_wrt(a,x,contextptr)){
 	// a*y+c*x+d=0 -> droite(-d/a*i,1+(-d-c)/a*i)
-	gen A=-d/a*cst_i,B=A+1-c/a*cst_i;
-	return _droite(makesequence(A,B),contextptr);
+	gen A=-d/a*cst_i,B=A+1-c/a*cst_i; return _droite(makesequence(A,B),contextptr);
       }
       // y=-b/a
+      if (nxstep>1024)
+        nxstep=1024;
       return plotfunc(-b/a,x,attributs,0,xmin,xmax,ymin,ymax,-5,5,nxstep,0,false,contextptr);
     }
     if (cklinear && is_linear_wrt(f_orig,x,a,b,contextptr) && a!=0){
@@ -13377,6 +13426,8 @@ int find_plotseq_args(const gen & args,gen & expr,gen & x,double & x0d,double & 
       }
       // x=-b/a
       gen d=_droite(makesequence(0,1+cst_i),contextptr);
+      if (nxstep>1024)
+        nxstep=1024;
       return symetrie(d,plotfunc(-b/a,y,attributs,0,xmin,xmax,ymin,ymax,-5,5,nxstep,0,false,contextptr),contextptr);
     }
     bool cplx=complex_mode(contextptr);
@@ -14371,7 +14422,7 @@ int find_plotseq_args(const gen & args,gen & expr,gen & x,double & x0d,double & 
       return g.print(context0);
   }
 
-#if !defined KHICAS // in kdisplay.cc
+#if !defined KHICAS && !defined SDL_KHICAS // in kdisplay.cc
 #if defined NSPIRE || defined FXCG
   logo_turtle vecteur2turtle(const vecteur & v){
     return logo_turtle();
@@ -15413,7 +15464,7 @@ gen _vers(const gen & g,GIAC_CONTEXT){
       _avance(gy,contextptr);
       _tourne_droite(-90,contextptr);
     }
-    return _polygone_rempli(-8,contextptr);
+    return _polygone_rempli(-4,contextptr);
   }
   static const char _rectangle_plein_s []="rectangle_plein";
   static define_unary_function_eval2 (__rectangle_plein,&_rectangle_plein,_rectangle_plein_s,&printastifunction);

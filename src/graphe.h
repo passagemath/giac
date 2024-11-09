@@ -518,7 +518,7 @@ public:
         std::map<int,int> max_weight,level_weight;
         std::map<int,ivector> levels;
         ipairs positions;
-      int nearest_pow2(double a) { return std::floor(0.5+std::log(a)/std::log(2)); }
+      int nearest_pow2(double a) { return std::floor(0.5+std::log(a)/std::log(2.0)); }
     public:
         bucketsampler(const ivector &W,GIAC_CONTEXT);
         int generate();
@@ -815,7 +815,7 @@ private:
     static void scale_point(point &p,double s);
     static double point_vecprod2d(const point &v,const point &w);
     static double point_dotprod(const point &p,const point &q);
-    static void clear_point_coords(point &p) { std:fill(p.begin(),p.end(),0); }
+    static void clear_point_coords(point &p) { std::fill(p.begin(),p.end(),0); }
     static double point_displacement(const point &p,bool sqroot=true);
     static double point_distance(const point &p,const point &q,point &pq);
     static void point_mirror(double a,double b,double c,const point &src,point &dest);
@@ -919,7 +919,7 @@ private:
     bool mvc_special(ivector &cover,int sg);
     bool mvc_is_unconfined(int i,int sg=0) const;
     bool mvc_is_dominant(int v,int sg) const;
-    bool mvc_reduce_basic(int sg,int c);
+    bool mvc_reduce_basic(int sg,int c,bool iscon);
     void mvc_half_integral(int sg, ivector &in_cover, ivector &out_cover);
     void mvc_alom(ivector &cover,int sg=-1);
     void mvc_dfs(ivector &cover,int sg=-1);

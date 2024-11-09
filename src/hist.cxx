@@ -202,6 +202,7 @@ void a_propos() {
     s += "3-d exports from gl2ps, (c) 1999-2006 Christophe Geuzaine\n";
     s += "Implicitplot3d code derived from Paul Bourke and Cory Gene Bloyd\n";
     s += "TinyMT code from Mutsuo Saito and Makoto Matsumoto\n";
+    s += "QRcode generator (c) Nayuki MIT license https://github.com/nayuki/QR-Code-generator\n";
     s += "\n\n\n\n\n\n";
     Xcas_parse_error_output->value(s.c_str());
     Fl::focus(Xcas_parse_error_output);
@@ -852,7 +853,7 @@ void load_autorecover_data() {
   #ifdef IPAQ // default with bandeau
        std::string configs="widget_size(12,1,1,300,240,1,2,1,";
   #else // ifndef IPAQ, 
-       std::string configs="widget_size(18,40,90,900,550,"+giac::print_INT_(n!=0)+",2,0,";
+       std::string configs="widget_size(16,40,90,900,550,"+giac::print_INT_(n!=0)+",2,0,";
   #endif // IPAQ
        configs += '7';
        configs += ','; 
@@ -1074,6 +1075,10 @@ static void cb_Xcas_open_v200(Fl_Menu_*, void*) {
   load_history(7);
 }
 
+static void cb_Xcas_QRcode0(Fl_Menu_*, void*) {
+  int pos=0;std::string html5="https://www-fourier.univ-grenoble-alpes.fr/~parisse/kcasfr.html#filename="+Xcas_current_session_name()+"&"+xcas::widget_html5(Xcas_current_session(),pos); if (!xcas::QRdisp(html5.c_str())) fl_alert(gettext("Unable to convert to a QR code."));
+}
+
 static void cb_Xcas_QRcode1(Fl_Menu_*, void*) {
   int pos=0;std::string html5="https://xcas.univ-grenoble-alpes.fr/xcasjs/#filename="+Xcas_current_session_name()+"&"+xcas::widget_html5(Xcas_current_session(),pos); if (!xcas::QRdisp(html5.c_str())) fl_alert(gettext("Unable to convert to a QR code."));
 }
@@ -1120,6 +1125,80 @@ static void cb_Xcas_save_current_session_as(Fl_Menu_*, void*) {
 
 static void cb_Xcas_save_all_sessions(Fl_Menu_*, void*) {
   Xcas_save_all(Xcas_Main_Tab);
+}
+
+static void cb_Xcas_nnumworks_doc(Fl_Menu_*, void*) {
+  giac::system_browser_command("doc/khicasnw.html");
+}
+
+static void cb_Xcas_open_nnumworks_xws(Fl_Menu_*, void*) {
+  load_history(-6);
+}
+
+static void cb_Xcas_send_nnumworks_xws(Fl_Menu_*, void*) {
+  xcas::History_cb_Send_session_numworks(Xcas_current_session(),0);
+}
+
+static void cb_Xcas_send_nnumworks_prog(Fl_Menu_*, void*) {
+  xcas::cb_Editeur_Send_Numworks(xcas::Xcas_input_focus,0);
+}
+
+static void cb_Xcas_open_nnumworks_calc(Fl_Menu_*, void*) {
+  load_history(-5);Fl_Widget * wid = Xcas_current_session();
+  xcas::History_Fold * hf=xcas::get_history_fold(wid); hf->pack->in_modified();
+}
+
+static void cb_Xcas_Export_nnumworks_calc(Fl_Menu_*, void*) {
+  xcas::History_cb_Save_as_numworks_calculator(Xcas_current_session(),0);
+}
+
+static void cb_Xcas_nnumworks_backup(Fl_Menu_*, void*) {
+  const char * newfile=file_chooser("Enter file name", "*.nws", "backup.nws");
+             if (!newfile) return;
+             if (giac::is_file_available(newfile)){
+                int i=fl_ask(gettext("File %s exists. Overwrite?"),newfile);
+                if ( !i ) return;
+             }
+             if (!dfu_get_scriptstore(newfile))
+               fl_alert("%s",gettext("Unable to backup calculator"));
+}
+
+static void cb_Xcas_nnumworks_restore(Fl_Menu_*, void*) {
+  const char * newfile=load_file_chooser("","*.nws","*.nws",0,false); 
+             if (newfile){ 
+                if (!dfu_send_scriptstore(newfile))
+                  fl_alert("%s",gettext("Unable to restore backup to calculator"));
+             };
+}
+
+static void cb_Xcas_Handle_nnumworks_flash(Fl_Menu_*, void*) {
+  xcas::nws_flash();
+}
+
+static void cb_Xcas_nnumworks_installb(Fl_Menu_*, void*) {
+  std::string prefix=giac::giac_aide_dir()+"doc/";
+              if (!dfu_send_slotab(0,(prefix+"khi110b.tar").c_str(),(prefix+"khi120b.tar").c_str())){
+                giac::system_browser_command("https://my.numworks.com/devices/upgrade");
+	        fl_alert("%s",gettext("Unable to send KhiCAS.\nCheck connection.\nPress RESET with 6 key pressed, release the 6 key,\nthen update Epsilon firmware from Numworks site and try again."));
+              }
+              else {
+               giac::system_browser_command("https://www-fourier.univ-grenoble-alpes.fr/~parisse/khicas.nwa");
+               giac::system_browser_command("https://my.numworks.com/apps");
+               fl_alert("%s",gettext("KhiCAS is almost installed.\nOpen https://my.numworks.com/apps\ninside a webUSB compatible browser like Chromium/Chrome\Select khicas.nwa from Downloads directory"));
+              };
+}
+
+static void cb_Xcas_nnumworks_install(Fl_Menu_*, void*) {
+  std::string prefix=giac::giac_aide_dir()+"doc/";
+              if (!dfu_send_slotab((prefix+"khia").c_str(),(prefix+"khi110ab.tar").c_str(),(prefix+"khi120ab.tar").c_str())){
+                giac::system_browser_command("https://my.numworks.com/devices/upgrade");
+	        fl_alert("%s",gettext("Unable to send KhiCAS.\nCheck connection.\nPress RESET with 6 key pressed, release the 6 key,\nthen update Epsilon firmware from Numworks site and try again."));
+              }
+              else {
+               giac::system_browser_command("https://www-fourier.univ-grenoble-alpes.fr/~parisse/khicas.nwa");
+               giac::system_browser_command("https://my.numworks.com/apps");
+               fl_alert("%s",gettext("KhiCAS is almost installed.\nOpen https://my.numworks.com/apps\ninside a webUSB compatible browser like Chromium/Chrome\Select khicas.nwa from Downloads directory"));
+              };
 }
 
 static void cb_Xcas_nws_doc(Fl_Menu_*, void*) {
@@ -2186,8 +2265,9 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {"V200 program", 0,  (Fl_Callback*)cb_Xcas_open_v200, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
  {"Clone", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"QRcode1", 0,  (Fl_Callback*)cb_Xcas_QRcode1, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"QRcode2", 0,  (Fl_Callback*)cb_Xcas_QRcode2, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"QRcode KhiCAS", 0x80071,  (Fl_Callback*)cb_Xcas_QRcode0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"QRcode XcasJS", 0,  (Fl_Callback*)cb_Xcas_QRcode1, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 8, 0},
+ {"QRcode Xcas web", 0x80072,  (Fl_Callback*)cb_Xcas_QRcode2, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Offline", 0,  (Fl_Callback*)cb_Xcas_CloneOffline, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Online", 0,  (Fl_Callback*)cb_Xcas_CloneOnline, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
@@ -2202,6 +2282,20 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {"Save as", 0,  (Fl_Callback*)cb_Xcas_save_current_session_as, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Save all", 0,  (Fl_Callback*)cb_Xcas_save_all_sessions, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Numworks", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Numworks N0115/N0120, locked N0110", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Documentation", 0,  (Fl_Callback*)cb_Xcas_nnumworks_doc, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Open calculator session", 0,  (Fl_Callback*)cb_Xcas_open_nnumworks_xws, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Send session to calculator", 0,  (Fl_Callback*)cb_Xcas_send_nnumworks_xws, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Send program to calculator", 0,  (Fl_Callback*)cb_Xcas_send_nnumworks_prog, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Import all programs from calculator", 0,  (Fl_Callback*)cb_Xcas_open_nnumworks_calc, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Overwrite calculator RAM", 0,  (Fl_Callback*)cb_Xcas_Export_nnumworks_calc, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Backup Numworks calculator", 0,  (Fl_Callback*)cb_Xcas_nnumworks_backup, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Restore Numworks from backup", 0,  (Fl_Callback*)cb_Xcas_nnumworks_restore, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Customize flash", 0,  (Fl_Callback*)cb_Xcas_Handle_nnumworks_flash, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Install KhiCAS (short version) on calculator", 0,  (Fl_Callback*)cb_Xcas_nnumworks_installb, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Install KhiCAS (long version) on calculator", 0,  (Fl_Callback*)cb_Xcas_nnumworks_install, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {"Old unlocked N0110 (Epsilon<16)", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Documentation", 0,  (Fl_Callback*)cb_Xcas_nws_doc, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Open calculator session", 0,  (Fl_Callback*)cb_Xcas_open_numworks_xws, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Send session to calculator", 0,  (Fl_Callback*)cb_Xcas_send_numworks_xws, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -2217,6 +2311,7 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {"Rescue mode (calculator assistance)", 0,  (Fl_Callback*)cb_Xcas_nw_rescue, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Certification du firmware Numworks N0110", 0,  (Fl_Callback*)cb_Xcas_nw_certify, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Certification N0110 avec test R/W", 0,  (Fl_Callback*)cb_Xcas_nw_certify_overwrite, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {0,0,0,0,0,0,0,0,0},
  {0,0,0,0,0,0,0,0,0},
  {"Export as", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"HP Prime, Casio", 0,  (Fl_Callback*)cb_Xcas_Export_Khicas_Casio, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -2363,7 +2458,7 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {0,0,0,0,0,0,0,0,0},
  {"Toolbox", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"New entry", 0x8006e,  (Fl_Callback*)cb_Xcas_Add_Entry, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"New comment", 0x80071,  (Fl_Callback*)cb_Xcas_Add_Comment, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"New comment", 0x8007a,  (Fl_Callback*)cb_Xcas_Add_Comment, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Equations", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"solve: Solve equation or system", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"fsolve: Solve equation numerically", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -3590,7 +3685,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
     { Xcas_main_menu = new Fl_Menu_Bar(0, 0, 775, 25);
       if (!menu_Xcas_main_menu_i18n_done) {
         int i=0;
-        for ( ; i<370; i++)
+        for ( ; i<386; i++)
           if (menu_Xcas_main_menu[i].label())
             menu_Xcas_main_menu[i].label(gettext(menu_Xcas_main_menu[i].label()));
         menu_Xcas_main_menu_i18n_done = 1;

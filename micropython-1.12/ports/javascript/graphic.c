@@ -382,6 +382,14 @@ static mp_obj_t graphic_draw_string(size_t n_args, const mp_obj_t *args) {
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(graphic_draw_string_obj, 3, 6, graphic_draw_string);
 
+static mp_obj_t graphic_color(size_t n_args, const mp_obj_t *args) {
+  int r=mp_int_float2color(args[0]);
+  int g=mp_int_float2color(args[1]);
+  int b=mp_int_float2color(args[2]);
+  return mp_color_tuple(mp_rgb(r,g,b));
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(graphic_color_obj, 3, 3, graphic_color);
+
 //
 static const mp_map_elem_t graphic_locals_dict_table[] = {
 	{ MP_ROM_QSTR(MP_QSTR_get_pixel), (mp_obj_t) &graphic_get_pixel_obj },
@@ -409,6 +417,7 @@ static const mp_map_elem_t graphic_locals_dict_table[] = {
  	{ MP_ROM_QSTR(MP_QSTR_draw_arc), (mp_obj_t) &graphic_draw_arc_obj },
  	{ MP_ROM_QSTR(MP_QSTR_draw_filled_arc), (mp_obj_t) &graphic_draw_filled_arc_obj },
 	{ MP_ROM_QSTR(MP_QSTR_draw_string), (mp_obj_t) &graphic_draw_string_obj },
+	{ MP_ROM_QSTR(MP_QSTR_color), (mp_obj_t) &graphic_color_obj },
 };
 
 
@@ -445,6 +454,7 @@ STATIC const mp_map_elem_t mp_module_graphic_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_filled_arc), (mp_obj_t) &graphic_draw_filled_arc_obj },
     { MP_ROM_QSTR(MP_QSTR_get_pixel), (mp_obj_t) &graphic_get_pixel_obj },
     { MP_ROM_QSTR(MP_QSTR_draw_string), (mp_obj_t) &graphic_draw_string_obj },
+    { MP_ROM_QSTR(MP_QSTR_color), (mp_obj_t) &graphic_color_obj },
     { MP_ROM_QSTR(MP_QSTR_show_screen), (mp_obj_t) &graphic_show_screen_obj },
     { MP_ROM_QSTR(MP_QSTR_clear_screen), (mp_obj_t) &graphic_clear_screen_obj },
     { MP_ROM_QSTR(MP_QSTR_clear), (mp_obj_t) &graphic_clear_obj },
@@ -2451,7 +2461,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(turtle_sety_obj, 0, 1, turtle_sety);
 static mp_obj_t turtle_write(size_t n_args, const mp_obj_t *args) {
   turtle_freeze();
   char buf[256];
-  sprintf(buf,"ecris(%s):;",mp_obj_str_get_str(args[0]));
+  sprintf(buf,"ecris(\"%s\"):;",mp_obj_str_get_str(args[0]));
   const char * val=caseval(buf);
   return turtle_ret(val);
   return mp_obj_new_str(val,strlen(val));

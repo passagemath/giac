@@ -17,7 +17,7 @@
  */
 #ifndef _GIAC_GEN_H
 #define _GIAC_GEN_H
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
 extern size_t stackptr;
 #endif
 
@@ -441,7 +441,11 @@ namespace giac {
   public:
     bool operator () (const gen & a,const gen & b) const;
   };
+#ifdef CPP11
+  typedef std::map<gen,gen,std::function<bool(const gen &, const gen &)> > gen_map;
+#else
   typedef std::map<gen,gen,comparegen> gen_map;
+#endif
 #else
   typedef std::map<gen,gen,const std::pointer_to_binary_function < const gen &, const gen &, bool> > gen_map;
 #endif
@@ -902,7 +906,11 @@ namespace giac {
 #if 1 // def NSPIRE
     ref_gen_map(): ref_count(1),m() {}
 #else
+#ifdef CPP11
+     ref_gen_map(const std::function<bool(const gen &, const gen &)> & p): ref_count(1),m(p) {}
+#else
     ref_gen_map(const std::pointer_to_binary_function < const gen &, const gen &, bool> & p): ref_count(1),m(p) {}
+#endif // CPP11
 #endif
     ref_gen_map(const gen_map & M):ref_count(1),m(M) {}
   };
@@ -1313,7 +1321,7 @@ namespace giac {
   std::string print_the_type(int val,GIAC_CONTEXT);
 
   // I/O
-#ifdef KHICAS
+#if defined KHICAS || defined SDL_KHICAS
   stdostream & operator << (stdostream & os,const gen & a);
 #endif
 #ifdef NSPIRE
@@ -1415,7 +1423,7 @@ namespace giac {
   // Terminal data for EQW display
   struct eqwdata {
     gen g; 
-#if defined KHICAS || defined FXCG
+#if defined KHICAS || defined SDL_KHICAS || defined FXCG
     short int x,y,dx,dy;
     short int baseline;
 #else
@@ -1445,7 +1453,7 @@ namespace giac {
 
   class identificateur {
   public:
-    int * ref_count;
+    int * ref_count_ptr;
     gen * value;
     // std::string * name;
     const char * id_name;

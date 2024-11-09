@@ -13382,7 +13382,7 @@ it is included for \Maple{} compatibility.
 You can prevent an expression from being evaluated by \emph{quoting}
 it, either by preceding it with \texttt{'}\index{'@\texttt{'}} or with the
 \texttt{quote}\index{quote@\texttt{quote}}
-or \texttt{hold}\index{hold@\texttt{hold}}) command.
+or \texttt{hold}\index{hold@\texttt{hold}} command.
 
 \paragraph*{Remark.}
 If $a$ is a variable, then \texttt{$a$:=quote($a$)} (or
@@ -13839,6 +13839,26 @@ subst(a^2+b,[a,b],[2,1])
 \begin{xcasoutput}
   5
 \end{xcasoutput}
+If you want to substitute values into an expression
+without evaluating the result, you can give the
+\texttt{subst} command an optional last argument of
+\texttt{quote}\index{quote@\texttt{quote}}.
+
+{\bf Examples}\\
+Assuming that \texttt{x} is not assigned:
+\begin{xcasinput}
+subst(sin(x),x,pi)
+\end{xcasinput}
+\begin{xcasoutput}
+  0
+\end{xcasoutput}
+\begin{xcasinput}
+subst(sin(x),x,pi,quote)
+\end{xcasinput}
+\begin{xcasoutput}
+  sin(pi)
+\end{xcasoutput}
+
 
 \paragraph*{Changing integration variables.}
 \texttt{subst} may also be used to make a change of variable in an

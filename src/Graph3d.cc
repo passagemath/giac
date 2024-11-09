@@ -57,6 +57,7 @@ void gl_finish(){}
 
 
 #ifdef __APPLE__
+#undef HAVE_LIBFLTK_GL
 //#include <OpenGL/gl.h>
 //#include <AGL/agl.h>
 #include <FL/x.H>
@@ -202,6 +203,7 @@ namespace xcas {
       autoscale(false);
       update_rotation();
       precision=1;
+      show_edges=true;
     }
 
   }
@@ -2706,8 +2708,8 @@ namespace xcas {
 	}
 	continue;
       }
-      bool line=G.subtype==_LINE__VECT,halfline=G.subtype==_HALFLINE__VECT,segment= G.subtype==_GROUP__VECT;
-      if (G.type==_VECT && G._VECTptr->size()>=2 && (line || halfline || segment)){
+      bool line=G.subtype==_LINE__VECT,halfline=G.subtype==_HALFLINE__VECT,segment= G.subtype==_GROUP__VECT,vect=G.subtype==_VECTOR__VECT;
+      if (G.type==_VECT && G._VECTptr->size()>=2 && (line || halfline || segment|| vect)){
 	for (int n=1;n<G._VECTptr->size();++n){
 	  gen a=evalf_double((*G._VECTptr)[n-1],1,contextptr),b=evalf_double((*G._VECTptr)[n],1,contextptr);
 	  if (a.type==_VECT && b.type==_VECT && a._VECTptr->size()==3 && b._VECTptr->size()==3){
@@ -3693,6 +3695,21 @@ int main(){
     }
   }
 
+bool discard(Graph3d * gr,double x,double y,double z){
+  double X,Y,Z,f=0.1;
+  do_transform(gr->invtransform3d,x,y,z,X,Y,Z);
+  double dX=f*(gr->window_xmax-gr->window_xmin);
+  if (X<gr->window_xmin-dX || X>gr->window_xmax+dX)
+    return true;
+  double dY=f*(gr->window_ymax-gr->window_ymin);
+  if (Y<gr->window_ymin-dY || Y>gr->window_ymax+dY)
+    return true;
+  double dZ=f*(gr->window_zmax-gr->window_zmin);
+  if (Z<gr->window_zmin-dZ || Z>gr->window_zmax+dZ)
+    return true;
+  return false;
+}
+
   
   // hpersurface encoded as a matrix
   // with lines containing 3 coordinates per point
@@ -3876,6 +3893,8 @@ int main(){
 	      a4 = ((float2 *)&z4)->a;
 	      z4 = ((float2 *)&z4)->f;
 	    }
+            if (discard(this,x1,y1,z1) || discard(this,x2,y2,z2) || discard(this,x3,y3,z3))
+              continue;
 	    yx1=y1-x1; yx2=y2-x2; yx3=y3-x3; yx4=y4-x4;
 	    tri[0]=double3(x1,y1,z1);
 	    tri[1]=double3(x2,y2,z2);
@@ -4895,7 +4914,13 @@ int main(){
       block=block_signal;
       block_signal=true;
     }
-    if (opengl){
+    if (
+#ifdef HAVE_LIBFLTK_GL
+	opengl
+#else
+	0
+#endif
+	){
 #if defined __APPLE__ && !defined GRAPH_WINDOW
       GLContext context;
       if (!glcontext){ // create context

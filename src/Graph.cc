@@ -1,5 +1,6 @@
 // -*- mode:C++ ; compile-command: "g++ -DHAVE_CONFIG_H -I. -I.. -I../include -I../../giac/include -g -c Graph.cc -DHAVE_CONFIG_H -DIN_GIAC" -*-
 #include "Graph.h"
+const int MAX_DISP_RADIUS=8192;
 /*
  *  Copyright (C) 2000,2014 B. Parisse, Institut Fourier, 38402 St Martin d'Heres
  *
@@ -57,6 +58,9 @@
 #include <unistd.h>
 #endif
 #include "qrcodegen.h"
+#ifdef __APPLE__
+#undef HAVE_LIBFLTK_GL
+#endif
 #ifndef HAVE_PNG_H
 #undef HAVE_LIBPNG
 #endif
@@ -172,11 +176,11 @@ namespace xcas {
       return;
     QRGraph2png(gr,2);
   }
-  static void cb_QRGraph_PNG3(Fl_Menu_* m , void*) {
+  static void cb_QRGraph_PNG1(Fl_Menu_* m , void*) {
     QRGraph * gr = find_qrgraph(m);
     if (!gr)
       return;
-    QRGraph2png(gr,3);
+    QRGraph2png(gr,1);
   }
   static void cb_QRGraph_PNG4(Fl_Menu_* m , void*) {
     QRGraph * gr = find_qrgraph(m);
@@ -204,9 +208,11 @@ namespace xcas {
   Fl_Menu_Item QRGraph_menu[] = {
     {gettext("Export Print"), 0,  0, 0, 64, 0, 0, 14, 56},
 #ifdef HAVE_LIBPNG
-    {gettext("PNG scale 6"), 0,  (Fl_Callback*)cb_QRGraph_PNG6, 0, 0, 0, 0, 14, 56},
-    {gettext("PNG scale 4"), 0,  (Fl_Callback*)cb_QRGraph_PNG4, 0, 0, 0, 0, 14, 56},
-    {gettext("PNG scale 8"), 0,  (Fl_Callback*)cb_QRGraph_PNG8, 0, 0, 0, 0, 14, 56},
+    {gettext("PNG scale 6"), 'p',  (Fl_Callback*)cb_QRGraph_PNG6, 0, 0, 0, 0, 14, 56},
+    {gettext("PNG scale 4"),'4',  (Fl_Callback*)cb_QRGraph_PNG4, 0, 0, 0, 0, 14, 56},
+    {gettext("PNG scale 2"), '2',  (Fl_Callback*)cb_QRGraph_PNG2, 0, 0, 0, 0, 14, 56},
+    {gettext("PNG scale 1"), '1',  (Fl_Callback*)cb_QRGraph_PNG1, 0, 0, 0, 0, 14, 56},
+    {gettext("PNG scale 8"), '8',  (Fl_Callback*)cb_QRGraph_PNG8, 0, 0, 0, 0, 14, 56},
 #endif
     {gettext("EPS and preview"), 0,  (Fl_Callback*)cb_QRGraph_Preview, 0, 0, 0, 0, 14, 56},
     {gettext("Print"), 0,  (Fl_Callback*)cb_QRGraph_Print, 0, 0, 0, 0, 14, 56},
@@ -247,7 +253,7 @@ namespace xcas {
         recalc = new Fl_Button(w->w()-40,36,40,34);
         recalc->label(gettext("QR"));
         gr = new QRGraph(10,70,initscale);
-        w->label(gettext("QR Code generator (c) Project Nayuki"));
+        w->label(gettext("QR Code generator (c) Project Nayuki github.com/nayuki/QR-Code-generator"));
         w->end();
       }
       in->value(S.c_str());
@@ -1796,7 +1802,7 @@ namespace xcas {
     rotanim_type(256),rotanim_danim(0),rotanim_nstep(100),rotanim_tstep(0.03),
     rotanim_rx(0),rotanim_ry(0),rotanim_rz(1),
     last_event(0),x_tick(1.0),y_tick(1.0),couleur(0),approx(true),hp_pos(-1),moving(false),moving_frame(false),ntheta(24),nphi(18),background_image(0) {
-    tracemode=0; tracemode_n=0; tracemode_i=0;
+    tracemode=0; tracemode_n=0; tracemode_i=0;     tracemaxdepth=12;
     init_tracemode();
     animations.push_back(this);
     push_cfg();
@@ -1830,7 +1836,7 @@ namespace xcas {
     rotanim_type(256),rotanim_danim(0),rotanim_nstep(100),rotanim_tstep(0.1),
     rotanim_rx(0),rotanim_ry(0),rotanim_rz(1),
     last_event(0),x_tick(1.0),y_tick(1.0),couleur(0),approx(true),hp_pos(-1),moving(false),moving_frame(false),ntheta(24),nphi(18),background_image(0) { 
-    tracemode=0; tracemode_n=0; tracemode_i=0;
+    tracemode=0; tracemode_n=0; tracemode_i=0;     tracemaxdepth=12;
     init_tracemode();
     legende_size=giac::LEGENDE_SIZE;
     animations.push_back(this);
@@ -2116,7 +2122,7 @@ namespace xcas {
       l=window()->labelsize();
     }
     static Fl_Window * w = 0;
-    static Fl_Value_Input * wxmin=0, * wxmax=0, *wymin=0, *wymax=0, *wzmin=0, *wzmax=0,*tx=0,*ty=0,*nx=0,*ny=0,*nz=0,*nd=0,*animate=0,*ylegendesize=0,*rx=0,*Theta=0,*Phi=0;
+    static Fl_Value_Input * wxmin=0, * wxmax=0, *wymin=0, *wymax=0, *wzmin=0, *wzmax=0,*tx=0,*ty=0,*nx=0,*ny=0,*nz=0,*nd=0,*animate=0,*ylegendesize=0,*rx=0,*Theta=0,*Phi=0,*trace4=0;
     static Fl_Value_Input * rotcfg_type=0,*rotcfg_danim=0,*rotcfg_nstep=0,*rotcfg_rx=0,*rotcfg_ry=0,*rotcfg_rz=0,*rotcfg_tstep=0;
     static Fl_Input * autoname_input=0;
     static Fl_Button * button0 = 0 ; // ok
@@ -2267,6 +2273,10 @@ namespace xcas {
       trace3=new Fl_Check_Button(4*dx/8,y_,dx/8,dh-4,gettext("Osc. circle"));
       trace3->tooltip(gettext("Show/Hide osculating circle of 2d curves"));
       trace3->down_box(FL_DOWN_BOX);
+      trace4=new Fl_Value_Input(6*dx/8,y_,dx/8,dh-4,gettext("Max"));
+      trace4->tooltip(gettext("Maximum number of embedded function calls for trace"));
+      trace4->minimum(0);
+      trace4->maximum(RAND_MAX);
       y_ += dh;
       c1=new Fl_Check_Button(0,y_,dx/8,dh-4,gettext("Show names"));
       c1->tooltip(gettext("Show/Hide names of geometric objects"));
@@ -2385,7 +2395,7 @@ namespace xcas {
     animate->value(animation_dt);
     double a,b,c,i,j,theta,wx=(window_xmax-window_xmin),wy=(window_ymax-window_ymin),wz=(window_zmax-window_zmin);
     if (gr3d){
-      trace1->hide(); trace2->hide(); trace3->hide();
+      trace1->hide(); trace2->hide(); trace3->hide(); trace4->hide();
       rotcfg_tstep->show(); rotcfg_nstep->show();
       rotcfg_rx->show(); rotcfg_ry->show(); rotcfg_rz->show();
       rotcfg_danim->show(); rotcfg_type->show();
@@ -2461,10 +2471,11 @@ namespace xcas {
       ylegendesize->hide();
     }
     else {
-      trace1->show(); trace2->show(); trace3->show();
+      trace1->show(); trace2->show(); trace3->show(); trace4->show();
       trace1->value(tracemode & 2);
       trace2->value(tracemode & 4);
       trace3->value(tracemode & 8);
+      trace4->value(tracemaxdepth);
       rotcfg_tstep->hide(); rotcfg_nstep->hide();
       rotcfg_rx->hide(); rotcfg_ry->hide(); rotcfg_rz->hide();
       rotcfg_danim->hide(); rotcfg_type->hide();
@@ -2622,6 +2633,10 @@ namespace xcas {
 	    tracemode |= 8;
 	    //orthonormalize();
 	  }
+	  tracemode_set();
+	}
+	if (o==trace4){
+          tracemaxdepth=trace4->value();
 	  tracemode_set();
 	}
 	if (fig && o == landscape){
@@ -5435,6 +5450,8 @@ namespace xcas {
 	  if ( (diam.type==_DOUBLE_) && (a1.type==_DOUBLE_) && (a2.type==_DOUBLE_) ){
 	    i1=diam._DOUBLE_val*x_scale/2.0;
 	    j1=diam._DOUBLE_val*y_scale/2.0;
+            if (i1>MAX_DISP_RADIUS || j1>MAX_DISP_RADIUS)
+              return;
 	    double a1d=a1._DOUBLE_val,a2d=a2._DOUBLE_val,angled=angle._DOUBLE_val;
 	    bool changer_sens=a1d>a2d;
 	    if (changer_sens){
@@ -5971,6 +5988,22 @@ namespace xcas {
     return true;
   }
 
+  int symb_depth(const gen & g,int curdepth,int maxdepth){
+    if (g.type==_VECT){
+      vecteur & v =*g._VECTptr;
+      for (int i=0;i<v.size();++i){
+        curdepth=symb_depth(v[i],curdepth,maxdepth);
+        if (curdepth>maxdepth)
+          return curdepth;
+      }
+    }
+    if (g.type!=_SYMB)
+      return curdepth;
+    if (curdepth==maxdepth)
+      return maxdepth+1;
+    return symb_depth(g._SYMBptr->feuille,curdepth+1,maxdepth);
+  }
+
   void Graph2d3d::tracemode_set(int operation){
     redraw();
 #ifndef NO_STDEXCEPT
@@ -6032,7 +6065,7 @@ namespace xcas {
     string curve_infos1,curve_infos2;
     gen parameq,x,y,t,tmin,tmax,tstep;
     // extract position at tracemode_i
-    if (G.is_symb_of_sommet(at_curve)){
+    if (G.is_symb_of_sommet(at_curve) && symb_depth(G._SYMBptr->feuille[0][0],0,tracemaxdepth)<tracemaxdepth){
       gen c=G._SYMBptr->feuille[0];
       parameq=c[0];
       // simple expand for i*ln(x)
@@ -6060,13 +6093,30 @@ namespace xcas {
       if (tmax._DOUBLE_val<tracemode_mark)
 	tracemode_mark=tmax._DOUBLE_val;
       G=G._SYMBptr->feuille[1];
-      if (G.type==_VECT){
+      if (G.type==_VECT && !G._VECTptr->empty()){
 	vecteur &Gv=*G._VECTptr;
-	tstep=(tmax-tmin)/(Gv.size()-1);
+        bool doit=false;
+        if (x==t){
+          tmin=re(Gv.front(),contextptr);
+          tmax=re(Gv.back(),contextptr);
+          doit=true;
+        }
+        else if (y==t){
+          tmin=im(Gv.front(),contextptr);
+          tmax=im(Gv.back(),contextptr);
+          doit=true;
+        }
+        if (doit){
+          tstep=(tmax-tmin)/(Gv.size()-1);
+          if (tracemode_mark<tmin._DOUBLE_val)
+            tracemode_mark=tmin._DOUBLE_val;
+          if (tracemode_mark>tmax._DOUBLE_val)
+            tracemode_mark=tmax._DOUBLE_val;
+        }
       }
       double eps=1e-6; // epsilon(contextptr)
       double curt=(tmin+tracemode_i*tstep)._DOUBLE_val;
-      if (abs(curt-tracemode_mark)<tstep._DOUBLE_val)
+      if (abs(curt-tracemode_mark)<0.999*tstep._DOUBLE_val)
 	curt=tracemode_mark;
       if (operation==-1){
 	gen A,B,C,R; // detect ellipse/hyperbola
@@ -6101,14 +6151,14 @@ namespace xcas {
       if (operation==7)
 	sol=tracemode_mark=curt;
       if (operation==2){ // root near curt
-	sol=newton(y,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,1,0,1,contextptr);
+	sol=newton(y,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,tmin._DOUBLE_val,tmax._DOUBLE_val,1,contextptr);
 	if (sol.type==_DOUBLE_){
 	  fl_alert("%s",(gettext("Root at ")+sol.print(contextptr)).c_str());
 	  sto(sol,gen("Zero",contextptr),contextptr);
 	}
       }
       if (operation==4){ // horizontal tangent near curt
-	sol=newton(y1,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,1,0,1,contextptr);
+	sol=newton(y1,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,tmin._DOUBLE_val,tmax._DOUBLE_val,1,contextptr);
 	if (sol.type==_DOUBLE_){
 	  fl_alert("%s",(gettext("y'=0, extremum/singular pt at ")+sol.print(contextptr)).c_str());
 	  sto(sol,gen("Extremum",contextptr),contextptr);
@@ -6118,7 +6168,7 @@ namespace xcas {
 	if (x1==1)
 	  fl_alert("%s",gettext("Tool for parametric curves!"));
 	else {
-	  sol=newton(x1,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,1,0,1,contextptr);
+	  sol=newton(x1,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,tmin._DOUBLE_val,tmax._DOUBLE_val,1,contextptr);
 	  if (sol.type==_DOUBLE_){
 	    fl_alert("%s",(gettext("x'=0, vertical or singular: ")+sol.print(contextptr)).c_str());
 	    sto(sol,gen("Vertical",contextptr),contextptr);
@@ -6126,7 +6176,7 @@ namespace xcas {
 	}
       }
       if (operation==6){ // inflexion
-	sol=newton(x1*y2-x2*y1,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,1,0,1,contextptr);
+	sol=newton(x1*y2-x2*y1,t,curt,NEWTON_DEFAULT_ITERATION,eps,1e-12,true,tmin._DOUBLE_val,tmax._DOUBLE_val,tmin._DOUBLE_val,tmax._DOUBLE_val,1,contextptr);
 	if (sol.type==_DOUBLE_){
 	  fl_alert("%s",("x'*y''-x''*y'=0: "+sol.print(contextptr)).c_str());
 	  sto(sol,gen("Inflexion",contextptr),contextptr);
@@ -6241,11 +6291,11 @@ namespace xcas {
 	tracemode_disp.push_back(I2);      
 	// function curve: set nearest intersection as mark/position
 	if (t==x && !is_zero(tstep)){
-	  gen Ix,Iy;
+          gen Ix,Iy;
 	  reim(remove_at_pnt(I1),Ix,Iy,contextptr);
-	  tracemode_mark=Ix._DOUBLE_val;
+	  tracemode_mark=evalf_double(Ix,1,contextptr)._DOUBLE_val;
 	  reim(remove_at_pnt(I2),Ix,Iy,contextptr);
-	  tracemode_i=((Ix-tmin)/tstep)._DOUBLE_val;
+	  tracemode_i=((evalf_double(Ix,1,contextptr)-tmin)/tstep)._DOUBLE_val;
 	}
       }
     } // end intersect
