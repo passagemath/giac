@@ -4,7 +4,7 @@ dnl Giac version number
 m4_define([giac_major_version], [1])
 m4_define([giac_minor_version], [9])
 m4_define([giac_micro_version], [0])
-m4_define([giac_patch_version], [93+passagemath-2024-10-29])
+m4_define([giac_patch_version], [993+passagemath-2024-11-09])
 m4_define([giac_version], [giac_major_version.giac_minor_version.giac_micro_version.giac_patch_version])
 
 dnl Attempt to change archive name made by make dist 
