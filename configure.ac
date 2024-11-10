@@ -18,8 +18,8 @@ m4_define([giac_lt_current], [0])
 m4_define([giac_lt_age], [0])
 m4_define([giac_lt_revision], [0])
 
-AC_INIT([giac], giac_version)
-AC_PREREQ(2.59)
+AC_INIT([giac],[giac_version])
+AC_PREREQ([2.71])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([src/index.h])
@@ -29,14 +29,14 @@ AM_INIT_AUTOMAKE([gnu 1.8 dist-bzip2 tar-ustar])
 
 dnl AM_MAINTAINER_MODE
 
-dnl AC_GNU_SOURCE
+dnl AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_CXX
 AC_PROG_CXXCPP
 AC_LANG([C++])
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_YACC
 AM_PROG_LEX
 AC_C_BIGENDIAN
@@ -585,7 +585,7 @@ fi
 AM_CONDITIONAL([BUILD_QUICKJS], [test "$CONFIG_QUICKJS" = "yes"])
 
 dnl Output makefiles etc.
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile
 src/Makefile
 check/Makefile
@@ -625,6 +625,7 @@ micropython-1.12/ulab/scipy/special/Makefile
 micropython-1.12/ulab/user/Makefile
 micropython-1.12/ulab/utils/Makefile
 ])
+AC_OUTPUT
 
 echo "Adding link . to giac in src"
 rm -f src/giac && ln -s . src/giac
