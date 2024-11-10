@@ -38,7 +38,7 @@ AC_PROG_CXXCPP
 AC_LANG([C++])
 LT_INIT
 AC_PROG_YACC
-AM_PROG_LEX
+AC_PROG_LEX(noyywrap)
 AC_C_BIGENDIAN
 
 dnl Check for standard C+headers
