@@ -1,9 +1,9 @@
 if BUILD_MICROPY
     MICROPY_DIR = micropython-1.12
 endif
-SUBDIRS =       $(MICROPY_DIR) src check intl po doc examples
+SUBDIRS =       $(MICROPY_DIR) src check po doc examples
 ## SUBDIRS = 	micropython-1.12 src check intl po doc examples
-DIST_SUBDIRS = 	micropython-1.12 src check intl po doc examples
+DIST_SUBDIRS = 	micropython-1.12 src check po doc examples
 EXTRA_DIST = giac_fltk_changes fltk-1.3.8-source.tar.bz2 path.h.in setup inst TROUBLES Init.scm compte INSTALACION LEAME.WIN LEAME.ipaq giac.specs giac.specs32 fltk.1.1.changes README.MACOSX changeversion mkosx mkosx10 mkosx3  win2unix.cc addu.cc xcas*.nsi xcas.desktop xcas.metainfo.xml xcas.xpm xcas.applications README.visualcpp java.README win win64  LISEZMOI.numworks icons/* README.hevea2mml README.itex2MML
 
 # Rule to build tar-bzipped distribution package

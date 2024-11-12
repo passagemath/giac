@@ -519,7 +519,7 @@ AC_ARG_ENABLE([gettext],
 
 if test "$CONFIG_GETTEXT" = "yes"; then 
    AC_CHECK_LIB(intl, main) 
-   dnl AM_GNU_GETTEXT
+   AM_GNU_GETTEXT([external])
    AM_GNU_GETTEXT_VERSION([0.14.5])
    fi
 dnl for Slowlaris comment next line
@@ -597,7 +597,6 @@ doc/local/Makefile
 doc/pt/Makefile
 doc/zh/Makefile
 doc/de/Makefile
-intl/Makefile
 po/Makefile.in
 examples/Makefile
 micropython-1.12/Makefile
