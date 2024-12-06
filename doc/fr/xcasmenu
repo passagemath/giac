@@ -34,6 +34,62 @@ Cmds/Entier/prevprime: premier precedent
 Cmds/Entier/smod: reste symetrique
 Cmds/Entier/znorder: ordre dans Z sur nZ *
 Cmds/Entier/znprimroot: generateur de Fp^*
+Cmds/Expression/factor
+Cmds/Expression/simplify
+Cmds/Expression/Divers/collect
+Cmds/Expression/Divers/expand
+Cmds/Expression/Divers/normal
+Cmds/Expression/Divers/eval
+Cmds/Expression/Divers/equal2diff
+Cmds/Expression/Divers/subst
+Cmds/Expression/Expln^/exp2pow: exp(n*ln(x)) -> x^n
+Cmds/Expression/Expln^/hyp2exp: hyperbolique en exp
+Cmds/Expression/Expln^/expexpand: developpe les exp
+Cmds/Expression/Expln^/lin: linearise les exp
+Cmds/Expression/Expln^/lncollect: regroupe les log
+Cmds/Expression/Expln^/lnexpand: developpe les log
+Cmds/Expression/Expln^/powexpand: developpe les ^
+Cmds/Expression/Expln^/pow2exp: ^ -> exp
+Cmds/Expression/Trigo/trigexpand: developpe sin,cos,tan
+Cmds/Expression/Trigo/tlin: linearisation trigonometrique
+Cmds/Expression/Trigo/tcollect: regroupe cos et sin
+Cmds/Expression/Trigo/halftan: en fonction de tan(x sur 2)
+Cmds/Expression/Trigo/cos2sintan: cos -> sin sur tan
+Cmds/Expression/Trigo/sin2costan: sin -> cos*tan
+Cmds/Expression/Trigo/tan2sincos: tan -> sin sur cos
+Cmds/Expression/Trigo/tan2cossin2: tan -> cos, sin 2*angle
+Cmds/Expression/Trigo/tan2sincos2: tan -> sin. cos 2*angle
+Cmds/Expression/Trigo/trigcos: sin^2 -> 1-cos^2
+Cmds/Expression/Trigo/trigsin: cos^2 -> 1-sin^2
+Cmds/Expression/Trigo/trigtan: cos^2 et sin^2 -> tan^2
+Cmds/Expression/Trigo/shift_phase
+Cmds/Expression/Trigo exp/exp2trig: exp(i*x) -> cos(x)+i*sin(x)
+Cmds/Expression/Trigo exp/trig2exp: cos et sin -> exp(i*angle)
+Cmds/Expression/Trigo exp/tsimplify: simplifier transcendant
+Cmds/Expression/Trigo exp/texpand: developper trigo, exp, ln
+Cmds/Expression/Trigo inv/atrig2ln: inverse trigo -> ln complexe
+Cmds/Expression/Trigo inv/acos2asin: acos -> asin
+Cmds/Expression/Trigo inv/acos2atan: acos -> atan
+Cmds/Expression/Trigo inv/asin2acos: asin -> acos
+Cmds/Expression/Trigo inv/asin2atan: asin -> atan
+Cmds/Expression/Trigo inv/atan2acos: atan -> acos
+Cmds/Expression/Trigo inv/atan2asin: atan -> asin
+Cmds/Expression/Rationnel/f2nd
+Cmds/Expression/Rationnel/ratnormal: forme normale
+Cmds/Expression/Rationnel/reorder: reordonner les variables
+Cmds/Expression/Rationnel/partfrac: elements simples
+Cmds/Expression/Rationnel/cpartfrac: elements simples sur C
+Cmds/Expression/Rationnel/simp2
+Cmds/Expression/Rationnel/collect: regrouper
+Cmds/Expression/Rationnel/factor: factoriser
+Cmds/Expression/Rationnel/expand: developper
+Cmds/Expression/Rationnel/normal: forme normale
+Cmds/Expression/Rationnel/simplify
+Cmds/Expression/Rationnel/mult_conjugate
+Cmds/Expression/Rationnel/mult_c_conjugate
+Cmds/Expression/Réel/epsilon2zero
+Cmds/Expression/Réel/evalf: evaluation approchee
+Cmds/Expression/Réel/float2rational
 Cmds/Réel/Base/abs: valeur absolue
 Cmds/Réel/Base/ceil: partie entiere superieure
 Cmds/Réel/Base/factorial: factorielle
@@ -925,62 +981,6 @@ Geo/Avancé/point_division_harmonique
 Geo/Avancé/puissance
 Geo/Avancé/developpee
 Geo/ClrGraph
-Expression/factor
-Expression/simplify
-Expression/Divers/collect
-Expression/Divers/expand
-Expression/Divers/normal
-Expression/Divers/eval
-Expression/Divers/equal2diff
-Expression/Divers/subst
-Expression/Expln^/exp2pow: exp(n*ln(x)) -> x^n
-Expression/Expln^/hyp2exp: hyperbolique en exp
-Expression/Expln^/expexpand: developpe les exp
-Expression/Expln^/lin: linearise les exp
-Expression/Expln^/lncollect: regroupe les log
-Expression/Expln^/lnexpand: developpe les log
-Expression/Expln^/powexpand: developpe les ^
-Expression/Expln^/pow2exp: ^ -> exp
-Expression/Trigo/trigexpand: developpe sin,cos,tan
-Expression/Trigo/tlin: linearisation trigonometrique
-Expression/Trigo/tcollect: regroupe cos et sin
-Expression/Trigo/halftan: en fonction de tan(x sur 2)
-Expression/Trigo/cos2sintan: cos -> sin sur tan
-Expression/Trigo/sin2costan: sin -> cos*tan
-Expression/Trigo/tan2sincos: tan -> sin sur cos
-Expression/Trigo/tan2cossin2: tan -> cos, sin 2*angle
-Expression/Trigo/tan2sincos2: tan -> sin. cos 2*angle
-Expression/Trigo/trigcos: sin^2 -> 1-cos^2
-Expression/Trigo/trigsin: cos^2 -> 1-sin^2
-Expression/Trigo/trigtan: cos^2 et sin^2 -> tan^2
-Expression/Trigo/shift_phase
-Expression/Trigo exp/exp2trig: exp(i*x) -> cos(x)+i*sin(x)
-Expression/Trigo exp/trig2exp: cos et sin -> exp(i*angle)
-Expression/Trigo exp/tsimplify: simplifier transcendant
-Expression/Trigo exp/texpand: developper trigo, exp, ln
-Expression/Trigo inv/atrig2ln: inverse trigo -> ln complexe
-Expression/Trigo inv/acos2asin: acos -> asin
-Expression/Trigo inv/acos2atan: acos -> atan
-Expression/Trigo inv/asin2acos: asin -> acos
-Expression/Trigo inv/asin2atan: asin -> atan
-Expression/Trigo inv/atan2acos: atan -> acos
-Expression/Trigo inv/atan2asin: atan -> asin
-Expression/Rationnel/f2nd
-Expression/Rationnel/ratnormal: forme normale
-Expression/Rationnel/reorder: reordonner les variables
-Expression/Rationnel/partfrac: elements simples
-Expression/Rationnel/cpartfrac: elements simples sur C
-Expression/Rationnel/simp2
-Expression/Rationnel/collect: regrouper
-Expression/Rationnel/factor: factoriser
-Expression/Rationnel/expand: developper
-Expression/Rationnel/normal: forme normale
-Expression/Rationnel/simplify
-Expression/Rationnel/mult_conjugate
-Expression/Rationnel/mult_c_conjugate
-Expression/Réel/epsilon2zero
-Expression/Réel/evalf: evaluation approchee
-Expression/Réel/float2rational
 Scolaire/factoriser:   une expression
 Scolaire/regrouper:   les termes équivalents
 Scolaire/simplifier:   une expression

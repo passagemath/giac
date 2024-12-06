@@ -21,8 +21,8 @@
 #include "giac.h"
 
 #ifdef HAVE_LIBFLTK
-char *file_chooser(const char *message,const char *pat,const char *fname,int relative=0);
-char *load_file_chooser(const char *message,const char *pat,const char *fname,int relative,bool save);
+const char *file_chooser(const char *message,const char *pat,const char *fname,int relative=0);
+const char *load_file_chooser(const char *message,const char *pat,const char *fname,int relative,bool save);
 #endif
 
 #ifndef NO_NAMESPACE_XCAS
@@ -30,6 +30,22 @@ namespace xcas {
 #endif // ndef NO_NAMESPACE_XCAS
 
 #ifdef HAVE_LIBFLTK
+  extern void (*qr_update) (int);
+  extern int qr_to;
+  void cb_qrxcas(Fl_Widget * b,void *);
+  void cb_qrkcas(Fl_Widget * b,void *);
+  void cb_qrjcas(Fl_Widget * b,void *);
+  void cb_qrwcas(Fl_Widget * b,void *);
+  void cb_qrtcas(Fl_Widget * b,void *);
+  void cb_qrxcas2(Fl_Widget * b,void *);
+  void cb_qrkcas2(Fl_Widget * b,void *);
+  void cb_qrjcas2(Fl_Widget * b,void *);
+  void cb_qrwcas2(Fl_Widget * b,void *);
+  void cb_qrtcas2(Fl_Widget * b,void *);
+  void cb_qrforum(Fl_Widget * b,void *);
+  void cb_qremail(Fl_Widget * b,void *);
+  std::string urlencode(const char* );
+  
   void add_recent_filename(const std::string & s,bool writerecent);
   void read_recent_filenames(Fl_Menu_ * menu); // read xcas_recent and init recent_filenames_menu
   extern void (*Xcas_load_filename)(const char * filename,bool modified); // set in hist.fl
@@ -215,6 +231,7 @@ namespace xcas {
   void History_cb_Save(Fl_Widget* m , void*) ;
   void History_cb_Save_as(Fl_Widget* m , void*) ;
   void History_cb_Save_as_xcas_casio(Fl_Widget* m , void*) ;
+  void History_cb_Save_as_xcas_ti83(Fl_Widget* m , void*) ;
   void History_cb_Save_as_xcas_nspire(Fl_Widget* m , void*) ;
   void History_cb_Save_as_xcas_numworks(Fl_Widget* m , void*) ;
   void History_cb_Save_as_numworks_archive(Fl_Widget* m , void*) ;

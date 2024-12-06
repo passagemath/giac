@@ -38,7 +38,7 @@
 \makeindex
 
 % \renewcommand{\cuttingunit}{subsection} (add HEVEA after % for hacha)
-\input{giacfr.tex}
+\input{../giacfr.tex}
 \ifhevea
 \(
 \newcommand{\R}{{\mathbb{R}}}
@@ -2456,7 +2456,7 @@ $5000!$~: comparez leurs temps d'ex\'ecution.
 \giacinput{5000!:;}
 \giacinput{product(range(1,5001)):;}
 \giacinput{product(cumSum(seq(1,5000))):;}
-\giacinput{f:=1; (f:=f*n)$(n=2..5000):;}
+\giacinput{f:=1; seq(f:=f*n,n=2..5000):;}
 \verb|f:=1; for(n:=1;n <= 5000;n++) {f:=f*n}|\\
 \verb|f:=1;n:=1; while(n < 5000) {n:=n+1; f:=f*n}|\\
 \verb|f:=1; (f:=f*n)$(n=2..5000):;|

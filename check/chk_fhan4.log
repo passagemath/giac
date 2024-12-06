@@ -1,0 +1,159 @@
+// Using locale /usr/share/locale/
+// C
+// /usr/share/locale/
+// giac
+// UTF-8
+// Maximum number of parallel threads 1
+// Giac share root-directory:/usr/share/giac/
+// Giac share root-directory:/usr/share/giac/
+Added 0 synonyms
+// Giac share root-directory:/usr/share/giac/
+// Warning: a, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// Success
+// Success
+// Success
+// Success
+// Success
+// Success
+// Success
+// Success
+// End defining T
+============== restarted ===============
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+// Time 0.03
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+0
+0
+0
+// Time 0.06
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+0
+// Time 0.1
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0.03
+  *** _ZM_mul_worker: Warning: increasing stack size to 4096000.
+// Time 0.13
+// Time 0.13
+// Time 0.19
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0.15
+// Time 0.12
+// Time 0.12
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+  ***   Warning: increasing stack size to 4096000.
+// Time 0.21
+// Time 0.24
+// Time 0.18
+// Time 0.15
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0.2
+// Time 0
+// Time 0
+// Time 0.01
+
+Evaluation time: 0.67
+// Time 0.67
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Total time 2.79
+PASS chk_fhan4 (exit status: 0)

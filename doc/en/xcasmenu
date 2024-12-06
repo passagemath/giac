@@ -3,6 +3,62 @@ Cmds/Constants/+infinity
 Cmds/Constants/-infinity
 Cmds/Constants/infinity
 Cmds/Constants/euler_gamma
+Cmds/Expression/factor
+Cmds/Expression/simplify
+Cmds/Expression/Misc/collect
+Cmds/Expression/Misc/expand
+Cmds/Expression/Misc/normal
+Cmds/Expression/Misc/eval
+Cmds/Expression/Misc/equal2diff
+Cmds/Expression/Misc/subst
+Cmds/Expression/Expln^/exp2pow
+Cmds/Expression/Expln^/hyp2exp
+Cmds/Expression/Expln^/expexpand
+Cmds/Expression/Expln^/lin
+Cmds/Expression/Expln^/lncollect
+Cmds/Expression/Expln^/lnexpand
+Cmds/Expression/Expln^/powexpand
+Cmds/Expression/Expln^/pow2exp
+Cmds/Expression/Trigo/trigexpand
+Cmds/Expression/Trigo/tlin
+Cmds/Expression/Trigo/tcollect
+Cmds/Expression/Trigo/halftan
+Cmds/Expression/Trigo/cos2sintan
+Cmds/Expression/Trigo/sin2costan
+Cmds/Expression/Trigo/tan2sincos
+Cmds/Expression/Trigo/tan2cossin2
+Cmds/Expression/Trigo/tan2sincos2
+Cmds/Expression/Trigo/trigcos
+Cmds/Expression/Trigo/trigsin
+Cmds/Expression/Trigo/trigtan
+Cmds/Expression/Trigo/shift_phase
+Cmds/Expression/Trigo exp/exp2trig
+Cmds/Expression/Trigo exp/trig2exp
+Cmds/Expression/Trigo exp/tsimplify
+Cmds/Expression/Trigo exp/texpand
+Cmds/Expression/Trigo inv/atrig2ln
+Cmds/Expression/Trigo inv/acos2asin
+Cmds/Expression/Trigo inv/acos2atan
+Cmds/Expression/Trigo inv/asin2acos
+Cmds/Expression/Trigo inv/asin2atan
+Cmds/Expression/Trigo inv/atan2acos
+Cmds/Expression/Trigo inv/atan2asin
+Cmds/Expression/Rational/f2nd
+Cmds/Expression/Rational/ratnormal
+Cmds/Expression/Rational/reorder
+Cmds/Expression/Rational/partfrac
+Cmds/Expression/Rational/cpartfrac
+Cmds/Expression/Rational/simp2
+Cmds/Expression/Rational/collect
+Cmds/Expression/Rational/factor
+Cmds/Expression/Rational/expand
+Cmds/Expression/Rational/normal
+Cmds/Expression/Rational/simplify
+Cmds/Expression/Rational/mult_conjugate
+Cmds/Expression/Rational/mult_c_conjugate
+Cmds/Expression/Real/epsilon2zero
+Cmds/Expression/Real/evalf
+Cmds/Expression/Real/float2rational
 Cmds/Integer/Crypto/bitand
 Cmds/Integer/Crypto/bitor
 Cmds/Integer/Crypto/bitxor
@@ -855,62 +911,6 @@ Geo/Advanced/harmonic_division
 Geo/Advanced/harmonic_division_point
 Geo/Advanced/powerpc
 Geo/ClrGraph
-Expression/factor
-Expression/simplify
-Expression/Misc/collect
-Expression/Misc/expand
-Expression/Misc/normal
-Expression/Misc/eval
-Expression/Misc/equal2diff
-Expression/Misc/subst
-Expression/Expln^/exp2pow
-Expression/Expln^/hyp2exp
-Expression/Expln^/expexpand
-Expression/Expln^/lin
-Expression/Expln^/lncollect
-Expression/Expln^/lnexpand
-Expression/Expln^/powexpand
-Expression/Expln^/pow2exp
-Expression/Trigo/trigexpand
-Expression/Trigo/tlin
-Expression/Trigo/tcollect
-Expression/Trigo/halftan
-Expression/Trigo/cos2sintan
-Expression/Trigo/sin2costan
-Expression/Trigo/tan2sincos
-Expression/Trigo/tan2cossin2
-Expression/Trigo/tan2sincos2
-Expression/Trigo/trigcos
-Expression/Trigo/trigsin
-Expression/Trigo/trigtan
-Expression/Trigo/shift_phase
-Expression/Trigo exp/exp2trig
-Expression/Trigo exp/trig2exp
-Expression/Trigo exp/tsimplify
-Expression/Trigo exp/texpand
-Expression/Trigo inv/atrig2ln
-Expression/Trigo inv/acos2asin
-Expression/Trigo inv/acos2atan
-Expression/Trigo inv/asin2acos
-Expression/Trigo inv/asin2atan
-Expression/Trigo inv/atan2acos
-Expression/Trigo inv/atan2asin
-Expression/Rational/f2nd
-Expression/Rational/ratnormal
-Expression/Rational/reorder
-Expression/Rational/partfrac
-Expression/Rational/cpartfrac
-Expression/Rational/simp2
-Expression/Rational/collect
-Expression/Rational/factor
-Expression/Rational/expand
-Expression/Rational/normal
-Expression/Rational/simplify
-Expression/Rational/mult_conjugate
-Expression/Rational/mult_c_conjugate
-Expression/Real/epsilon2zero
-Expression/Real/evalf
-Expression/Real/float2rational
 Highschool/L9/normal
 Highschool/L9/factor
 Highschool/L9/canonical_form

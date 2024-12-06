@@ -8534,6 +8534,7 @@ namespace giac {
 #endif
   }
 
+#if 0
   // finish full row reduction to echelon form if N is upper triangular
   // this is done from lmax-1 to l *** code not tested ***
   bool smallmodrref_upper(vector< vector<mod4int> > & N,int l,int lmax,int c,int cmax,mod4int modulo){
@@ -8639,6 +8640,7 @@ namespace giac {
     }
     return true;
   }
+#endif
 
   int smallmodrref_lastpivotcol(const vector< vector<int> > & K,int lmax){
     // first find the column of the last pivot
@@ -15889,10 +15891,11 @@ namespace giac {
       return 1;
     int s=(int) args._VECTptr->size();
     if (args.subtype==_SEQ__VECT){
-      if (0 && s==2){
-	if (args._VECTptr->back()==-1)
+      if (s>=2 && args[1]==at_size){
+        gen b=args._VECTptr->back();
+	if (b==-1)
 	  return tailles(args._VECTptr->front());
-	return int(taille(args._VECTptr->front(),0));
+	return int(taille(args._VECTptr->front(),b.type==_INT_?giacmax(0,b.val):0));
       }
 #if 0 //def KHICAS
       if (s==0)
@@ -17339,8 +17342,10 @@ namespace giac {
       svl.push_back(di);
       d[i]=vi;
     }
+#ifndef GIAC_HAS_STO_38 // otherwise G1 crashes
      if (smallsvl)
-       *logptr(contextptr) << "Warning, ill-conditionned matrix, " << smallsvl << " small singular values were replaced by 0. Result is probably wrong." << '\n';    
+       *logptr(contextptr) << "Warning, ill-conditionned matrix, " << smallsvl << " small singular values were replaced by 0. Result is probably wrong." << '\n';
+#endif
     if (method==-2){
       if (transposed){
 	int add0=int(M.size()-M.front()._VECTptr->size());

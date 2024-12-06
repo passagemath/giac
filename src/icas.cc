@@ -3,6 +3,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#ifdef EMCC2
+#include <emscripten.h>
+#endif
 #include "first.h"
 #ifdef KHICAS
 int main(){
@@ -41,7 +44,7 @@ using namespace std;
 #include <fstream>
 #include <iomanip>
 #include <time.h>
-#ifdef HAVE_SYS_TIME_H
+#if defined HAVE_SYS_TIME_H || defined EMCC2
 #include <sys/time.h>
 #endif
 //#include <unistd.h> // For reading arguments from file
@@ -167,8 +170,9 @@ void dealloc(struct Tgraph *graph);
 
 static int texmacs_counter= 0;
 
-
+#ifndef EMCC2
 #include "Xcas1.h"
+#endif
 
 #ifndef HAVE_LIBFLTK
 using namespace giac;
@@ -669,9 +673,11 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
           std::map<std::string,std::string>::const_iterator it=giac::lexer_localization_map().find(c),itend=giac::lexer_localization_map().end();
           if (it!=itend)
             c=it->second;
+#if !defined EMCC && !defined EMCC2
           vector<string> v=giac::html_help(giac::html_mtt,c);
           if (!v.empty())
             ;
+#endif
         }
         print_help_text(desc,usg,rel,ex);
       }
@@ -1420,6 +1426,22 @@ int micropyjs_evaled(string & s,const giac::context * contextptr){
   return 0;
 }
 
+#ifdef EMCC2
+std::string get_string(const std::string & in){
+  char buf[1024];
+  EM_ASM({
+      var msg=UTF8ToString($0);
+      var jsString = prompt(msg);
+      if (jsString==null) jsString="";
+      var lengthBytes = lengthBytesUTF8(jsString)+1;
+      stringToUTF8(jsString,$1,1024);
+      },in.c_str(),buf);
+  std::string s(buf);
+  //free(buf);
+  return s;
+}
+#endif
+
 int main(int ARGC, char *ARGV[]){
   //giac::stack_check_init(512*1024);  
   bool inemacs=((ARGC>=2) && std::string(ARGV[1])=="--emacs");
@@ -1442,6 +1464,19 @@ int main(int ARGC, char *ARGV[]){
   giac::context * contextptr = 
     //  (giac::context *) giac::context0 ; 
     &giac_context;
+#ifdef EMCC2
+  for (int i=0;;++i){
+    string s;
+    s=get_string("Empty string -> end");
+    if (s.size()==0)
+      break;
+    cout << ">>> " << s << "\n" ;
+    giac::gen g(s,contextptr);
+    g=eval(g,eval_level(contextptr),contextptr);
+    cout << g.print(contextptr) << "\n";
+  }
+  return 0;
+#endif  
   bool dohevea=true;
   if (ARGC>1 && strcmp(ARGV[ARGC-1],"--pdf")==0)
     dohevea=false;
@@ -2090,7 +2125,7 @@ int main(int ARGC, char *ARGV[]){
   /* *********************************************************
    *                       END OF TEXMACS                  *
    ********************************************************* */
-#endif // EMCC not defined
+#endif // EMCC/EMCC2/... not defined
 
   if (insage || getenv("GIAC_NO_TIME"))
     show_time=false;
@@ -2413,7 +2448,7 @@ int main(int ARGC, char *ARGV[]){
 #ifdef __APPLE__
       startc=clock();
 #endif
-#if 1 // def HAVE_LIBFLTK
+#ifndef EMCC2
       xcas::icas_eval(gq,e,reading_file,filename,contextptr);
 #else
       e=eval(gq,1,contextptr);

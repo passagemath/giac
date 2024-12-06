@@ -5005,6 +5005,15 @@ delcols([[1,2,3],[4,5,6],[7,8,9]],1..1)
 delcols([[1,2,3],[4,5,6],[7,8,9]],0..1)
 delcols([[1,2,3],[4,5,6],[7,8,9]],1)
 
+# frenet
+1 Calcule la courbure, le centre du cercle osculateur, les vecteur T (tangent) et N (normal) du repère de Frénet
+2 Returns the curvature, the center of the osculating circle, vectors T (tangent) and N (normal) of the Frenet frame
+0 [X(t),Y(t)],t,[t0]
+-1 osculating_circle
+-2 curvature
+[t,t^2],t
+[t,t^2],t,1
+
 # frequencies
 1 Renvoie les fréquences des valeurs d'une liste.
 2 Returns the frequencies of a list of values.
@@ -11590,6 +11599,7 @@ legendre_symbol(132,25)
 -2 convert
 -3 trig2exp
 -4 log10
+-5 logb
 ln(1)
 ln(e)
  convert(cos(x),ln)
@@ -11624,7 +11634,7 @@ ln(e)
 2 Logarithm with base b.
 3 Logaritmo en base b.
 4 Λογάριθμος με βάση b.
-0 Real
+0 Real,Real
 -1 log
 -2 log10
 logb(5,2)

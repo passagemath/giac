@@ -30,6 +30,9 @@
 #include <emscripten.h>
 #endif
 
+#ifdef HAVE_LIBFLTK
+void console_output(const char *s,int i);
+#else
 void console_output(const char *s,int i){
   EM_ASM_ARGS({
       var text = UTF8ToString($0); // Convert message to JS string
@@ -50,6 +53,7 @@ void console_output(const char *s,int i){
       }
     },s,i);
 }
+#endif
 
 void mp_hal_stdout_tx_strn(const char *str, size_t len) {
   console_output(str,len);

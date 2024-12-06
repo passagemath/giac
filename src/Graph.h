@@ -38,6 +38,15 @@ namespace xcas {
 #endif // ndef NO_NAMESPACE_XCAS
 
 #ifdef HAVE_LIBFLTK
+  const int QRDISP_WIDTH=185,QRDISP_HEIGHT=185;
+  class QRGraph:public Fl_Widget {
+  public:
+    int QRscale,size_border;
+    string filename;
+    unsigned char data[QRDISP_WIDTH][QRDISP_HEIGHT];
+    virtual FL_EXPORT void draw();
+    QRGraph(int x,int y,int scale=3,const char * f="qrcode"):QRscale(scale),Fl_Widget(x,y,200*scale,200*scale),filename(f){};
+  };
   bool QRdisp(const char * text);
 
   // Locales initialization, should be done before history.o is loaded
@@ -127,7 +136,7 @@ namespace xcas {
     int mode; // 0 pointer, 1 1-arg, 2 2-args, etc.
     // plot_tmp=function_tmp(args_tmp) or function_final(args_tmp)
     // depends whether args.tmp.size()==mode
-    giac::gen function_tmp,function_final,args_push; 
+    giac::gen function_tmp,function_final,args_push,trace_x0,trace_x1,trace_x2,trace_y0,trace_y1,trace_y2,trace_parameq,trace_z1,trace_z2,trace_t; // trace_* are storing cached derivatives for curve study; 
     giac::vecteur args_tmp; // WARNING should only contain numeric value
     unsigned args_tmp_push_size;
   public:

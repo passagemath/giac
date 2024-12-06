@@ -371,7 +371,7 @@ HTML_DIRS_LOCAL = casrouge castor cascmd_fr casgeo cassim \
 
 HTML_STAMPS = casrouge.stamp castor.stamp cascmd_fr.stamp casgeo.stamp \
 	      cassim.stamp casinter.stamp casexo.stamp \
-	      cascas.stamp
+	      cascas.stamp tutoriel.stamp
 
 HTML_LOCAL = algo.html algo*png tutoriel.html tutoriel*png
 FIGURES = figure1 figure2 figure3 figure4 figure5 th1968* windowinter* \

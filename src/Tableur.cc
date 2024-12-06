@@ -1258,7 +1258,7 @@ namespace xcas {
 
   bool get_filename(string & tmp,const string & extension){
     for (;;){
-      char * newfile = file_chooser(gettext("Save sheet"), ("*."+extension).c_str(), "");
+      const char * newfile = file_chooser(gettext("Save sheet"), ("*."+extension).c_str(), "");
       if ( (!newfile) || (!*newfile))
 	return false;
       tmp=newfile;
@@ -1433,7 +1433,7 @@ namespace xcas {
   }
 
   std::string tableur_insert(Flv_Table_Gen * tg){
-    char * newfile = load_file_chooser(gettext("Insert sheet"), "*.tab", "",0,false);
+    const char * newfile = load_file_chooser(gettext("Insert sheet"), "*.tab", "",0,false);
     if (!newfile || file_not_available(newfile))
       return "";
     ifstream inf(newfile);
@@ -1456,7 +1456,7 @@ namespace xcas {
     Flv_Table_Gen * tg=find_table_brother(m);
     if (!tg) return;
     const giac::context * contextptr = get_context(tg);
-    char * newfile = load_file_chooser(gettext("Insert CSV sheet"), "*.csv", "",0,false);
+    const char * newfile = load_file_chooser(gettext("Insert CSV sheet"), "*.csv", "",0,false);
     if (!newfile || file_not_available(newfile))
       return;
     char sep=';',nl='\n',decsep=',';

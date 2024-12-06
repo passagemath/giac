@@ -45,11 +45,19 @@ const int xwaspy_shift=33;
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
+
+#ifdef EMCC2
+#include <emscripten.h>
+#include <FL/platform.H>
+#include <dirent.h>
+#else
 #ifdef HAVE_SSTREAM
 #include <sstream>
 #else
 #include <strstream>
 #endif
+#endif // EMCC2
+
 #ifdef WIN32
 #if !defined(GNUWINCE) && !defined(__MINGW_H)
 #include <sys/cygwin.h>
@@ -68,17 +76,113 @@ using namespace std;
 using namespace giac;
 
 #ifdef HAVE_LIBFLTK
-#if defined(FL_DEVICE) || (!defined(__APPLE__) && !defined(WIN32)) 
-#include <FL/Fl_File_Chooser.H>
-char *file_chooser(const char *message,const char *pat,const char *fname,int relative){
-  return fl_file_chooser(message,pat,fname,relative);
+
+#ifdef EMCC2
+
+extern "C" int createfileselect();
+int createfileselect(){
+  vector<string> vs;
+  DIR *dp;
+  struct dirent *ep;
+  dp = opendir ("/data/");
+  if (dp == NULL)
+    return 0;
+  while ( (ep = readdir (dp)) ){
+    // cout << ep->d_name << "\n";
+    if (ep->d_type == DT_DIR){
+      if (strcmp(ep->d_name,".")==0 || strcmp(ep->d_name,"..")==0)
+        continue;
+      // FIXME handle ep
+      continue;
+    }
+    string cur(ep->d_name);
+    vs.push_back(cur);
+  }
+  closedir(dp);
+  string s="<option value=''>Effacer</option>";
+  for (int i=0;i<vs.size();++i){
+    s += "<option value='";
+    s += vs[i];
+    s += "'>";
+    s += vs[i];
+    s += "</option>";
+  }
+  EM_ASM({
+      document.getElementById('save_from_localfs_button').style.display='none';
+      document.getElementById('loadfilediv').style.display='block';
+      document.getElementById('filedialogsubmit').style.display='inline';
+      let field=document.getElementById('fileselect');
+      field.innerHTML=UTF8ToString($0);
+    },s.c_str());
+  return 1;
 }
-char *load_file_chooser(const char *message,const char *pat,const char *fname,int relative,bool save){
+EM_ASYNC_JS(int,emfiledialog,(),{
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let maxms=2000;
+    if (1){
+      var field=document.getElementById('filedialog');
+      field.showModal();
+      for (let i=0;i<maxms && field.open;++i){
+	await sleep(100);
+	//console.log(i);
+      }
+      return 0;
+    } else {
+      var field=document.getElementById('filedialogdiv');
+      field.style.display='inline';
+      var xcasfield=document.getElementById('fltk_canvas1');
+      xcasfield.hidden=true;
+      for (let i=0;i<maxms && field.style.display=='inline';++i){
+	await sleep(100);
+	console.log(i);
+      }
+      xcasfield.hidden=false;
+      return 0;
+    }
+  });
+#endif
+// #if !defined(EMCC2) && (defined(FL_DEVICE) || (!defined(__APPLE__) && !defined(WIN32)) )
+// native file chooser works in emcc2 but the returned path will not work with libc calls
+#if (defined(FL_DEVICE) || (!defined(__APPLE__) && !defined(WIN32)) )
+#include <FL/Fl_File_Chooser.H>
+const char *file_chooser(const char *message,const char *pat,const char *fname,int relative){
+#ifdef EMCC2
+  if (!createfileselect())
+    return 0;
+  emscripten_pause_main_loop();
+  emfiledialog();
+  emscripten_resume_main_loop();
+  char *str = (char*)EM_ASM_PTR({
+      let f=document.getElementById('filedialoginput');
+      var jsString = f.value;
+      console.log('modal',jsString);
+      return stringToNewUTF8(jsString);
+    });
+  static string files="";
+  files="";
+  if (str){
+    if (strlen(str))
+      files=str;
+    free(str);
+  }
+  if (files.empty())
+    return 0;
+  return files.c_str();
+#else
   return fl_file_chooser(message,pat,fname,relative);
+#endif
+}
+
+const char *load_file_chooser(const char *message,const char *pat,const char *fname,int relative,bool save){
+#ifdef EMCC2
+  return file_chooser(message,"/data/",fname,relative);
+#else
+  return fl_file_chooser(message,pat,fname,relative);
+#endif
 }
 #else // FL_DEVICE
 #include <FL/Fl_Native_File_Chooser.H>
-char *load_file_chooser(const char *message,const char *pat,const char *fname,int relative,bool save){
+const char *load_file_chooser(const char *message,const char *pat,const char *fname,int relative,bool save){
   // Create native chooser
   Fl_Native_File_Chooser native(Fl_Native_File_Chooser::BROWSE_FILE);
   static string filename="";
@@ -102,8 +206,26 @@ char *load_file_chooser(const char *message,const char *pat,const char *fname,in
     return 0;		// CANCEL
   default: // PICKED FILE
     filename=native.filename();
-    fname=filename.c_str();
-    return (char *) filename.c_str();
+#ifdef EMCC2 // copy file to or from /data depending on save bool flag?
+    // fl_read_to_string(const char *empath) which allows reading a file to string through
+    // the stored handle.
+    // fl_read_to_binary(const char *empath, int &len) which allows to read a
+    // binary file to a uchar pointer.
+    // fl_writer_to_file(const char *empath, const uchar *data, int len).
+    if (!save){
+      int len;
+      const uchar * ptr=fl_read_to_binary(filename.c_str(),len);
+      if (!ptr)
+        return 0;
+      filename=string("/data/")+remove_path(filename);
+      FILE * f =fopen(filename.c_str(),"wb");
+      if (!f)
+        return 0;
+      len=fwrite(ptr,1,len,f);
+      fclose(f);
+    }
+#endif
+    return fname=filename.c_str();
   }
 }
 
@@ -115,7 +237,7 @@ Fl_Button * file_chooser_but1=0;
 Fl_Button * file_chooser_but2=0;
 Fl_Button * file_chooser_but3=0;
 
-char *file_chooser(const char *message,const char *pat,const char *fname,int relative){
+const char *file_chooser(const char *message,const char *pat,const char *fname,int relative){
   if (!file_chooser_win){
     Fl_Group::current(0);
     file_chooser_win = new Fl_Window(600, 80,gettext("Choose file"));
@@ -178,7 +300,7 @@ char *file_chooser(const char *message,const char *pat,const char *fname,int rel
     return 0;
 }
 #else
-char *file_chooser(const char *message,const char *pat,const char *fname,int relative){
+const char *file_chooser(const char *message,const char *pat,const char *fname,int relative){
   return load_file_chooser(message,pat,fname,relative,true);
 }
 #endif // __APPLE__
@@ -189,7 +311,89 @@ char *file_chooser(const char *message,const char *pat,const char *fname,int rel
 #ifndef NO_NAMESPACE_XCAS
 namespace xcas {
 #endif // ndef NO_NAMESPACE_XCAS
+  void (*qr_update) (int)=0;
+  int qr_to=1;
+  void cb_qrxcas(Fl_Widget * b,void *){
+    qr_to=1;
+    if (qr_update)
+      qr_update(1);
+  }
+  void cb_qrkcas(Fl_Widget * b,void *){
+    qr_to=2;
+    if (qr_update)
+      qr_update(2);
+  }
+  void cb_qrjcas(Fl_Widget * b,void *){
+    qr_to=3;
+    if (qr_update)
+      qr_update(3);
+  }
+  void cb_qrwcas(Fl_Widget * b,void *){
+    qr_to=4;
+    if (qr_update)
+      qr_update(4);
+  }
 
+  void cb_qrtcas(Fl_Widget * b,void *){
+    qr_to=5;
+    if (qr_update)
+      qr_update(5);
+  }
+
+  void cb_qrxcas2(Fl_Widget * b,void *){
+    qr_to=1;
+    if (qr_update)
+      qr_update(-1);
+  }
+  void cb_qrkcas2(Fl_Widget * b,void *){
+    qr_to=2;
+    if (qr_update)
+      qr_update(-2);
+  }
+  void cb_qrjcas2(Fl_Widget * b,void *){
+    qr_to=3;
+    if (qr_update)
+      qr_update(-3);
+  }
+  void cb_qrwcas2(Fl_Widget * b,void *){
+    qr_to=4;
+    if (qr_update)
+      qr_update(-4);
+  }
+  void cb_qrtcas2(Fl_Widget * b,void *){
+    qr_to=5;
+    if (qr_update)
+      qr_update(-5);
+  }
+
+
+  void cb_qrforum(Fl_Widget * b,void *){
+    if (qr_update)
+      qr_update(-256);
+  }
+
+  void cb_qremail(Fl_Widget * b,void *){
+    if (qr_update)
+      qr_update(-512);
+  }
+
+  string urlencode(const char* src){
+    string res;    
+    const char hex[] = "0123456789abcdef";    
+    for (int i = 0; i < strlen(src); i++) {
+      if (('a' <= src[i] && src[i] <= 'z')
+          || ('A' <= src[i] && src[i] <= 'Z')
+          || ('0' <= src[i] && src[i] <= '9')) {
+        res += src[i];
+      } else {
+        res += '%';
+        res += hex[src[i] >> 4];
+        res += hex[src[i] & 15];
+      }
+    }
+    return res;
+  }  
+  
   static std::vector<std::string> Xcas_recent_filenames;
   static std::string Xcas_recent_filenames_filename("xcas_recent");
   void (*Xcas_load_filename)(const char * filename,bool modified)=0;
@@ -341,7 +545,7 @@ namespace xcas {
   }
 
   History_Pack::History_Pack(int X,int Y,int W,int H,const char*l):Fl_Group(X,Y,W,H,l),_selecting(false),_pushed(false),_moving(false),_saving(false),undo_position(0),_modified(false),_resize_above(false),_spacing(2),_printlevel_w(labelsize()),_sel_begin(-1),_sel_end(-1),pretty_output(1),next_delay(0),eval_below(false),doing_eval(false),eval_below_once(true),eval_next(false),queue_pos(-1),update_pos(-1),contextptr(0),
-#if 1
+#if 1 // ndef EMCC2
 								   new_question(new_question_editor),
 #else
 								   new_question(new_question_multiline_input),
@@ -480,6 +684,21 @@ namespace xcas {
     else
       contextptr=get_context(w);
     if (Multiline_Input_tab * m=dynamic_cast<Multiline_Input_tab *>(w)){
+      if (strlen(m->value())==1){
+	char c=m->value()[0];
+	if (c=='.'){
+	  g=symbolic(at_avance,0);
+	  return 1;
+	}
+	if (c==';'){
+	  g=symbolic(at_show_pixels,0);
+	  return 1;
+	}
+	if (c==','){
+	  g=symbolic(at_show,0);
+	  return 1;
+	}
+      }
       int pyc=python_compat(contextptr);
       giac::python_contextptr=contextptr;
 #ifdef QUICKJS
@@ -496,9 +715,15 @@ namespace xcas {
 #endif
 #ifdef HAVE_LIBMICROPYTHON
       if (pyc & 4){
-	int i=micropy_ck_eval(m->value());
-	g=string2gen("Done",false);
+	g=symbolic(at_python,makesequence(string2gen(m->value(),false),at_python));
 	return 1;
+      }
+      else {
+	if (pyc>=0 && strcmp(m->value(),"python")==0){
+	  python_compat(pyc | 4,contextptr);
+	  g=string2gen("Done",false);
+	  return 1;
+	}
       }
 #endif
       if (m && !m->changed()){
@@ -1111,7 +1336,7 @@ namespace xcas {
     Fl_Widget ** a = (Fl_Widget **) array();
     sprintf(chaine,"%i",n);
     fl_font(labelfont(),labelsize());
-    _printlevel_w=int(fl_width(chaine))+2;
+    _printlevel_w=giacmax(25,int(fl_width(chaine))+6);
     // Find how much space is required horizontally
     int W=w(),H=0,X=x(),Y=y();
     for (int i=0;i<n;++i){
@@ -1884,7 +2109,7 @@ namespace xcas {
       fname=remove_path(remove_extension(*url))+"_.xws";
     else
       fname="session.xws";
-    char * newfile = file_chooser(tmp.c_str(), "*.xws", fname.c_str());
+    const char * newfile = file_chooser(tmp.c_str(), "*.xws", fname.c_str());
     if (wid)
       Fl::focus(wid);
     // check filename
@@ -2273,7 +2498,7 @@ namespace xcas {
     }
     return y;
   }
-
+  
   bool History_Pack::insert_before(int before_position,bool newurl,int mws){
     if (!_insert)
       return false;
@@ -2295,6 +2520,10 @@ namespace xcas {
       break;
     case -4:
       newfile = load_file_chooser(gettext("Load Numworks archive"),"*.nws","*.nws",0,false);
+      mws=0;
+      break;
+    case -7:
+      newfile = load_file_chooser(gettext("Load KhiCAS TI83/84 worksheet"),"*.8xv","*.8xv",0,false);
       mws=0;
       break;
     case -5:{
@@ -2371,6 +2600,7 @@ namespace xcas {
       newfile = load_file_chooser("Load worksheet", "*.xws", "session.xws",0,false);
     }
     // check filename
+    fprintf(stdout,"insert_before %s\n",newfile);
     if ( !newfile ){
       History_Fold * hf=get_history_fold(this);
       if (hf) hf->update_status(true);
@@ -2380,6 +2610,7 @@ namespace xcas {
       fl_message("%s",("File "+string(newfile)+" does not exist.").c_str());
       return false;
     }
+    fprintf(stdout,"file exists %s\n",newfile);
     if (mws==3 || mws==7){
       if (xcas_mode(contextptr)!=3){
 	int i=fl_ask("%s",gettext("Set compatibility mode to TI?"));
@@ -2443,12 +2674,14 @@ namespace xcas {
       return false;
     last_history_pack=this;
     string urlname = unix_path(urlname0).c_str();
+    fprintf(stdout,"insert_url urlname0=%s urlname=%s\n",urlname0,urlname.c_str());
 #if 1 // ndef WIN32
     string sn=get_path(urlname);
     if (!sn.empty()){
 #ifndef HAVE_NO_CWD
       //_cd(string2gen(sn,false),contextptr);
       chdir(sn.c_str());
+      urlname=remove_path(urlname);
 #endif
     }
 #endif
@@ -2466,6 +2699,26 @@ namespace xcas {
       c=fgetc(f);
       if (POS==0 && c==0){
 	casio=true;
+      }
+      if (POS==0 && c=='*'){
+        fclose(f);
+        f=fopen(urlname.c_str(),"rb");
+        c=fgetc(f);
+	unsigned char c1=fgetc(f),c2=fgetc(f),c3=fgetc(f);
+	if (c1=='*' && c2=='T' && c3=='I'){
+          char buf[128]={0};
+          fread(buf,74,1,f); // skip header
+          bool pyti=buf[70]=='P' && buf[71]=='Y';
+          bool xcasti=buf[70]=='X' && buf[71]=='C';
+          if (!xcasti)
+            return false;  // FIXME handle pyti
+          c=fgetc(f); // name length
+          if (c) fread(buf,1,c,f);
+          buf[c]=0; // buf==name -> FIXME session name?
+          // data begins
+	  casio=true;
+	  continue;
+	}
       }
       if (POS==0 && (unsigned char)c==0xba){
 	unsigned char c1=fgetc(f),c2=fgetc(f),c3=fgetc(f);
@@ -2895,6 +3148,8 @@ namespace xcas {
     if (Fl_Scroll * s = dynamic_cast<Fl_Scroll *>(q))
       b = s->child(0);
     a=p->eval(b);
+    if (qr_update && (!p->eval_below || N>=M-1) )
+      qr_update(qr_to);
     if (a==0 && g->children()==3){
       Fl_Widget * tmp =g->child(2);
       int tmph=tmp->h();
@@ -2932,6 +3187,14 @@ namespace xcas {
     g->resizable(g);
     bool fin_pack=N>=M-1;
     if (!fin_pack){ // if next level is not a multiline_input do like at end
+#ifdef EMCC2
+      if (p->eval_below){
+        if (Fl_Group * nxt=dynamic_cast<Fl_Group *>(p->child(N+1))){
+          History_Pack_Group_eval(nxt,add_group);
+          return;
+        }
+      }
+#endif
       Fl_Widget * tmp = p->child(N+1);
       if (Fl_Tile * tmps = dynamic_cast<Fl_Tile *>(tmp)){
 	if (tmps->children())
@@ -3113,6 +3376,8 @@ namespace xcas {
       return "tns";
     case -4:
       return "nws";
+    case -7:
+      return "8xv";
     case 1:
       return "map";
     case 2:
@@ -3471,7 +3736,7 @@ namespace xcas {
 	if (mode==-3)
 	  tmp += ".xw";
 	tmp += "."+mode2extension(mode);
-	char * newfile = file_chooser(gettext("Export worksheet as"), ("*."+mode2extension(mode)).c_str(), tmp.c_str());
+	const char * newfile = file_chooser(gettext("Export worksheet as"), ("*."+mode2extension(mode)).c_str(), tmp.c_str());
 	// check filename
 	if ( !newfile )
 	  return ;
@@ -3487,13 +3752,84 @@ namespace xcas {
 	  ofstream f(newfile);
 	  f << target;
 	}
+        else
+          if (mode==-7){
+          // TI83/84 http://merthsoft.com/linkguide/ti83+/fformat.html
+          /*
+            Offset 	Length 	Description
+            0 	8 bytes 	8-character signature. The signature is always "**TI83F*".
+            8 	3 bytes 	3-byte further signature. These three bytes always contain {1Ah, 0Ah, 00h} = {26, 10, 0}
+            11 (Bh) 	42 (2Ah) bytes 	Comment. The comment is either zero-terminated or padded on the right with space characters.
+            53 (35h) 	2 bytes 	Length, in bytes, of the data section of the file. This number should be 57 (39h) bytes less than the file size.
+            55 (37h) 	n bytes 	Data section - consists of a number of variable entries (described below).
+            55 (37h)+n 	2 bytes 	File checksum. This is the lower 16 bits of the sum of all bytes in the data section.
+
+            Each variable entry follows this format:
+
+            Offset: add 0x37 	Length 	Description
+            0 	2 bytes 	Always has a value of 11 or 13 (Bh or Dh).
+            2 	2 bytes 	Length, in bytes, of the variable data.
+            4 	1 byte 	variable type ID byte (see variable type ID's)
+            5 	8 bytes 	Variable name, padded with NULL characters (0h) on the right.
+            13 (Dh) 	1 byte 	Version. Usually set to 0 (present if first bytes are Dh).
+            14 (Eh) 	1 byte 	Flag. Set to 80h if variable is archived, 00h else (present if first bytes are Dh).
+            15 (Fh) 	2 bytes 	Length, in bytes, of the variable data (This is a copy of the value in offset 2)
+            17 (11h) 	n bytes 	Variable data. Click here for variable data formats.
+            
+          */
+	  ofstream of;
+          of.open(newfile,ios::binary);
+          save_as_text(of,-1,o->pack);
+          of.close();
+          // read data
+          vector<unsigned char> data(0x4f);
+          FILE * f=fopen(newfile,"rb");
+          if (!f) return ;
+          for (;;){
+            unsigned char c=fgetc(f);
+            if (feof(f))
+              break;
+            data.push_back(c);
+          }
+          fclose(f);
+          // add ti83/84 header
+          strcpy((char *)&data[0],"**TI83F*");
+          data[8]=0x1a;
+          data[9]=data[10]=0xa;
+          strcpy((char *)&data[11],"Exported via Xcas ");
+          int length=data.size();
+          data[0x35]=(length-55)%256;
+          data[0x36]=(length-55)/256;
+          data[0x37]=0xd;
+          data[0x38]=0;
+          data[0x39]=(length-0x48)%256;
+          data[0x3a]=(length-0x48)/256;
+          data[0x3b]=0x15; // appvar
+          // 3c-44
+          strncpy((char*)&data[0x3c],remove_path(remove_extension(newfile)).c_str(),8);
+          data[0x44]=0; // version
+          data[0x45]=0; // 0x80 if archived
+          data[0x46]=data[0x39];
+          data[0x47]=data[0x3a];
+          data[0x48]=(length-0x4a)%256;
+          data[0x49]=(length-0x4a)/256;
+          strcpy((char*)&data[0x4a],"XCAS");
+          unsigned checksum=0;
+          for (int i=55;i<length;++i)
+            checksum += data[i];
+          data.push_back(checksum%256);
+          data.push_back((checksum/256)%256);
+          f=fopen(newfile,"wb");
+          fwrite(&data[0],data.size(),1,f);
+          fclose(f);
+        }
 	else {
 	  ofstream of;
-	  if (mode==-1)
+	  if (mode==-1 || mode==-7)
 	    of.open(newfile,ios::binary);
 	  else
 	    of.open(newfile);
-	  save_as_text(of,mode,o->pack);
+            save_as_text(of,mode,o->pack);
 	}
       }
     }
@@ -3501,6 +3837,10 @@ namespace xcas {
 
   void History_cb_Save_as_xcas_casio(Fl_Widget* m , void*) {
     History_cb_save_as_text(m,-1);
+  }
+
+  void History_cb_Save_as_xcas_ti83(Fl_Widget* m , void*) {
+    History_cb_save_as_text(m,-7);
   }
 
   void History_cb_Save_as_xcas_numworks(Fl_Widget* m , void*) {
@@ -4847,31 +5187,32 @@ namespace xcas {
     fold_button=0;
     input=0;
     if (showmenu){
-      group = new Fl_Group(X,Y+2,W,L-2);
-      help_button = new No_Focus_Button(X,Y+1,L,L-2,"?");
+      int H=L; // L-2
+      group = new Fl_Group(X,Y+2,W,H);
+      help_button = new No_Focus_Button(X,Y+1,L,H,"?");
       help_button->callback((Fl_Callback*) History_cb_help_button);
       help_button->tooltip(gettext("Online help and command completion"));
       help_button->color(FL_CYAN);
-      save_button = new Fl_Button(X+L,Y+1,3*L,L-2,gettext("Save"));
+      save_button = new Fl_Button(X+L,Y+1,3*L,H,gettext("Save"));
       save_button->color(Xcas_save_saved_color);
       save_button->callback((Fl_Callback*) History_cb_save_button);
       save_button->tooltip(gettext("Save current session"));
       save_button->align(Fl_Align(68|FL_ALIGN_INSIDE));
 #ifdef IPAQ
-      bnd_button = new No_Focus_Button(X+8*L,Y+1,2*L,L-2,"bnd");
+      bnd_button = new No_Focus_Button(X+8*L,Y+1,2*L,H,"bnd");
       bnd_button->callback((Fl_Callback*) History_cb_tex_button);
       bnd_button->tooltip(gettext("Switch bandeau on or off"));
-      current_status = new Fl_Button(X+6*L,Y+1,max(W-14*L,0),L-2);
+      current_status = new Fl_Button(X+6*L,Y+1,max(W-14*L,0),H);
       current_status->align(FL_ALIGN_LEFT|FL_ALIGN_CLIP |FL_ALIGN_INSIDE);
 #else
-      current_status = new Fl_Button(X+4*L,Y+1,max(W-12*L,0),L-2);
+      current_status = new Fl_Button(X+4*L,Y+1,max(W-14*L,0),H);
       current_status->align(FL_ALIGN_CENTER|FL_ALIGN_CLIP |FL_ALIGN_INSIDE);
 #endif
       current_status->label("");
       current_status->labelfont(FL_HELVETICA_ITALIC);
       current_status->callback((Fl_Callback*) History_cb_current_status);
       current_status->tooltip(gettext("Current CAS status. Click to modify"));
-      stop_button = new No_Focus_Button(current_status->x()+current_status->w(),current_status->y(),3*L,L-2);
+      stop_button = new No_Focus_Button(current_status->x()+current_status->w(),current_status->y(),3*L,H);
       if (showmenu!=-1){
 	stop_button->label("STOP");
 	stop_button->callback((Fl_Callback*) History_cb_stop_button);
@@ -4880,18 +5221,18 @@ namespace xcas {
 	xcas::Xcas_Cancel=stop_button; // FIXME when history fold destroyed
       }
       stop_button->deactivate();
-      keyboard_button = new No_Focus_Button(stop_button->x()+stop_button->w(),Y+1,3*L,L-2,gettext("Kbd"));
+      keyboard_button = new No_Focus_Button(stop_button->x()+stop_button->w(),Y+1,3*L,H,gettext("Kbd"));
       if (showmenu==-1)
 	keyboard_button->deactivate();
       else {
 	keyboard_button->callback((Fl_Callback*) History_cb_keyboard_button);
 	keyboard_button->tooltip(gettext("Switch keyboard on or off"));
       }
-      // msg_button = new No_Focus_Button(keyboard_button->x()+keyboard_button->w(),Y+1,2*L,L-2,"Msg");
+      // msg_button = new No_Focus_Button(keyboard_button->x()+keyboard_button->w(),Y+1,2*L,H,"Msg");
       // msg_button->callback((Fl_Callback*) History_cb_msg_button);
       // msg_button->tooltip("Show messages line");
-      // close_button = new Fl_Button(msg_button->x()+msg_button->w(),stop_button->y(),L,L-2);
-      close_button = new Fl_Button(keyboard_button->x()+keyboard_button->w()+L,stop_button->y(),L,L-2);
+      // close_button = new Fl_Button(msg_button->x()+msg_button->w(),stop_button->y(),L,H);
+      close_button = new Fl_Button(keyboard_button->x()+keyboard_button->w()+L,stop_button->y(),L,H);
       if (showmenu==-1)
 	close_button->deactivate();
       else {
@@ -4912,12 +5253,12 @@ namespace xcas {
     }
     else {
       labeltype(FL_NO_LABEL);
-      fold_button = new Fl_Button(X,Y+1,L,L-2,"-");
+      fold_button = new Fl_Button(X,Y+1,L,H,"-");
       fold_button->color(Xcas_save_saved_color);
       fold_button->callback((Fl_Callback*) History_cb_fold_button);
       Fl_Group::add(fold_button);
       // only one of input or group will be visible
-      input = new Fl_Input(X+L,Y+1,W-L,L-2);
+      input = new Fl_Input(X+L,Y+1,W-L,H);
       input->textfont(FL_HELVETICA_BOLD_ITALIC);
       // input->label("");
       Fl_Group::add(input);
@@ -5050,7 +5391,7 @@ namespace xcas {
     if (mb) mb->resize(X,Y,W,L); // (X,Y,W,H) not compatible w/ geo right-click
     if (fold_button) fold_button->resize(X,Y+2,L,L-2);
     if (input) input->resize(X+L,Y+2,W-L,L-2);
-    if (group) group->resize(X,Y+2,W,L-2);
+    if (group) group->resize(X,Y+2,W,L);
     // save_button->resize(X+3*L,Y+2,3*L,L-2);
     scroll->resize(X,Y+L,W,H-L);
     int sw=min(max(labelsize(),10),16);

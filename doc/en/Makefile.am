@@ -8,7 +8,7 @@ DVI_LOCAL = cascmd_en.dvi casinter.dvi cas.dvi
 
 HTML_DIRS_LOCAL = casinter cascmd_en tutoriel
 
-HTML_STAMPS = casinter.stamp cascmd_en.stamp tutoriel
+HTML_STAMPS = casinter.stamp cascmd_en.stamp tutoriel.stamp
 
 info_TEXINFOS = giac_us.texinfo
 AM_MAKEINFOHTMLFLAGS = --no-split

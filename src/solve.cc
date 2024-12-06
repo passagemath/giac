@@ -2603,6 +2603,15 @@ namespace giac {
     return symbolic(g._SYMBptr->sommet,solve_revert_inequations(g._SYMBptr->feuille));
   }
 
+  bool taillesort(const gen & a,const gen & b){
+    bool ai=is_inequation(a),bi=is_inequation(b);
+    if (ai && !bi)
+      return true;
+    if (!ai &&bi)
+      return false;
+    return taille(a,RAND_MAX)<taille(b,RAND_MAX);
+  }
+
   vecteur solve(const gen & e,const gen & x,int isolate_mode,GIAC_CONTEXT){
     bool complexmode=isolate_mode & 1;
     vecteur res;
@@ -2622,9 +2631,15 @@ namespace giac {
       return res;
     }
     if (e.type==_VECT){
-      if (x.type==_IDNT && lvarx(e,x)==vecteur(1,x))
+      if (x.type==_IDNT &&
+          _is_polynomial(makesequence(e,x),contextptr)!=0
+          // lvarx(e,x)==vecteur(1,x)
+          )
 	return solve(_gcd(e,contextptr),x,isolate_mode,contextptr);
-      const_iterateur it=e._VECTptr->begin(),itend=e._VECTptr->end();
+      // sort e in asc. order of complexity
+      vecteur ev=*e._VECTptr;
+      sort(ev.begin(),ev.end(),taillesort);
+      const_iterateur it=ev.begin(),itend=ev.end();
       gen curx=x._IDNTptr->eval(1,x,contextptr);
       res=vecteur(1,x); // everything is solution up to now
       double eps=epsilon(contextptr);
@@ -5891,7 +5906,10 @@ namespace giac {
   }
   
   gen newton(const gen & f0, const gen & x,const gen & guess_,int niter,double eps1, double eps2,bool real,double xmin,double xmax,double rand_xmin,double rand_xmax,double init_prefactor,GIAC_CONTEXT){
-    if (real && (!is_zero(im(f0,contextptr),contextptr) || !is_zero(im(guess_,contextptr),contextptr)) )
+    if (real &&
+        (has_i(f0) || has_i(guess_))
+        // (!is_zero(im(f0,contextptr),contextptr) || !is_zero(im(guess_,contextptr),contextptr))
+        )
       real=false;
     if (abs_calc_mode(contextptr)==38 && x.type==_VECT){
       vecteur AZin,AZout;
@@ -6051,6 +6069,9 @@ namespace giac {
 	    d=linsolve(evalf(subst(invdf,x,a,false,contextptr),1,contextptr),-subst(f,x,a,false,contextptr),contextptr);
 	  else
 	    d=-evalf(subst(invdf,x,a,false,contextptr)*subst(f,x,a,false,contextptr),1,contextptr);
+	  if (is_undef(d) || (d.type==_VECT &&d._VECTptr->empty()) || !lidnt(d).empty()){
+	    return gensizeerr(gettext("Unable to solve numerically, perhaps a multiple root?"));             
+          }          
 	  a=a+d;
 	  if (is_positive(epsg2-_l2norm(d,contextptr)/max(1,abs(a,contextptr),contextptr),contextptr))
 	    break;
@@ -7918,6 +7939,13 @@ namespace giac {
 		  else
 		    resk=gensizeerr(contextptr);
 		}
+                // quick check for undef in initial equations
+                for (int k=0;k<res.size();++k){
+                  gen resk=res[k];
+                  gen resval=subst(eq,var,resk,false,contextptr);
+                  if (has_undef(resval))
+                    res.erase(res.begin()+k);
+                }
 		return res;
 	      }
 	      if (eq.size()==2 && var.size()==2 && is_zero(derive(derive(eq,var[j],contextptr),var[j],contextptr))){
@@ -9123,7 +9151,10 @@ namespace giac {
     }
     env.moduloon = false;    
     for (unsigned i=0;i<eqp.size();++i){
-      if (coefftype(eqp[i],coeff)==_MOD){
+      int ct=coefftype(eqp[i],coeff);
+      if (ct==_EXT)
+        return gensizeerr(gettext("Non polynomial system"));
+      if (ct==_MOD){
 	with_cocoa = false;
 	env.moduloon = true;
 	env.modulo = *(coeff._MODptr+1);

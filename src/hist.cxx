@@ -5,6 +5,11 @@
 #ifdef FL_DEVICE
 #include <FL/gl.h>
 #endif
+#ifdef EMCC2
+#include <emscripten.h>
+  #include "opengl.h"
+  void Xcas_emscripten_main_loop();
+#endif
 #ifdef FL_DEVICE
 #include <FL/Fl_Printer.H>
 #endif
@@ -12,6 +17,7 @@
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
+static Fl_Group * qrgroup=0; xcas::QRGraph * qrwid=0; xcas::No_Focus_Button *qrforum=0,*qremail=0; Fl_Menu_Bar *qrmenu=0; 
 static char ** xcas_argv; 
 static int xcas_argc,xcas_user_level,update_xcas=0; 
 #ifdef USE_OBJET_BIDON
@@ -22,6 +28,37 @@ static giac::vecteur rpn_description;
 static unsigned rpn_menu_page; 
 static std::string rpn_menu_string[6],rpnn_menu_string[5],doc_prefix("doc/fr/"); bool rpn_menu_is_directory[6]; 
 static giac::vecteur home_menu, rpnn_menu[5]; 
+
+void Xcas_qrresize() {
+  int h1=Xcas_Keyboard_Group->h(),h2=Xcas_Scientific_Keyboard->h();
+            int L=Xcas_Keyboard_Group->labelsize();
+            //if (L<26) L=26; if (L>50) L=50;
+            int H=giac::giacmin(h1-2*h2,Xcas_Keyboard_Group->w()-3*L);
+            int scale=H/qrwid->size_border;
+              if (scale>=2){
+                qrwid->QRscale=scale;
+                int X=Xcas_Keyboard_Group->x();
+                int Y=Xcas_Keyboard_Group->y()+Xcas_Keyboard_Group->h()-H;
+                qrgroup->resize(X,Y,H+3*L,H);
+                int S=4*L/3;
+                xcas::change_group_fontsize(qrgroup,L);
+                //qrmenu->labelsize(20);
+                //qrforum->labelsize(L);
+                //qremail->labelsize(L);
+                qrwid->resize(X+3*L,Y,H,H);
+                qrmenu->resize(X,Y+L/3,3*L,S);
+                qrforum->resize(X,Y+7*L/3,3*L,S);
+                qremail->resize(X,Y+13*L/3,3*L,S);
+  #ifdef EMCC2
+                qrforum->hide();
+                qremail->hide();
+  #endif
+                qrgroup->show();
+                qrgroup->redraw();
+              }
+              else
+                qrgroup->hide();
+}
 
 void Xcas_alt_ctrl_cb(int i) {
   if (!(i & 1)){
@@ -242,6 +279,8 @@ void rpn_button(xcas::No_Focus_Button * wid,int i) {
        make_thread(giac::symbolic(giac::at_of,makevecteur(e,eqwptr->get_selection())),eval_level(cptr),xcas::Equation_eval_callback,eqwptr,cptr);
        return;
     }
+    if (e.is_symb_of_sommet(giac::at_equal))
+      e=e[1];
     if (e.type==giac::_FUNC){
       xcas::help_output(e._FUNCptr->ptr()->s,giac::language(contextptr));
       if (eqwptr){
@@ -322,29 +361,172 @@ void show_rpn_menu(unsigned i) {
 }
 
 void Xcas_resize_mainwindow() {
-  int h=Xcas_Main_Window_->h();
-      int w_=Xcas_Main_Window_->w(),i=Xcas_Main_Window_->labelsize(),y=i+4;
+  int h=Xcas_Main_Window_->h(),w_=Xcas_Main_Window_->w();
+      int i=Xcas_Main_Window_->labelsize(),y=i+4;
       int dy=0;
       int bs=Xcas_Messages->visible()?4*y:0;
       int bottom=bs;
-      int kh=4*(i+5); // keyboard size
-      int bh=(i+5); // bandeau size
-      if (Xcas_Keyboard_Group->visible()) dy += kh ;
+      int kh=4*(i+5); // keyboard vertical size
+      int bh=(i+25); // bandeau size
       if (Xcas_Bandeau_Keys->visible()) dy += bh;
       Xcas_main_menu->resize(0,0,w_,y);
-      Xcas_Main_Tab->resize(0,y,w_,h-y-bottom-dy);
-      Xcas_Main_Tab->redraw();
-      Xcas_Keyboard_Group->resize(0,h-bottom-dy,w_,kh);
+      int kw=w_;
+      if (h>=w_){ // keyboard below
+        //if (h>1300) kh*=3.5; else 
+        if (h>1000) kh*=2.75; else if (h>=800) kh*=2.25;  else if (h>=600) kh*=1.5;
+        if (Xcas_Keyboard_Group->visible()) dy += kh ;
+        int qr=0;
+        if (!Xcas_Bandeau_Keys->visible() && h-y-bottom-dy>2*370) qr=370;
+        Xcas_Main_Tab->resize(0,y,w_,h-y-bottom-dy-qr);
+        Xcas_Main_Tab->redraw();
+        int kbdy=Xcas_Main_Tab->y()+Xcas_Main_Tab->h();
+        Xcas_Keyboard_Group->resize(0,kbdy,w_,kh+qr);
+        Kbd_control->resize(0,kbdy,0.44*kw,kh/2);
+        Numeric_numbers->resize(0.44*kw,kbdy,0.56*kw,kh/2);
+        Xcas_Alpha_Keyboard->resize(0, kbdy+kh/2,kw,kh/2);
+        Xcas_Scientific_Keyboard->resize(0, kbdy+kh/2,kw,kh/2);
+      } else { // keyboard right
+        double lambda=0.36;
+        kw=lambda*w_;
+        if (Xcas_Keyboard_Group->visible())
+          Xcas_Main_Tab->resize(0,y,w_-kw,h-y-bottom-dy);
+        else
+          Xcas_Main_Tab->resize(0,y,w_,h-y-bottom-dy);
+        Xcas_Main_Tab->redraw();
+        int dw=5,ww=dw+(1-lambda)*w_; kw-=dw;
+        int yy=y+dw;
+        kh=h-yy-bottom-dy; 
+        Xcas_Keyboard_Group->resize(ww,yy,kw,kh);
+        const int maxkbdsize=8*36; if (kh>maxkbdsize) kh=maxkbdsize;
+        Kbd_control->resize(ww,yy,0.44*kw,kh/2);
+        Numeric_numbers->resize(ww+0.44*kw,yy,0.56*kw,kh/2);
+        Xcas_Alpha_Keyboard->resize(ww, yy+kh/2,kw,kh/2);
+        Xcas_Scientific_Keyboard->resize(ww, yy+kh/2,kw,kh/2);
+      }
+        if (!qrwid){
+          int L=20;
+          qrgroup=new Fl_Group(0,0,L,3*L);
+  static Fl_Menu_Item qrmenu_menu[] = {
+      {gettext("Clone"), 0,  0, 0, 64, 0, 0, 14, 56},
+      {gettext("Forum"), 0,  (Fl_Callback*)xcas::cb_qrforum, 0, 0, 0, 0, 14, 56},
+      {gettext("Email"), 0,  (Fl_Callback*)xcas::cb_qremail, 0, 0, 0, 0, 14, 56},
+      {gettext("QRcode Xcas FLTK"), 0,  (Fl_Callback*)xcas::cb_qrxcas, 0, 0, 0, 0, 14, 56},
+      {gettext("QRcode XcasJS"), 0,  (Fl_Callback*)xcas::cb_qrjcas, 0, 0, 0, 0, 14, 56},
+      {gettext("QRcode calculatrice"), 0,  (Fl_Callback*)xcas::cb_qrkcas, 0, 0, 0, 0, 14, 56},
+      {gettext("QRcode Xcasfr"), 0,  (Fl_Callback*)xcas::cb_qrwcas, 0, 0, 0, 0, 14, 56},
+      {gettext("QRcode Tableaufr"), 0,  (Fl_Callback*)xcas::cb_qrtcas, 0, 0, 0, 0, 14, 56},
+      {gettext("Xcas FLTK"), 0,  (Fl_Callback*)xcas::cb_qrxcas2, 0, 0, 0, 0, 14, 56},
+      {gettext("XcasJS"), 0,  (Fl_Callback*)xcas::cb_qrjcas2, 0, 0, 0, 0, 14, 56},
+      {gettext("calculatrice"), 0,  (Fl_Callback*)xcas::cb_qrkcas2, 0, 0, 0, 0, 14, 56},
+      {gettext("Xcasfr"), 0,  (Fl_Callback*)xcas::cb_qrwcas2, 0, 0, 0, 0, 14, 56},
+      {gettext("Tableaufr"), 0,  (Fl_Callback*)xcas::cb_qrtcas2, 0, 0, 0, 0, 14, 56},
+      {0},
+      {0},
+    };
+          qrmenu = new Fl_Menu_Bar(0,0,L,L,"Clone");
+          qrmenu->menu(qrmenu_menu);
+          qrforum = new xcas::No_Focus_Button(0,L,L,L);
+          qrforum->label(gettext("Forum"));
+          qrforum->tooltip(gettext("Forum"));
+          qrforum->callback((Fl_Callback *) xcas::cb_qrforum);
+          qremail = new xcas::No_Focus_Button(0,2*L,L,L);
+          qremail->label(gettext("Email"));
+          qremail->tooltip(gettext("Email"));
+          qremail->callback((Fl_Callback *) xcas::cb_qremail);
+          qrwid=new xcas::QRGraph(0,0,1 /* initscale */);
+          qrgroup->end();
+          qrgroup->hide();
+          Xcas_Keyboard_Group->add(qrgroup);
+        }
+      if (qrwid && qrwid->size_border){
+        Xcas_qrresize();
+      }
+      // alpha and sci kbd below controls and numbers
       Xcas_Keyboard_Group->redraw();
       Xcas_Bandeau_Keys->resize(0,h-bottom-bh,w_,bh);
+  #if 1 // def EMCC2
+      Xcas_close_bandeau->hide();
+      Xcas_Bandeau_Keys_Group->resize(0,h-bottom-bh,w_,bh);
+  #endif
       Xcas_Bandeau_Keys->redraw();
       Xcas_Messages->resize(0,h-bottom,w_,bs);
       Xcas_Messages->redraw();
       Xcas_Main_Window_->init_sizes();
 }
 
+void Xcas_qrupdate(int i) {
+  if (qrwid){
+          enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;  // Error correction level
+          // Make the QR Code symbol
+          uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
+          uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
+          int pos=0;
+          std::string S;
+          S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/giac/xcas.html#filename=";
+          if (giac::absint(i)==2) S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/kcasfr.html#filename=";
+          else if (giac::absint(i)==3) S="https://xcas.univ-grenoble-alpes.fr/xcasjs/#filename=";
+          else if (giac::absint(i)==4) S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasfr.html#filename=";
+          else if (giac::absint(i)==5) S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/tableaufr.html#filename=";
+          string session;
+  #ifdef EMCC2
+          char *str = (char*)EM_ASM_PTR({
+             var jsString = UI.getfrom();
+             return stringToNewUTF8(jsString);
+          });
+          if (str){
+            if (strlen(str)) session=string("@")+str;
+            free(str);
+          }
+          fprintf(stdout,"from %s\n",session.c_str());
+  #endif
+          S += session.empty()?Xcas_current_session_name():session;
+          S+="&"+xcas::widget_html5(Xcas_current_session(),pos);
+  #ifdef EMCC2
+    EM_ASM({
+      UI.updatemaillink(UTF8ToString($0));
+    },S.c_str());
+  #endif
+          if (i==-256){
+             S="[url="+S+"]"+"session Xcas"+"[/url]";
+             Fl::copy(S.c_str(),S.size(),1);
+             static int alertforum=1;
+             if (alertforum) { fl_alert("%s",gettext("Link copied to clipboard")); alertforum=0; }
+             S="https://xcas.univ-grenoble-alpes.fr/forum/viewforum.php?f=25";
+          }
+          if (i==-512){
+            string uS=xcas::urlencode(S.c_str());
+            S = "mailto:email@fr?subject=session Xcas&body=Bonjour%0d%0aVeuillez suivre ce lien : <"+uS+">";
+          }
+          if (i<=0)
+            giac::system_browser_command(S.c_str());
+          bool ok=qrcodegen_encodeText(S.c_str(), tempBuffer, qrcode, errCorLvl,qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true);
+          if (ok){
+            int initscale=2;
+            memset(qrwid->data,255,sizeof(qrwid->data));
+            qrwid->filename="qr"+giac::remove_path(giac::remove_extension(Xcas_current_session_name()));
+            int size = qrcodegen_getSize(qrcode);
+            int border = 4; // 177+2*4==QR_WIDTH/HEIGHT
+            qrwid->size_border=size+2*border;
+            for (int y = -border; y < size + border; y++) {
+              for (int x = -border; x < size + border; x++) {
+                qrwid->data[border+x][border+y]=qrcodegen_getModule(qrcode, x, y)?0:255;
+              }
+            }
+            Xcas_qrresize();
+          }
+        }
+}
+
 void Xcas_change_labelsize(int i) {
-  xcas::change_group_fontsize(Xcas_Main_Window_,i);
+  #ifdef EMCC2
+      EM_ASM({
+        console.log('labelsize',$0);
+      },i);
+  #endif
+      cerr << "New labelsize " << i << "\n";
+      xcas::change_group_fontsize(Xcas_Main_Window_,i);
+      if (xcas::handle_tab_w)  
+        xcas::change_group_fontsize(xcas::handle_tab_w,i);
       Xcas_resize_mainwindow();
       if (xcas::Xcas_Debug_Window){ 
         xcas::Xcas_Debug_Window->labelfont(Xcas_Main_Window_->labelfont());
@@ -366,7 +548,10 @@ void Xcas_change_labelsize(int i) {
 }
 
 giac::gen Xcas_widget_size(const giac::gen & g,const giac::context * cptr) {
-  int f=14,ff=0;
+  int f=18,ff=0;
+  #ifdef EMCC2
+     f=24;
+  #endif
       int x=Xcas_Main_Window_->x(),y=Xcas_Main_Window_->y(),w=Xcas_Main_Window_->w(),h=Xcas_Main_Window_->h();
       const giac::context * contextptr=Xcas_get_context();
       if (g.type==giac::_VECT){
@@ -546,7 +731,11 @@ giac::gen Xcas_widget_size(const giac::gen & g,const giac::context * cptr) {
         ff=0;
       Xcas_Main_Window_->labelfont(ff);
       Xcas_change_labelsize(f);
+  #ifdef EMCC2
+      Xcas_Main_Window_->resize(0,0,w-2,h-(h>w?100:30));
+  #else
       Xcas_Main_Window_->resize(x,y,w,h);
+  #endif
       Xcas_resize_mainwindow(); 	
       return giac::plus_one;
 }
@@ -825,7 +1014,11 @@ void load_autorecover_data() {
       std::string configname=giac::home_directory()+giac::xcasrc();
   #endif //
      if (!giac::is_file_available(configname.c_str())){
-      Xcas_widget_size(giac::makevecteur(18,40,90,900,550,0,0,1),0);
+  #ifdef EMCC2
+      Xcas_widget_size(giac::makevecteur(24,40,90,900,485,0,0,1),0);
+  #else
+      Xcas_widget_size(giac::makevecteur(14,40,90,900,485,0,0,1),0);
+  #endif
       FILE * f =fopen(configname.c_str(),"w");
       if (f){
         fclose(f);
@@ -853,7 +1046,7 @@ void load_autorecover_data() {
   #ifdef IPAQ // default with bandeau
        std::string configs="widget_size(12,1,1,300,240,1,2,1,";
   #else // ifndef IPAQ, 
-       std::string configs="widget_size(16,40,90,900,550,"+giac::print_INT_(n!=0)+",2,0,";
+       std::string configs="widget_size(16,40,90,900,485,"+giac::print_INT_(n!=0)+",2,0,";
   #endif // IPAQ
        configs += '7';
        configs += ','; 
@@ -1031,6 +1224,39 @@ void Xcas_save_config(const giac::context * contextptr) {
        of << "insmod(" << it->print(contextptr) << ");" << std::endl;
 }
 
+void Xcas_emscripten_main_loop() {
+  #ifdef EMCC2
+    Fl::wait(); 
+    if (1){
+       // resize? (if there is an orientation change)
+       int W,H;
+       W=EM_ASM_INT({
+   	// console.log("w h",window.innerWidth,window.innerHeight);
+   	return window.innerWidth;
+         });
+       H=EM_ASM_INT({
+   	return window.innerHeight;
+         });
+       if (H<480) H=480;
+       //if (H>1024) H=1024;
+       if (giac::absint(W-Xcas_Main_Window_->w())>=32 ||
+           giac::absint(H-Xcas_Main_Window_->h())>=32 ){
+         if (H>W){
+   	if (Xcas_Main_Window_->labelsize()<36)
+             Xcas_change_labelsize(36);
+         }  
+         else {
+   	if (Xcas_Main_Window_->labelsize()>24)
+   	  Xcas_change_labelsize(24);
+         }
+         Xcas_Main_Window_->resize(0,0,W-2,H-(H>W?100:30));
+         if (xcas::handle_tab_w) xcas::handle_tab_w->resize(0,0,W-2,H-2);
+         Xcas_resize_mainwindow();
+       }
+     }
+  #endif
+}
+
 Fl_Window *Xcas_Main_Window_=(Fl_Window *)0;
 
 Fl_Menu_Bar *Xcas_main_menu=(Fl_Menu_Bar *)0;
@@ -1045,6 +1271,10 @@ static void cb_Xcas_open_session(Fl_Menu_*, void*) {
 
 static void cb_Xcas_open_recovery(Fl_Menu_*, void*) {
   xcas::recovery_mode=true; load_history(0); xcas::recovery_mode=false;
+}
+
+static void cb_Xcas_open_ti83(Fl_Menu_*, void*) {
+  load_history(-7);
 }
 
 static void cb_Xcas_open_casio(Fl_Menu_*, void*) {
@@ -1321,6 +1551,10 @@ static void cb_Xcas_nw_certify_overwrite(Fl_Menu_*, void*) {
             if (i==0) return;
 	    bool b=giac::nws_certify_firmware(true,Xcas_get_context());
             fl_message(b?"Firmware signé par le logiciel Xcas, conforme à la réglementation\n(assurez-vous d'avoir téléchargé Xcas sur www-fourier.univ-grenoble-alpes.fr/~parisse/install_fr.html)":"Le firmware n'est pas certifié par le logiciel Xcas.\nVérifiez que la calculatrice est bien connectée!");
+}
+
+static void cb_Xcas_Export_Khicas_TI83(Fl_Menu_*, void*) {
+  xcas::History_cb_Save_as_xcas_ti83(Xcas_current_session(),0);
 }
 
 static void cb_Xcas_Export_Khicas_Casio(Fl_Menu_*, void*) {
@@ -2256,6 +2490,7 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {0,0,0,0,0,0,0,0,0},
  {"Open (recovery mode)", 0,  (Fl_Callback*)cb_Xcas_open_recovery, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Import", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"TI83/84", 0,  (Fl_Callback*)cb_Xcas_open_ti83, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Khicas", 0,  (Fl_Callback*)cb_Xcas_open_casio, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Numworks Backup", 0,  (Fl_Callback*)cb_Xcas_open_nws, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Numworks Khicas session", 0,  (Fl_Callback*)cb_Xcas_open_numworks, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -2314,6 +2549,7 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {0,0,0,0,0,0,0,0,0},
  {0,0,0,0,0,0,0,0,0},
  {"Export as", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"TI83/84", 0,  (Fl_Callback*)cb_Xcas_Export_Khicas_TI83, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"HP Prime, Casio", 0,  (Fl_Callback*)cb_Xcas_Export_Khicas_Casio, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"KhiCas Numworks", 0,  (Fl_Callback*)cb_Xcas_Export_Khicas_Numworks, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"KhiCas TI Nspire CX", 0,  (Fl_Callback*)cb_Xcas_Export_Khicas_Nspire, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -2459,6 +2695,7 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {"Toolbox", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"New entry", 0x8006e,  (Fl_Callback*)cb_Xcas_Add_Entry, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"New comment", 0x8007a,  (Fl_Callback*)cb_Xcas_Add_Comment, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"New expression", 0x80065,  (Fl_Callback*)cb_Xcas_Add_Expression, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Equations", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"solve: Solve equation or system", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"fsolve: Solve equation numerically", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -2571,9 +2808,6 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {0,0,0,0,0,0,0,0,0},
  {0,0,0,0,0,0,0,0,0},
  {0,0,0,0,0,0,0,0,0},
- {"Expression", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"New expression", 0x80065,  (Fl_Callback*)cb_Xcas_Add_Expression, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {0,0,0,0,0,0,0,0,0},
  {"Cmds", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Constants", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"i: sqrt(-1)", 0,  (Fl_Callback*)cb_Xcas_help_i, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -2631,10 +2865,10 @@ Fl_Menu_Item menu_Xcas_main_menu[] = {
  {0,0,0,0,0,0,0,0,0},
  {"Phys", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
- {"Highschool", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {0,0,0,0,0,0,0,0,0},
  {"Turtle", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"New turtle", 0x8006c,  (Fl_Callback*)cb_Xcas_Add_Logo, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {"Highschool", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
  {0,0,0,0,0,0,0,0,0}
 };
@@ -2697,10 +2931,6 @@ xcas::No_Focus_Button *Xcas_y_key=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_z_key=(xcas::No_Focus_Button *)0;
 
-xcas::No_Focus_Button *Xcas_Inferieur_key=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Superieur_key=(xcas::No_Focus_Button *)0;
-
 xcas::No_Focus_Button *Xcas_Backslash_key=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Parenthese_ouvrante_key=(xcas::No_Focus_Button *)0;
@@ -2711,17 +2941,7 @@ xcas::No_Focus_Button *Xcas_Espace_key=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Point_exclamation_key=(xcas::No_Focus_Button *)0;
 
-xcas::No_Focus_Button *Xcas_Crochet_fermant_key=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Crochet_ouvrant_key=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Accolade_ouvrant_key=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Accolade_fermant_key=(xcas::No_Focus_Button *)0;
-
 xcas::No_Focus_Button *Xcas_Deux_points_key=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Equal_key=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Guillemet_key=(xcas::No_Focus_Button *)0;
 
@@ -2853,8 +3073,6 @@ Xcas_Alpha_Keyboard->redraw();
 
 xcas::No_Focus_Button *Xcas_Diese_key=(xcas::No_Focus_Button *)0;
 
-xcas::No_Focus_Button *Xcas_Pi_key=(xcas::No_Focus_Button *)0;
-
 xcas::No_Focus_Button *Xcas_Greek_key=(xcas::No_Focus_Button *)0;
 
 static void cb_Xcas_Greek_key(xcas::No_Focus_Button*, void*) {
@@ -2953,15 +3171,114 @@ xcas::No_Focus_Button *Xcas_Variable_t=(xcas::No_Focus_Button *)0;
 
 Fl_Group *Xcas_Delim_keyboard=(Fl_Group *)0;
 
+Fl_Menu_Bar *Xcas_calculus_group=(Fl_Menu_Bar *)0;
+
+static void cb_Xcas_Helpon(Fl_Menu_*, void*) {
+  Fl_Widget * w=xcas::Xcas_input_focus;
+           if (xcas::Xcas_Text_Editor * ed=dynamic_cast<xcas::Xcas_Text_Editor *>(w))
+             ed->completion();
+}
+
+static void cb_Xcas_Alg_simplify(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"simplify(";Fl::e_length=9; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Alg_factor(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"factor(";Fl::e_length=7; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Calc_diff(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"diff(";;Fl::e_length=5; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Calc_integrate(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"integrate(";Fl::e_length=11; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Calc_sum(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"sum(";
+Fl::e_length=4; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Calc_limit(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"limit(";
+Fl::e_length=6; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Plot_plot(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"plot(";Fl::e_length=5; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Plot_plotparam(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"plotparam(";Fl::e_length=10; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Plot_plotpolar(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"plotpolar(";Fl::e_length=10; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Prg_si(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)" si alors sinon fsi; ";Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Prg_pour(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)" pour de jusque faire  fpour; ";Fl::e_length=30; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Prg_tantque(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)" tantque faire ftantque; ";Fl::e_length=25; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Prg_repeter(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)" repeter jusqua ; ";Fl::e_length=18; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Prg_fonction(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"f(x,y):= { local ;  }";
+Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+static void cb_Xcas_Prg_return(Fl_Menu_*, void*) {
+  Fl::e_text=(char *)"return ;";
+Fl::e_length=8; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);
+}
+
+unsigned char menu_Xcas_calculus_group_i18n_done = 0;
+Fl_Menu_Item menu_Xcas_calculus_group[] = {
+ {" ? ", 0,  (Fl_Callback*)cb_Xcas_Helpon, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"alg", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"simplify", 0,  (Fl_Callback*)cb_Xcas_Alg_simplify, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"factor", 0,  (Fl_Callback*)cb_Xcas_Alg_factor, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {"calc", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"\342\210\202", 0,  (Fl_Callback*)cb_Xcas_Calc_diff, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"\342\210\253", 0,  (Fl_Callback*)cb_Xcas_Calc_integrate, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"sum", 0,  (Fl_Callback*)cb_Xcas_Calc_sum, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"limit", 0,  (Fl_Callback*)cb_Xcas_Calc_limit, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {"plot", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"plot", 0,  (Fl_Callback*)cb_Xcas_Plot_plot, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"plotparam", 0,  (Fl_Callback*)cb_Xcas_Plot_plotparam, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"plotpolar", 0,  (Fl_Callback*)cb_Xcas_Plot_plotpolar, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {"prg", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"si", 0,  (Fl_Callback*)cb_Xcas_Prg_si, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"pour", 0,  (Fl_Callback*)cb_Xcas_Prg_pour, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"tantque", 0,  (Fl_Callback*)cb_Xcas_Prg_tantque, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"repeter", 0,  (Fl_Callback*)cb_Xcas_Prg_repeter, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"fonction", 0,  (Fl_Callback*)cb_Xcas_Prg_fonction, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {"return", 0,  (Fl_Callback*)cb_Xcas_Prg_return, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {0,0,0,0,0,0,0,0,0}
+};
+
+xcas::No_Focus_Button *Xcas_Quote=(xcas::No_Focus_Button *)0;
+
 xcas::No_Focus_Button *Xcas_Double_quote=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Parentheses=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Brackets=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Crochets=(xcas::No_Focus_Button *)0;
 
-xcas::No_Focus_Button *Xcas_Quote=(xcas::No_Focus_Button *)0;
+xcas::No_Focus_Button *Xcas_Brackets=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Virgule=(xcas::No_Focus_Button *)0;
 
@@ -2969,11 +3286,25 @@ xcas::No_Focus_Button *Xcas_Semi_button=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Sto=(xcas::No_Focus_Button *)0;
 
+xcas::No_Focus_Button *Xcas_Parentheses=(xcas::No_Focus_Button *)0;
+
 xcas::No_Focus_Button *Xcas_Keyboard_suchthat=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Keyboard_rp=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_RPN_space=(xcas::No_Focus_Button *)0;
+
+xcas::No_Focus_Button *Xcas_Equal_button=(xcas::No_Focus_Button *)0;
+
+xcas::No_Focus_Button *Xcas_Keyboard_infinity=(xcas::No_Focus_Button *)0;
+
+static void cb_Xcas_Keyboard_infinity(xcas::No_Focus_Button*, void*) {
+  Xcas_input_0arg(Xcas_Keyboard_infinity,"+infinity");
+}
+
+xcas::No_Focus_Button *Xcas_Superieur=(xcas::No_Focus_Button *)0;
+
+xcas::No_Focus_Button *Xcas_Inferieur_button=(xcas::No_Focus_Button *)0;
 
 Fl_Group *Cst_keyboard=(Fl_Group *)0;
 
@@ -2988,109 +3319,6 @@ xcas::No_Focus_Button *Xcas_Cst_pi=(xcas::No_Focus_Button *)0;
 
 static void cb_Xcas_Cst_pi(xcas::No_Focus_Button*, void*) {
   Xcas_input_0arg(Xcas_Cst_pi,"pi");
-}
-
-xcas::No_Focus_Button *Xcas_Keyboard_infinity=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_Keyboard_infinity(xcas::No_Focus_Button*, void*) {
-  Xcas_input_0arg(Xcas_Keyboard_infinity,"+infinity");
-}
-
-xcas::No_Focus_Button *Xcas_Racine_carree=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_Racine_carree(xcas::No_Focus_Button*, void*) {
-  xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"sqrt",true);
-}
-
-Fl_Group *Rewrite_keyboard=(Fl_Group *)0;
-
-xcas::No_Focus_Button *Xcas_approx_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_approx_key(xcas::No_Focus_Button*, void*) {
-  xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"approx",true);
-}
-
-xcas::No_Focus_Button *Xcas_simplify_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_simplify_key(xcas::No_Focus_Button*, void*) {
-  xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"simplify",true);
-}
-
-xcas::No_Focus_Button *Xcas_factor_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_factor_key(xcas::No_Focus_Button*, void*) {
-  xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"factor",true);
-}
-
-xcas::No_Focus_Button *Xcas_convert_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_convert_key(xcas::No_Focus_Button*, void*) {
-  Xcas_input_0arg(Xcas_convert_key," => ");
-}
-
-Fl_Menu_Button *Xcas_Prg_Menubutton=(Fl_Menu_Button *)0;
-
-static void cb_Xcas_Prg_si(Fl_Menu_*, void*) {
-  Fl::e_text=(char *)" si alors sinon fsi; ";Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);
-}
-
-static void cb_Xcas_Prg_pour(Fl_Menu_*, void*) {
-  Fl::e_text=(char *)" pour de jusque faire  fpour; ";Fl::e_length=30; xcas::fl_handle(xcas::Xcas_input_focus);
-}
-
-static void cb_Xcas_Prg_tantque(Fl_Menu_*, void*) {
-  Fl::e_text=(char *)" tantque faire ftantque; ";Fl::e_length=25; xcas::fl_handle(xcas::Xcas_input_focus);
-}
-
-static void cb_Xcas_Prg_repeter(Fl_Menu_*, void*) {
-  Fl::e_text=(char *)" repeter jusqua ; ";Fl::e_length=18; xcas::fl_handle(xcas::Xcas_input_focus);
-}
-
-static void cb_Xcas_Prg_fonction(Fl_Menu_*, void*) {
-  Fl::e_text=(char *)"f(x,y):= { local ;  }";
-Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);
-}
-
-static void cb_Xcas_Prg_return(Fl_Menu_*, void*) {
-  Fl::e_text=(char *)"return ;";
-Fl::e_length=8; xcas::fl_handle(xcas::Xcas_input_focus);
-}
-
-unsigned char menu_Xcas_Prg_Menubutton_i18n_done = 0;
-Fl_Menu_Item menu_Xcas_Prg_Menubutton[] = {
- {"si", 0,  (Fl_Callback*)cb_Xcas_Prg_si, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
- {"pour", 0,  (Fl_Callback*)cb_Xcas_Prg_pour, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
- {"tantque", 0,  (Fl_Callback*)cb_Xcas_Prg_tantque, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
- {"repeter", 0,  (Fl_Callback*)cb_Xcas_Prg_repeter, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
- {"fonction", 0,  (Fl_Callback*)cb_Xcas_Prg_fonction, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
- {"return", 0,  (Fl_Callback*)cb_Xcas_Prg_return, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 10, 0},
- {0,0,0,0,0,0,0,0,0}
-};
-
-Fl_Group *Xcas_calculus_group=(Fl_Group *)0;
-
-xcas::No_Focus_Button *Xcas_diff_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_diff_key(xcas::No_Focus_Button*, void*) {
-  if (calc_mode(Xcas_get_context())==38) xcas::Xcas_input_arg(Xcas_diff_key,"∂"); else xcas::Xcas_input_arg(Xcas_diff_key,"diff");
-}
-
-xcas::No_Focus_Button *Xcas_int_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_int_key(xcas::No_Focus_Button*, void*) {
-  if (calc_mode(Xcas_get_context())==38) xcas::Xcas_input_arg(Xcas_int_key,"∫"); else xcas::Xcas_input_arg(Xcas_int_key,"integrate");
-}
-
-xcas::No_Focus_Button *Xcas_sigma_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_sigma_key(xcas::No_Focus_Button*, void*) {
-  if (calc_mode(Xcas_get_context())==38) xcas::Xcas_input_arg(Xcas_sigma_key,"Σ"); else xcas::Xcas_input_arg(Xcas_sigma_key,"sum");
-}
-
-xcas::No_Focus_Button *Xcas_limit_key=(xcas::No_Focus_Button *)0;
-
-static void cb_Xcas_limit_key(xcas::No_Focus_Button*, void*) {
-  xcas::Xcas_input_arg(Xcas_limit_key,"limit");
 }
 
 Fl_Group *Transcendental=(Fl_Group *)0;
@@ -3121,6 +3349,12 @@ static void cb_Xcas_Atangeant_button(xcas::No_Focus_Button*, void*) {
   Xcas_input_arg(Xcas_Atangeant_button,"atan");
 }
 
+xcas::No_Focus_Button *Xcas_approx_key=(xcas::No_Focus_Button *)0;
+
+static void cb_Xcas_approx_key(xcas::No_Focus_Button*, void*) {
+  xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"approx",true);
+}
+
 Fl_Group *Exp_keyboard=(Fl_Group *)0;
 
 xcas::No_Focus_Button *Xcas_Exp_button=(xcas::No_Focus_Button *)0;
@@ -3131,27 +3365,17 @@ xcas::No_Focus_Button *Xcas_Ln10_button=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Ln_button=(xcas::No_Focus_Button *)0;
 
+xcas::No_Focus_Button *Xcas_Racine_carree=(xcas::No_Focus_Button *)0;
+
+static void cb_Xcas_Racine_carree(xcas::No_Focus_Button*, void*) {
+  xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"sqrt",true);
+}
+
 Fl_Group *Operations_keyboard=(Fl_Group *)0;
-
-xcas::No_Focus_Button *Xcas_Plus=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Moins=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Fois=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Divise=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_Puissance=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_C_mod=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Inverse_button=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Inferieur_button=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Superieur=(xcas::No_Focus_Button *)0;
-
-xcas::No_Focus_Button *Xcas_Equal_button=(xcas::No_Focus_Button *)0;
 
 Fl_Group *Numeric_numbers=(Fl_Group *)0;
 
@@ -3179,7 +3403,25 @@ xcas::No_Focus_Button *Xcas_Point=(xcas::No_Focus_Button *)0;
 
 xcas::No_Focus_Button *Xcas_EEX=(xcas::No_Focus_Button *)0;
 
+xcas::No_Focus_Button *Xcas_Plus=(xcas::No_Focus_Button *)0;
+
+xcas::No_Focus_Button *Xcas_Moins=(xcas::No_Focus_Button *)0;
+
+xcas::No_Focus_Button *Xcas_Fois=(xcas::No_Focus_Button *)0;
+
+xcas::No_Focus_Button *Xcas_Divise=(xcas::No_Focus_Button *)0;
+
 Fl_Group *Kbd_control=(Fl_Group *)0;
+
+xcas::No_Focus_Button *Xcas_Undo_Key=(xcas::No_Focus_Button *)0;
+
+static void cb_Xcas_Undo_Key(xcas::No_Focus_Button*, void*) {
+  static char petit_buffer[2]={26,0};
+      Fl::e_length=1;
+      Fl::e_text=petit_buffer;
+      Fl::e_keysym=26;
+      xcas::fl_handle(Fl::focus());
+}
 
 xcas::No_Focus_Button *Xcas_Echap=(xcas::No_Focus_Button *)0;
 
@@ -3189,7 +3431,7 @@ static char petit_buffer[]="";
 Fl::e_length=0;
 Fl::e_text=petit_buffer;
 Fl::e_keysym=FL_Escape;
-xcas::fl_handle(xcas::Xcas_input_focus);
+xcas::fl_handle(Fl::focus());
 }
 
 xcas::No_Focus_Button *Xcas_Alpha=(xcas::No_Focus_Button *)0;
@@ -3247,7 +3489,7 @@ static void cb_Xcas_main_del_button(xcas::No_Focus_Button*, void*) {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_BackSpace;
-      xcas::fl_handle(xcas::Xcas_input_focus);
+      xcas::fl_handle(Fl::focus());
 }
 
 xcas::No_Focus_Button *Xcas_main_paste_button=(xcas::No_Focus_Button *)0;
@@ -3264,7 +3506,7 @@ static void cb_Xcas_main_enter_button(xcas::No_Focus_Button*, void*) {
       Fl::e_length=1;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Enter;
-      xcas::fl_handle(xcas::Xcas_input_focus);
+      xcas::fl_handle(Fl::focus());
 }
 
 xcas::No_Focus_Button *Xcas_main_left_button=(xcas::No_Focus_Button *)0;
@@ -3275,7 +3517,7 @@ static void cb_Xcas_main_left_button(xcas::No_Focus_Button*, void*) {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Left;
-      xcas::fl_handle(xcas::Xcas_input_focus);
+      xcas::fl_handle(Fl::focus());
 }
 
 xcas::No_Focus_Button *Xcas_main_down_button=(xcas::No_Focus_Button *)0;
@@ -3286,7 +3528,7 @@ static void cb_Xcas_main_down_button(xcas::No_Focus_Button*, void*) {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Down;
-      xcas::fl_handle(xcas::Xcas_input_focus);
+      xcas::fl_handle(Fl::focus());
 }
 
 xcas::No_Focus_Button *Xcas_main_up_button=(xcas::No_Focus_Button *)0;
@@ -3297,7 +3539,7 @@ static void cb_Xcas_main_up_button(xcas::No_Focus_Button*, void*) {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Up;
-      xcas::fl_handle(xcas::Xcas_input_focus);
+      xcas::fl_handle(Fl::focus());
 }
 
 xcas::No_Focus_Button *Xcas_main_right_button=(xcas::No_Focus_Button *)0;
@@ -3308,7 +3550,7 @@ static void cb_Xcas_main_right_button(xcas::No_Focus_Button*, void*) {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Right;
-      xcas::fl_handle(xcas::Xcas_input_focus);
+      xcas::fl_handle(Fl::focus());
 }
 
 xcas::No_Focus_Button *Xcas_main_tab_button=(xcas::No_Focus_Button *)0;
@@ -3319,7 +3561,7 @@ static void cb_Xcas_main_tab_button(xcas::No_Focus_Button*, void*) {
       Fl::e_length=1;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=9;
-      xcas::fl_handle(xcas::Xcas_input_focus);
+      xcas::fl_handle(Fl::focus());
 }
 
 Fl_Group *Xcas_Bandeau_Keys=(Fl_Group *)0;
@@ -3681,6 +3923,13 @@ static void cb_Xcas_DispG_ClrGraph(Fl_Button*, void*) {
 }
 
 Fl_Window* Xcas_run(int argc,char ** argv) {
+  //stack_check_init(256*1024);
+  signal(SIGINT,giac::ctrl_c_signal_handler);
+  giac::child_id=1;
+  giac::print_rewrite_prod_inv=true;
+  doc_prefix=giac::read_env(giac::context0); // Set giac::language and modes from environment
+  xcas::read_aide("aide_cas",giac::language(giac::context0));
+  giac::set_language(giac::language(giac::context0),giac::context0);
   { Xcas_Main_Window_ = new Fl_Window(865, 530, gettext("Xcas New Interface"));
     { Xcas_main_menu = new Fl_Menu_Bar(0, 0, 775, 25);
       if (!menu_Xcas_main_menu_i18n_done) {
@@ -3705,10 +3954,10 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
       Xcas_Main_Tab->end();
       Fl_Group::current()->resizable(Xcas_Main_Tab);
     } // xcas::Xcas_Tabs* Xcas_Main_Tab
-    { Xcas_Keyboard_Group = new Fl_Group(0, 410, 490, 110);
-      { Xcas_Alpha_Keyboard = new Fl_Group(0, 415, 310, 100);
+    { Xcas_Keyboard_Group = new Fl_Group(0, 410, 510, 110);
+      { Xcas_Alpha_Keyboard = new Fl_Group(205, 415, 305, 105);
         Xcas_Alpha_Keyboard->hide();
-        { Xcas_a_key = new xcas::No_Focus_Button(0, 415, 30, 25, gettext("a"));
+        { Xcas_a_key = new xcas::No_Focus_Button(205, 415, 35, 25, gettext("a"));
           Xcas_a_key->box(FL_UP_BOX);
           Xcas_a_key->color((Fl_Color)10);
           Xcas_a_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3719,7 +3968,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_a_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_a_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_a_key
-        { Xcas_b_key = new xcas::No_Focus_Button(30, 415, 25, 25, gettext("b"));
+        { Xcas_b_key = new xcas::No_Focus_Button(240, 415, 30, 25, gettext("b"));
           Xcas_b_key->box(FL_UP_BOX);
           Xcas_b_key->color((Fl_Color)10);
           Xcas_b_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3730,7 +3979,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_b_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_b_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_b_key
-        { Xcas_c_key = new xcas::No_Focus_Button(55, 415, 25, 25, gettext("c"));
+        { Xcas_c_key = new xcas::No_Focus_Button(270, 415, 30, 25, gettext("c"));
           Xcas_c_key->box(FL_UP_BOX);
           Xcas_c_key->color((Fl_Color)10);
           Xcas_c_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3741,7 +3990,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_c_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_c_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_c_key
-        { Xcas_d_key = new xcas::No_Focus_Button(80, 415, 25, 25, gettext("d"));
+        { Xcas_d_key = new xcas::No_Focus_Button(300, 415, 30, 25, gettext("d"));
           Xcas_d_key->box(FL_UP_BOX);
           Xcas_d_key->color((Fl_Color)10);
           Xcas_d_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3752,7 +4001,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_d_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_d_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_d_key
-        { Xcas_e_key = new xcas::No_Focus_Button(105, 415, 25, 25, gettext("e"));
+        { Xcas_e_key = new xcas::No_Focus_Button(330, 415, 30, 25, gettext("e"));
           Xcas_e_key->box(FL_UP_BOX);
           Xcas_e_key->color((Fl_Color)10);
           Xcas_e_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3763,7 +4012,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_e_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_e_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_e_key
-        { Xcas_f_key = new xcas::No_Focus_Button(130, 415, 25, 25, gettext("f"));
+        { Xcas_f_key = new xcas::No_Focus_Button(360, 415, 30, 25, gettext("f"));
           Xcas_f_key->box(FL_UP_BOX);
           Xcas_f_key->color((Fl_Color)10);
           Xcas_f_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3774,7 +4023,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_f_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_f_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_f_key
-        { Xcas_g_key = new xcas::No_Focus_Button(155, 415, 25, 25, gettext("g"));
+        { Xcas_g_key = new xcas::No_Focus_Button(390, 415, 30, 25, gettext("g"));
           Xcas_g_key->box(FL_UP_BOX);
           Xcas_g_key->color((Fl_Color)10);
           Xcas_g_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3785,7 +4034,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_g_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_g_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_g_key
-        { Xcas_h_key = new xcas::No_Focus_Button(180, 415, 25, 25, gettext("h"));
+        { Xcas_h_key = new xcas::No_Focus_Button(420, 415, 30, 25, gettext("h"));
           Xcas_h_key->box(FL_UP_BOX);
           Xcas_h_key->color((Fl_Color)10);
           Xcas_h_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3796,7 +4045,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_h_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_h_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_h_key
-        { Xcas_i_key = new xcas::No_Focus_Button(205, 415, 25, 25, gettext("i"));
+        { Xcas_i_key = new xcas::No_Focus_Button(450, 415, 30, 25, gettext("i"));
           Xcas_i_key->box(FL_UP_BOX);
           Xcas_i_key->color((Fl_Color)10);
           Xcas_i_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3807,7 +4056,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_i_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_i_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_i_key
-        { Xcas_j_key = new xcas::No_Focus_Button(230, 415, 25, 25, gettext("j"));
+        { Xcas_j_key = new xcas::No_Focus_Button(480, 415, 30, 25, gettext("j"));
           Xcas_j_key->box(FL_UP_BOX);
           Xcas_j_key->color((Fl_Color)10);
           Xcas_j_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3818,7 +4067,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_j_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_j_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_j_key
-        { Xcas_k_key = new xcas::No_Focus_Button(255, 415, 25, 25, gettext("k"));
+        { Xcas_k_key = new xcas::No_Focus_Button(205, 440, 35, 25, gettext("k"));
           Xcas_k_key->box(FL_UP_BOX);
           Xcas_k_key->color((Fl_Color)10);
           Xcas_k_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3829,7 +4078,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_k_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_k_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_k_key
-        { Xcas_l_key = new xcas::No_Focus_Button(280, 415, 30, 25, gettext("l"));
+        { Xcas_l_key = new xcas::No_Focus_Button(240, 440, 30, 25, gettext("l"));
           Xcas_l_key->box(FL_UP_BOX);
           Xcas_l_key->color((Fl_Color)10);
           Xcas_l_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3840,7 +4089,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_l_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_l_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_l_key
-        { Xcas_m_key = new xcas::No_Focus_Button(0, 440, 30, 25, gettext("m"));
+        { Xcas_m_key = new xcas::No_Focus_Button(270, 440, 30, 25, gettext("m"));
           Xcas_m_key->box(FL_UP_BOX);
           Xcas_m_key->color((Fl_Color)10);
           Xcas_m_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3851,7 +4100,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_m_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_m_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_m_key
-        { Xcas_n_key = new xcas::No_Focus_Button(30, 440, 25, 25, gettext("n"));
+        { Xcas_n_key = new xcas::No_Focus_Button(300, 440, 30, 25, gettext("n"));
           Xcas_n_key->box(FL_UP_BOX);
           Xcas_n_key->color((Fl_Color)10);
           Xcas_n_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3862,7 +4111,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_n_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_n_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_n_key
-        { Xcas_o_key = new xcas::No_Focus_Button(55, 440, 25, 25, gettext("o"));
+        { Xcas_o_key = new xcas::No_Focus_Button(330, 440, 30, 25, gettext("o"));
           Xcas_o_key->box(FL_UP_BOX);
           Xcas_o_key->color((Fl_Color)10);
           Xcas_o_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3873,7 +4122,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_o_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_o_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_o_key
-        { Xcas_p_key = new xcas::No_Focus_Button(80, 440, 25, 25, gettext("p"));
+        { Xcas_p_key = new xcas::No_Focus_Button(360, 440, 30, 25, gettext("p"));
           Xcas_p_key->box(FL_UP_BOX);
           Xcas_p_key->color((Fl_Color)10);
           Xcas_p_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3884,7 +4133,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_p_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_p_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_p_key
-        { Xcas_q_key = new xcas::No_Focus_Button(105, 440, 25, 25, gettext("q"));
+        { Xcas_q_key = new xcas::No_Focus_Button(390, 440, 30, 25, gettext("q"));
           Xcas_q_key->box(FL_UP_BOX);
           Xcas_q_key->color((Fl_Color)10);
           Xcas_q_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3895,7 +4144,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_q_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_q_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_q_key
-        { Xcas_r_key = new xcas::No_Focus_Button(130, 440, 25, 25, gettext("r"));
+        { Xcas_r_key = new xcas::No_Focus_Button(420, 440, 30, 25, gettext("r"));
           Xcas_r_key->box(FL_UP_BOX);
           Xcas_r_key->color((Fl_Color)10);
           Xcas_r_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3906,7 +4155,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_r_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_r_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_r_key
-        { Xcas_s_key = new xcas::No_Focus_Button(155, 440, 25, 25, gettext("s"));
+        { Xcas_s_key = new xcas::No_Focus_Button(450, 440, 30, 25, gettext("s"));
           Xcas_s_key->box(FL_UP_BOX);
           Xcas_s_key->color((Fl_Color)10);
           Xcas_s_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3917,7 +4166,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_s_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_s_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_s_key
-        { Xcas_t_key = new xcas::No_Focus_Button(180, 440, 25, 25, gettext("t"));
+        { Xcas_t_key = new xcas::No_Focus_Button(480, 440, 30, 25, gettext("t"));
           Xcas_t_key->box(FL_UP_BOX);
           Xcas_t_key->color((Fl_Color)10);
           Xcas_t_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3928,7 +4177,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_t_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_t_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_t_key
-        { Xcas_u_key = new xcas::No_Focus_Button(205, 440, 25, 25, gettext("u"));
+        { Xcas_u_key = new xcas::No_Focus_Button(205, 465, 35, 25, gettext("u"));
           Xcas_u_key->box(FL_UP_BOX);
           Xcas_u_key->color((Fl_Color)10);
           Xcas_u_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3939,7 +4188,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_u_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_u_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_u_key
-        { Xcas_v_key = new xcas::No_Focus_Button(230, 440, 25, 25, gettext("v"));
+        { Xcas_v_key = new xcas::No_Focus_Button(240, 465, 30, 25, gettext("v"));
           Xcas_v_key->box(FL_UP_BOX);
           Xcas_v_key->color((Fl_Color)10);
           Xcas_v_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3950,7 +4199,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_v_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_v_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_v_key
-        { Xcas_w_key = new xcas::No_Focus_Button(255, 440, 25, 25, gettext("w"));
+        { Xcas_w_key = new xcas::No_Focus_Button(270, 465, 30, 25, gettext("w"));
           Xcas_w_key->box(FL_UP_BOX);
           Xcas_w_key->color((Fl_Color)10);
           Xcas_w_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3961,7 +4210,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_w_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_w_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_w_key
-        { Xcas_x_key = new xcas::No_Focus_Button(280, 440, 30, 25, gettext("x"));
+        { Xcas_x_key = new xcas::No_Focus_Button(300, 465, 30, 25, gettext("x"));
           Xcas_x_key->box(FL_UP_BOX);
           Xcas_x_key->color((Fl_Color)10);
           Xcas_x_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3972,7 +4221,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_x_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_x_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_x_key
-        { Xcas_y_key = new xcas::No_Focus_Button(0, 465, 30, 25, gettext("y"));
+        { Xcas_y_key = new xcas::No_Focus_Button(330, 465, 30, 25, gettext("y"));
           Xcas_y_key->box(FL_UP_BOX);
           Xcas_y_key->color((Fl_Color)10);
           Xcas_y_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3983,7 +4232,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_y_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_y_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_y_key
-        { Xcas_z_key = new xcas::No_Focus_Button(30, 465, 25, 25, gettext("z"));
+        { Xcas_z_key = new xcas::No_Focus_Button(360, 465, 30, 25, gettext("z"));
           Xcas_z_key->box(FL_UP_BOX);
           Xcas_z_key->color((Fl_Color)10);
           Xcas_z_key->selection_color(FL_BACKGROUND_COLOR);
@@ -3994,29 +4243,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_z_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_z_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_z_key
-        { Xcas_Inferieur_key = new xcas::No_Focus_Button(55, 465, 25, 25, gettext("<"));
-          Xcas_Inferieur_key->box(FL_UP_BOX);
-          Xcas_Inferieur_key->color((Fl_Color)10);
-          Xcas_Inferieur_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Inferieur_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Inferieur_key->labelfont(0);
-          Xcas_Inferieur_key->labelsize(10);
-          Xcas_Inferieur_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Inferieur_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Inferieur_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Inferieur_key
-        { Xcas_Superieur_key = new xcas::No_Focus_Button(80, 465, 25, 25, gettext(">"));
-          Xcas_Superieur_key->box(FL_UP_BOX);
-          Xcas_Superieur_key->color((Fl_Color)10);
-          Xcas_Superieur_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Superieur_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Superieur_key->labelfont(0);
-          Xcas_Superieur_key->labelsize(10);
-          Xcas_Superieur_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Superieur_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Superieur_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Superieur_key
-        { Xcas_Backslash_key = new xcas::No_Focus_Button(30, 490, 25, 25, gettext("\\"));
+        { Xcas_Backslash_key = new xcas::No_Focus_Button(240, 490, 30, 25, gettext("\\"));
           Xcas_Backslash_key->box(FL_UP_BOX);
           Xcas_Backslash_key->color((Fl_Color)10);
           Xcas_Backslash_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4027,7 +4254,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Backslash_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Backslash_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Backslash_key
-        { Xcas_Parenthese_ouvrante_key = new xcas::No_Focus_Button(105, 465, 25, 25, gettext("("));
+        { Xcas_Parenthese_ouvrante_key = new xcas::No_Focus_Button(390, 465, 30, 25, gettext("("));
           Xcas_Parenthese_ouvrante_key->box(FL_UP_BOX);
           Xcas_Parenthese_ouvrante_key->color((Fl_Color)10);
           Xcas_Parenthese_ouvrante_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4038,7 +4265,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Parenthese_ouvrante_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Parenthese_ouvrante_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Parenthese_ouvrante_key
-        { Xcas_Parenthese_fermante_key = new xcas::No_Focus_Button(130, 465, 25, 25, gettext(")"));
+        { Xcas_Parenthese_fermante_key = new xcas::No_Focus_Button(420, 465, 30, 25, gettext(")"));
           Xcas_Parenthese_fermante_key->box(FL_UP_BOX);
           Xcas_Parenthese_fermante_key->color((Fl_Color)10);
           Xcas_Parenthese_fermante_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4049,7 +4276,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Parenthese_fermante_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Parenthese_fermante_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Parenthese_fermante_key
-        { Xcas_Espace_key = new xcas::No_Focus_Button(255, 490, 25, 25, gettext(" "));
+        { Xcas_Espace_key = new xcas::No_Focus_Button(450, 490, 30, 25, gettext(" "));
           Xcas_Espace_key->box(FL_UP_BOX);
           Xcas_Espace_key->color((Fl_Color)10);
           Xcas_Espace_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4060,7 +4287,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Espace_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Espace_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Espace_key
-        { Xcas_Point_exclamation_key = new xcas::No_Focus_Button(180, 490, 25, 25, gettext("!"));
+        { Xcas_Point_exclamation_key = new xcas::No_Focus_Button(390, 490, 30, 25, gettext("!"));
           Xcas_Point_exclamation_key->box(FL_UP_BOX);
           Xcas_Point_exclamation_key->color((Fl_Color)10);
           Xcas_Point_exclamation_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4071,51 +4298,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Point_exclamation_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Point_exclamation_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Point_exclamation_key
-        { Xcas_Crochet_fermant_key = new xcas::No_Focus_Button(180, 465, 25, 25, gettext("]"));
-          Xcas_Crochet_fermant_key->box(FL_UP_BOX);
-          Xcas_Crochet_fermant_key->color((Fl_Color)10);
-          Xcas_Crochet_fermant_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Crochet_fermant_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Crochet_fermant_key->labelfont(0);
-          Xcas_Crochet_fermant_key->labelsize(10);
-          Xcas_Crochet_fermant_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Crochet_fermant_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Crochet_fermant_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Crochet_fermant_key
-        { Xcas_Crochet_ouvrant_key = new xcas::No_Focus_Button(155, 465, 25, 25, gettext("["));
-          Xcas_Crochet_ouvrant_key->box(FL_UP_BOX);
-          Xcas_Crochet_ouvrant_key->color((Fl_Color)10);
-          Xcas_Crochet_ouvrant_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Crochet_ouvrant_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Crochet_ouvrant_key->labelfont(0);
-          Xcas_Crochet_ouvrant_key->labelsize(10);
-          Xcas_Crochet_ouvrant_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Crochet_ouvrant_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Crochet_ouvrant_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Crochet_ouvrant_key
-        { Xcas_Accolade_ouvrant_key = new xcas::No_Focus_Button(205, 465, 25, 25, gettext("{"));
-          Xcas_Accolade_ouvrant_key->box(FL_UP_BOX);
-          Xcas_Accolade_ouvrant_key->color((Fl_Color)10);
-          Xcas_Accolade_ouvrant_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Accolade_ouvrant_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Accolade_ouvrant_key->labelfont(0);
-          Xcas_Accolade_ouvrant_key->labelsize(10);
-          Xcas_Accolade_ouvrant_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Accolade_ouvrant_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Accolade_ouvrant_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Accolade_ouvrant_key
-        { Xcas_Accolade_fermant_key = new xcas::No_Focus_Button(230, 465, 25, 25, gettext("}"));
-          Xcas_Accolade_fermant_key->box(FL_UP_BOX);
-          Xcas_Accolade_fermant_key->color((Fl_Color)10);
-          Xcas_Accolade_fermant_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Accolade_fermant_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Accolade_fermant_key->labelfont(0);
-          Xcas_Accolade_fermant_key->labelsize(10);
-          Xcas_Accolade_fermant_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Accolade_fermant_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Accolade_fermant_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Accolade_fermant_key
-        { Xcas_Deux_points_key = new xcas::No_Focus_Button(130, 490, 25, 25, gettext(":"));
+        { Xcas_Deux_points_key = new xcas::No_Focus_Button(360, 490, 30, 25, gettext(":"));
           Xcas_Deux_points_key->box(FL_UP_BOX);
           Xcas_Deux_points_key->color((Fl_Color)10);
           Xcas_Deux_points_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4126,18 +4309,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Deux_points_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Deux_points_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Deux_points_key
-        { Xcas_Equal_key = new xcas::No_Focus_Button(155, 490, 25, 25, gettext("="));
-          Xcas_Equal_key->box(FL_UP_BOX);
-          Xcas_Equal_key->color((Fl_Color)10);
-          Xcas_Equal_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Equal_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Equal_key->labelfont(0);
-          Xcas_Equal_key->labelsize(10);
-          Xcas_Equal_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Equal_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Equal_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Equal_key
-        { Xcas_Guillemet_key = new xcas::No_Focus_Button(280, 465, 30, 25, gettext("\""));
+        { Xcas_Guillemet_key = new xcas::No_Focus_Button(480, 465, 30, 25, gettext("\""));
           Xcas_Guillemet_key->box(FL_UP_BOX);
           Xcas_Guillemet_key->color((Fl_Color)10);
           Xcas_Guillemet_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4148,7 +4320,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Guillemet_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Guillemet_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Guillemet_key
-        { Xcas_Souligne_key = new xcas::No_Focus_Button(55, 490, 25, 25, gettext("_"));
+        { Xcas_Souligne_key = new xcas::No_Focus_Button(270, 490, 30, 25, gettext("_"));
           Xcas_Souligne_key->box(FL_UP_BOX);
           Xcas_Souligne_key->color((Fl_Color)10);
           Xcas_Souligne_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4159,7 +4331,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Souligne_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Souligne_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Souligne_key
-        { Xcas_Majuscule_key = new xcas::No_Focus_Button(0, 490, 30, 25, gettext("Maj"));
+        { Xcas_Majuscule_key = new xcas::No_Focus_Button(205, 490, 35, 25, gettext("Maj"));
           Xcas_Majuscule_key->box(FL_UP_BOX);
           Xcas_Majuscule_key->color((Fl_Color)1);
           Xcas_Majuscule_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4171,7 +4343,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Majuscule_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Majuscule_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Majuscule_key
-        { Xcas_Diese_key = new xcas::No_Focus_Button(205, 490, 25, 25, gettext("#"));
+        { Xcas_Diese_key = new xcas::No_Focus_Button(420, 490, 30, 25, gettext("#"));
           Xcas_Diese_key->box(FL_UP_BOX);
           Xcas_Diese_key->color((Fl_Color)10);
           Xcas_Diese_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4182,18 +4354,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Diese_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Diese_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Diese_key
-        { Xcas_Pi_key = new xcas::No_Focus_Button(230, 490, 25, 25, gettext("\316\240"));
-          Xcas_Pi_key->box(FL_UP_BOX);
-          Xcas_Pi_key->color((Fl_Color)10);
-          Xcas_Pi_key->selection_color(FL_BACKGROUND_COLOR);
-          Xcas_Pi_key->labeltype(FL_NORMAL_LABEL);
-          Xcas_Pi_key->labelfont(0);
-          Xcas_Pi_key->labelsize(10);
-          Xcas_Pi_key->labelcolor(FL_FOREGROUND_COLOR);
-          Xcas_Pi_key->align(Fl_Align(FL_ALIGN_CENTER));
-          Xcas_Pi_key->when(FL_WHEN_RELEASE);
-        } // xcas::No_Focus_Button* Xcas_Pi_key
-        { Xcas_Greek_key = new xcas::No_Focus_Button(280, 490, 30, 25, gettext("a"));
+        { Xcas_Greek_key = new xcas::No_Focus_Button(480, 490, 30, 25, gettext("a"));
           Xcas_Greek_key->box(FL_UP_BOX);
           Xcas_Greek_key->color((Fl_Color)1);
           Xcas_Greek_key->selection_color(FL_FOREGROUND_COLOR);
@@ -4205,7 +4366,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Greek_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Greek_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Greek_key
-        { Xcas_Alpha_virgule_key = new xcas::No_Focus_Button(80, 490, 25, 25, gettext(","));
+        { Xcas_Alpha_virgule_key = new xcas::No_Focus_Button(300, 490, 30, 25, gettext(","));
           Xcas_Alpha_virgule_key->box(FL_UP_BOX);
           Xcas_Alpha_virgule_key->color((Fl_Color)10);
           Xcas_Alpha_virgule_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4216,7 +4377,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Alpha_virgule_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Alpha_virgule_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Alpha_virgule_key
-        { Xcas_Alpha_point_virgule_key = new xcas::No_Focus_Button(105, 490, 25, 25, gettext(";"));
+        { Xcas_Alpha_point_virgule_key = new xcas::No_Focus_Button(330, 490, 30, 25, gettext(";"));
           Xcas_Alpha_point_virgule_key->box(FL_UP_BOX);
           Xcas_Alpha_point_virgule_key->color((Fl_Color)10);
           Xcas_Alpha_point_virgule_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4227,7 +4388,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Alpha_point_virgule_key->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Alpha_point_virgule_key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Alpha_point_virgule_key
-        { Xcas_Alpha_quote_key = new xcas::No_Focus_Button(255, 465, 25, 25, gettext("\'"));
+        { Xcas_Alpha_quote_key = new xcas::No_Focus_Button(450, 465, 30, 25, gettext("\'"));
           Xcas_Alpha_quote_key->box(FL_UP_BOX);
           Xcas_Alpha_quote_key->color((Fl_Color)10);
           Xcas_Alpha_quote_key->selection_color(FL_BACKGROUND_COLOR);
@@ -4240,9 +4401,9 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
         } // xcas::No_Focus_Button* Xcas_Alpha_quote_key
         Xcas_Alpha_Keyboard->end();
       } // Fl_Group* Xcas_Alpha_Keyboard
-      { Xcas_Scientific_Keyboard = new Fl_Group(0, 415, 310, 100);
-        { Lettre_keyboard = new Fl_Group(0, 415, 50, 50);
-          { Xcas_Variable_x = new xcas::No_Focus_Button(0, 415, 25, 25, gettext("x"));
+      { Xcas_Scientific_Keyboard = new Fl_Group(205, 415, 280, 100);
+        { Lettre_keyboard = new Fl_Group(435, 465, 50, 50);
+          { Xcas_Variable_x = new xcas::No_Focus_Button(435, 465, 25, 25, gettext("x"));
             Xcas_Variable_x->box(FL_UP_BOX);
             Xcas_Variable_x->shortcut(0x78);
             Xcas_Variable_x->color(FL_BACKGROUND_COLOR);
@@ -4254,7 +4415,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Variable_x->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Variable_x->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Variable_x
-          { Xcas_Variable_y = new xcas::No_Focus_Button(25, 415, 25, 25, gettext("y"));
+          { Xcas_Variable_y = new xcas::No_Focus_Button(460, 465, 25, 25, gettext("y"));
             Xcas_Variable_y->box(FL_UP_BOX);
             Xcas_Variable_y->shortcut(0x79);
             Xcas_Variable_y->color(FL_BACKGROUND_COLOR);
@@ -4266,7 +4427,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Variable_y->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Variable_y->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Variable_y
-          { Xcas_Variable_z = new xcas::No_Focus_Button(0, 440, 25, 25, gettext("z"));
+          { Xcas_Variable_z = new xcas::No_Focus_Button(435, 490, 25, 25, gettext("z"));
             Xcas_Variable_z->box(FL_UP_BOX);
             Xcas_Variable_z->shortcut(0x7a);
             Xcas_Variable_z->color(FL_BACKGROUND_COLOR);
@@ -4278,7 +4439,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Variable_z->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Variable_z->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Variable_z
-          { Xcas_Variable_t = new xcas::No_Focus_Button(25, 440, 25, 25, gettext("t"));
+          { Xcas_Variable_t = new xcas::No_Focus_Button(460, 490, 25, 25, gettext("t"));
             Xcas_Variable_t->box(FL_UP_BOX);
             Xcas_Variable_t->shortcut(0x74);
             Xcas_Variable_t->color(FL_BACKGROUND_COLOR);
@@ -4292,55 +4453,18 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           } // xcas::No_Focus_Button* Xcas_Variable_t
           Lettre_keyboard->end();
         } // Fl_Group* Lettre_keyboard
-        { Xcas_Delim_keyboard = new Fl_Group(50, 415, 140, 50);
-          { Xcas_Double_quote = new xcas::No_Focus_Button(70, 415, 30, 25, gettext("\""));
-            Xcas_Double_quote->tooltip(gettext("String delimiter"));
-            Xcas_Double_quote->box(FL_UP_BOX);
-            Xcas_Double_quote->color(FL_BACKGROUND_COLOR);
-            Xcas_Double_quote->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Double_quote->labeltype(FL_NORMAL_LABEL);
-            Xcas_Double_quote->labelfont(0);
-            Xcas_Double_quote->labelsize(10);
-            Xcas_Double_quote->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Double_quote->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Double_quote->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Double_quote
-          { Xcas_Parentheses = new xcas::No_Focus_Button(100, 440, 25, 25, gettext("("));
-            Xcas_Parentheses->box(FL_UP_BOX);
-            Xcas_Parentheses->color(FL_BACKGROUND_COLOR);
-            Xcas_Parentheses->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Parentheses->labeltype(FL_NORMAL_LABEL);
-            Xcas_Parentheses->labelfont(0);
-            Xcas_Parentheses->labelsize(10);
-            Xcas_Parentheses->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Parentheses->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Parentheses->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Parentheses
-          { Xcas_Brackets = new xcas::No_Focus_Button(130, 415, 30, 25, gettext("{}"));
-            Xcas_Brackets->tooltip(gettext("Bloc delimiter (set delimiter in maple compatible mode)"));
-            Xcas_Brackets->box(FL_UP_BOX);
-            Xcas_Brackets->color(FL_BACKGROUND_COLOR);
-            Xcas_Brackets->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Brackets->labeltype(FL_NORMAL_LABEL);
-            Xcas_Brackets->labelfont(0);
-            Xcas_Brackets->labelsize(10);
-            Xcas_Brackets->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Brackets->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Brackets->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Brackets
-          { Xcas_Crochets = new xcas::No_Focus_Button(100, 415, 30, 25, gettext("[]"));
-            Xcas_Crochets->tooltip(gettext("List, vector, matrix delimiter"));
-            Xcas_Crochets->box(FL_UP_BOX);
-            Xcas_Crochets->color(FL_BACKGROUND_COLOR);
-            Xcas_Crochets->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Crochets->labeltype(FL_NORMAL_LABEL);
-            Xcas_Crochets->labelfont(0);
-            Xcas_Crochets->labelsize(10);
-            Xcas_Crochets->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Crochets->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Crochets->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Crochets
-          { Xcas_Quote = new xcas::No_Focus_Button(50, 415, 20, 25, gettext("\'"));
+        { Xcas_Delim_keyboard = new Fl_Group(205, 415, 280, 50);
+          { Xcas_calculus_group = new Fl_Menu_Bar(205, 415, 165, 25);
+            if (!menu_Xcas_calculus_group_i18n_done) {
+              int i=0;
+              for ( ; i<23; i++)
+                if (menu_Xcas_calculus_group[i].label())
+                  menu_Xcas_calculus_group[i].label(gettext(menu_Xcas_calculus_group[i].label()));
+              menu_Xcas_calculus_group_i18n_done = 1;
+            }
+            Xcas_calculus_group->menu(menu_Xcas_calculus_group);
+          } // Fl_Menu_Bar* Xcas_calculus_group
+          { Xcas_Quote = new xcas::No_Focus_Button(370, 415, 25, 25, gettext("\'"));
             Xcas_Quote->tooltip(gettext("Quote"));
             Xcas_Quote->box(FL_UP_BOX);
             Xcas_Quote->color(FL_BACKGROUND_COLOR);
@@ -4352,7 +4476,43 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Quote->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Quote->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Quote
-          { Xcas_Virgule = new xcas::No_Focus_Button(125, 440, 20, 25, gettext(","));
+          { Xcas_Double_quote = new xcas::No_Focus_Button(395, 415, 30, 25, gettext("\""));
+            Xcas_Double_quote->tooltip(gettext("String delimiter"));
+            Xcas_Double_quote->box(FL_UP_BOX);
+            Xcas_Double_quote->color(FL_BACKGROUND_COLOR);
+            Xcas_Double_quote->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Double_quote->labeltype(FL_NORMAL_LABEL);
+            Xcas_Double_quote->labelfont(0);
+            Xcas_Double_quote->labelsize(10);
+            Xcas_Double_quote->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Double_quote->align(Fl_Align(FL_ALIGN_CENTER));
+            Xcas_Double_quote->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Double_quote
+          { Xcas_Crochets = new xcas::No_Focus_Button(425, 415, 30, 25, gettext("[]"));
+            Xcas_Crochets->tooltip(gettext("List, vector, matrix delimiter"));
+            Xcas_Crochets->box(FL_UP_BOX);
+            Xcas_Crochets->color(FL_BACKGROUND_COLOR);
+            Xcas_Crochets->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Crochets->labeltype(FL_NORMAL_LABEL);
+            Xcas_Crochets->labelfont(0);
+            Xcas_Crochets->labelsize(10);
+            Xcas_Crochets->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Crochets->align(Fl_Align(FL_ALIGN_CENTER));
+            Xcas_Crochets->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Crochets
+          { Xcas_Brackets = new xcas::No_Focus_Button(455, 415, 30, 25, gettext("{}"));
+            Xcas_Brackets->tooltip(gettext("Bloc delimiter (set delimiter in maple compatible mode)"));
+            Xcas_Brackets->box(FL_UP_BOX);
+            Xcas_Brackets->color(FL_BACKGROUND_COLOR);
+            Xcas_Brackets->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Brackets->labeltype(FL_NORMAL_LABEL);
+            Xcas_Brackets->labelfont(0);
+            Xcas_Brackets->labelsize(10);
+            Xcas_Brackets->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Brackets->align(Fl_Align(FL_ALIGN_CENTER));
+            Xcas_Brackets->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Brackets
+          { Xcas_Virgule = new xcas::No_Focus_Button(350, 440, 25, 25, gettext(","));
             Xcas_Virgule->box(FL_UP_BOX);
             Xcas_Virgule->color(FL_BACKGROUND_COLOR);
             Xcas_Virgule->selection_color(FL_BACKGROUND_COLOR);
@@ -4363,7 +4523,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Virgule->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Virgule->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Virgule
-          { Xcas_Semi_button = new xcas::No_Focus_Button(160, 415, 30, 25, gettext(";"));
+          { Xcas_Semi_button = new xcas::No_Focus_Button(405, 440, 30, 25, gettext(";"));
             Xcas_Semi_button->box(FL_UP_BOX);
             Xcas_Semi_button->color(FL_BACKGROUND_COLOR);
             Xcas_Semi_button->selection_color(FL_BACKGROUND_COLOR);
@@ -4374,7 +4534,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Semi_button->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Semi_button->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Semi_button
-          { Xcas_Sto = new xcas::No_Focus_Button(70, 440, 30, 25, gettext(":="));
+          { Xcas_Sto = new xcas::No_Focus_Button(230, 440, 30, 25, gettext("="));
             Xcas_Sto->tooltip(gettext("Assign"));
             Xcas_Sto->box(FL_UP_BOX);
             Xcas_Sto->color(FL_BACKGROUND_COLOR);
@@ -4386,7 +4546,18 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Sto->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Sto->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Sto
-          { Xcas_Keyboard_suchthat = new xcas::No_Focus_Button(50, 440, 20, 25, gettext("|"));
+          { Xcas_Parentheses = new xcas::No_Focus_Button(320, 440, 30, 25, gettext("("));
+            Xcas_Parentheses->box(FL_UP_BOX);
+            Xcas_Parentheses->color(FL_BACKGROUND_COLOR);
+            Xcas_Parentheses->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Parentheses->labeltype(FL_NORMAL_LABEL);
+            Xcas_Parentheses->labelfont(0);
+            Xcas_Parentheses->labelsize(10);
+            Xcas_Parentheses->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Parentheses->align(Fl_Align(FL_ALIGN_CENTER));
+            Xcas_Parentheses->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Parentheses
+          { Xcas_Keyboard_suchthat = new xcas::No_Focus_Button(205, 440, 20, 25, gettext("|"));
             Xcas_Keyboard_suchthat->box(FL_UP_BOX);
             Xcas_Keyboard_suchthat->color(FL_BACKGROUND_COLOR);
             Xcas_Keyboard_suchthat->selection_color(FL_BACKGROUND_COLOR);
@@ -4397,7 +4568,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Keyboard_suchthat->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Keyboard_suchthat->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Keyboard_suchthat
-          { Xcas_Keyboard_rp = new xcas::No_Focus_Button(145, 440, 25, 25, gettext(")"));
+          { Xcas_Keyboard_rp = new xcas::No_Focus_Button(375, 440, 30, 25, gettext(")"));
             Xcas_Keyboard_rp->box(FL_UP_BOX);
             Xcas_Keyboard_rp->color(FL_BACKGROUND_COLOR);
             Xcas_Keyboard_rp->selection_color(FL_BACKGROUND_COLOR);
@@ -4408,7 +4579,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Keyboard_rp->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Keyboard_rp->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Keyboard_rp
-          { Xcas_RPN_space = new xcas::No_Focus_Button(170, 440, 20, 25, gettext(" "));
+          { Xcas_RPN_space = new xcas::No_Focus_Button(435, 440, 25, 25, gettext(" "));
             Xcas_RPN_space->box(FL_UP_BOX);
             Xcas_RPN_space->color(FL_BACKGROUND_COLOR);
             Xcas_RPN_space->selection_color(FL_BACKGROUND_COLOR);
@@ -4419,10 +4590,59 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_RPN_space->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_RPN_space->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_RPN_space
+          { Xcas_Equal_button = new xcas::No_Focus_Button(205, 440, 25, 25, gettext(":"));
+            Xcas_Equal_button->tooltip(gettext("Equal"));
+            Xcas_Equal_button->box(FL_UP_BOX);
+            Xcas_Equal_button->color(FL_BACKGROUND_COLOR);
+            Xcas_Equal_button->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Equal_button->labeltype(FL_NORMAL_LABEL);
+            Xcas_Equal_button->labelfont(0);
+            Xcas_Equal_button->labelsize(14);
+            Xcas_Equal_button->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Equal_button->align(Fl_Align(FL_ALIGN_CLIP));
+            Xcas_Equal_button->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Equal_button
+          { Xcas_Keyboard_infinity = new xcas::No_Focus_Button(460, 440, 25, 25, gettext("oo"));
+            Xcas_Keyboard_infinity->tooltip(gettext("Infinity (unsigned)"));
+            Xcas_Keyboard_infinity->box(FL_UP_BOX);
+            Xcas_Keyboard_infinity->color(FL_BACKGROUND_COLOR);
+            Xcas_Keyboard_infinity->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Keyboard_infinity->labeltype(FL_NORMAL_LABEL);
+            Xcas_Keyboard_infinity->labelfont(0);
+            Xcas_Keyboard_infinity->labelsize(10);
+            Xcas_Keyboard_infinity->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Keyboard_infinity->callback((Fl_Callback*)cb_Xcas_Keyboard_infinity);
+            Xcas_Keyboard_infinity->align(Fl_Align(FL_ALIGN_CENTER));
+            Xcas_Keyboard_infinity->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Keyboard_infinity
+          { Xcas_Superieur = new xcas::No_Focus_Button(260, 440, 30, 25, gettext(">"));
+            Xcas_Superieur->box(FL_UP_BOX);
+            Xcas_Superieur->shortcut(0x2d);
+            Xcas_Superieur->color(FL_BACKGROUND_COLOR);
+            Xcas_Superieur->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Superieur->labeltype(FL_NORMAL_LABEL);
+            Xcas_Superieur->labelfont(0);
+            Xcas_Superieur->labelsize(14);
+            Xcas_Superieur->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Superieur->align(Fl_Align(FL_ALIGN_CENTER));
+            Xcas_Superieur->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Superieur
+          { Xcas_Inferieur_button = new xcas::No_Focus_Button(290, 440, 30, 25, gettext("<"));
+            Xcas_Inferieur_button->tooltip(gettext("Inferior"));
+            Xcas_Inferieur_button->box(FL_UP_BOX);
+            Xcas_Inferieur_button->color(FL_BACKGROUND_COLOR);
+            Xcas_Inferieur_button->selection_color(FL_BACKGROUND_COLOR);
+            Xcas_Inferieur_button->labeltype(FL_NORMAL_LABEL);
+            Xcas_Inferieur_button->labelfont(0);
+            Xcas_Inferieur_button->labelsize(14);
+            Xcas_Inferieur_button->labelcolor(FL_FOREGROUND_COLOR);
+            Xcas_Inferieur_button->align(Fl_Align(FL_ALIGN_CLIP));
+            Xcas_Inferieur_button->when(FL_WHEN_RELEASE);
+          } // xcas::No_Focus_Button* Xcas_Inferieur_button
           Xcas_Delim_keyboard->end();
         } // Fl_Group* Xcas_Delim_keyboard
-        { Cst_keyboard = new Fl_Group(190, 415, 60, 50);
-          { Xcas_Cst_i = new xcas::No_Focus_Button(190, 440, 30, 25, gettext("i"));
+        { Cst_keyboard = new Fl_Group(410, 465, 25, 50);
+          { Xcas_Cst_i = new xcas::No_Focus_Button(410, 490, 25, 25, gettext("i"));
             Xcas_Cst_i->tooltip(gettext("Complex square root of -1"));
             Xcas_Cst_i->box(FL_UP_BOX);
             Xcas_Cst_i->shortcut(0x69);
@@ -4436,7 +4656,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Cst_i->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Cst_i->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Cst_i
-          { Xcas_Cst_pi = new xcas::No_Focus_Button(220, 415, 30, 25, gettext("\317\200"));
+          { Xcas_Cst_pi = new xcas::No_Focus_Button(410, 465, 25, 25, gettext("\317\200"));
             Xcas_Cst_pi->tooltip(gettext("The pi number"));
             Xcas_Cst_pi->box(FL_UP_BOX);
             Xcas_Cst_pi->color(FL_BACKGROUND_COLOR);
@@ -4449,165 +4669,11 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Cst_pi->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Cst_pi->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Cst_pi
-          { Xcas_Keyboard_infinity = new xcas::No_Focus_Button(190, 415, 30, 25, gettext("oo"));
-            Xcas_Keyboard_infinity->tooltip(gettext("Infinity (unsigned)"));
-            Xcas_Keyboard_infinity->box(FL_UP_BOX);
-            Xcas_Keyboard_infinity->color(FL_BACKGROUND_COLOR);
-            Xcas_Keyboard_infinity->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Keyboard_infinity->labeltype(FL_NORMAL_LABEL);
-            Xcas_Keyboard_infinity->labelfont(0);
-            Xcas_Keyboard_infinity->labelsize(10);
-            Xcas_Keyboard_infinity->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Keyboard_infinity->callback((Fl_Callback*)cb_Xcas_Keyboard_infinity);
-            Xcas_Keyboard_infinity->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Keyboard_infinity->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Keyboard_infinity
-          { Xcas_Racine_carree = new xcas::No_Focus_Button(220, 440, 30, 25, gettext("sqrt"));
-            Xcas_Racine_carree->tooltip(gettext("Square root"));
-            Xcas_Racine_carree->box(FL_UP_BOX);
-            Xcas_Racine_carree->color(FL_BACKGROUND_COLOR);
-            Xcas_Racine_carree->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Racine_carree->labeltype(FL_NORMAL_LABEL);
-            Xcas_Racine_carree->labelfont(0);
-            Xcas_Racine_carree->labelsize(10);
-            Xcas_Racine_carree->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Racine_carree->callback((Fl_Callback*)cb_Xcas_Racine_carree);
-            Xcas_Racine_carree->align(Fl_Align(FL_ALIGN_CLIP));
-            Xcas_Racine_carree->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Racine_carree
           Cst_keyboard->end();
         } // Fl_Group* Cst_keyboard
-        { Rewrite_keyboard = new Fl_Group(0, 465, 60, 50);
-          { Xcas_approx_key = new xcas::No_Focus_Button(0, 465, 15, 25, gettext("~"));
-            Xcas_approx_key->tooltip(gettext("Evalf"));
-            Xcas_approx_key->box(FL_UP_BOX);
-            Xcas_approx_key->shortcut(0x80061);
-            Xcas_approx_key->color(FL_BACKGROUND_COLOR);
-            Xcas_approx_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_approx_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_approx_key->labelfont(0);
-            Xcas_approx_key->labelsize(10);
-            Xcas_approx_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_approx_key->callback((Fl_Callback*)cb_Xcas_approx_key);
-            Xcas_approx_key->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_approx_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_approx_key
-          { Xcas_simplify_key = new xcas::No_Focus_Button(0, 490, 30, 25, gettext("simplify"));
-            Xcas_simplify_key->tooltip(gettext("simplify: Simplify expression"));
-            Xcas_simplify_key->box(FL_UP_BOX);
-            Xcas_simplify_key->shortcut(0xc0073);
-            Xcas_simplify_key->color(FL_BACKGROUND_COLOR);
-            Xcas_simplify_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_simplify_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_simplify_key->labelfont(0);
-            Xcas_simplify_key->labelsize(10);
-            Xcas_simplify_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_simplify_key->callback((Fl_Callback*)cb_Xcas_simplify_key);
-            Xcas_simplify_key->align(Fl_Align(68|FL_ALIGN_INSIDE));
-            Xcas_simplify_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_simplify_key
-          { Xcas_factor_key = new xcas::No_Focus_Button(30, 465, 30, 25, gettext("factor"));
-            Xcas_factor_key->tooltip(gettext("factor: Factorization"));
-            Xcas_factor_key->box(FL_UP_BOX);
-            Xcas_factor_key->shortcut(0x80066);
-            Xcas_factor_key->color(FL_BACKGROUND_COLOR);
-            Xcas_factor_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_factor_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_factor_key->labelfont(0);
-            Xcas_factor_key->labelsize(10);
-            Xcas_factor_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_factor_key->callback((Fl_Callback*)cb_Xcas_factor_key);
-            Xcas_factor_key->align(Fl_Align(68|FL_ALIGN_INSIDE));
-            Xcas_factor_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_factor_key
-          { Xcas_convert_key = new xcas::No_Focus_Button(15, 465, 15, 25, gettext("=>"));
-            Xcas_convert_key->tooltip(gettext("Sto/Convert to"));
-            Xcas_convert_key->box(FL_UP_BOX);
-            Xcas_convert_key->shortcut(0x80063);
-            Xcas_convert_key->color(FL_BACKGROUND_COLOR);
-            Xcas_convert_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_convert_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_convert_key->labelfont(0);
-            Xcas_convert_key->labelsize(10);
-            Xcas_convert_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_convert_key->callback((Fl_Callback*)cb_Xcas_convert_key);
-            Xcas_convert_key->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_convert_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_convert_key
-          { Xcas_Prg_Menubutton = new Fl_Menu_Button(30, 490, 30, 25, gettext("prg"));
-            Xcas_Prg_Menubutton->labelsize(10);
-            if (!menu_Xcas_Prg_Menubutton_i18n_done) {
-              int i=0;
-              for ( ; i<6; i++)
-                if (menu_Xcas_Prg_Menubutton[i].label())
-                  menu_Xcas_Prg_Menubutton[i].label(gettext(menu_Xcas_Prg_Menubutton[i].label()));
-              menu_Xcas_Prg_Menubutton_i18n_done = 1;
-            }
-            Xcas_Prg_Menubutton->menu(menu_Xcas_Prg_Menubutton);
-          } // Fl_Menu_Button* Xcas_Prg_Menubutton
-          Rewrite_keyboard->end();
-        } // Fl_Group* Rewrite_keyboard
-        { Xcas_calculus_group = new Fl_Group(60, 465, 40, 50);
-          { Xcas_diff_key = new xcas::No_Focus_Button(60, 465, 20, 25, gettext("\342\210\202"));
-            Xcas_diff_key->tooltip(gettext("diff"));
-            Xcas_diff_key->box(FL_UP_BOX);
-            Xcas_diff_key->shortcut(0x80064);
-            Xcas_diff_key->color(FL_BACKGROUND_COLOR);
-            Xcas_diff_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_diff_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_diff_key->labelfont(10);
-            Xcas_diff_key->labelsize(10);
-            Xcas_diff_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_diff_key->callback((Fl_Callback*)cb_Xcas_diff_key);
-            Xcas_diff_key->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_diff_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_diff_key
-          { Xcas_int_key = new xcas::No_Focus_Button(80, 465, 20, 25, gettext("\342\210\253"));
-            Xcas_int_key->tooltip(gettext("Integral"));
-            Xcas_int_key->box(FL_UP_BOX);
-            Xcas_int_key->shortcut(0x80069);
-            Xcas_int_key->color(FL_BACKGROUND_COLOR);
-            Xcas_int_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_int_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_int_key->labelfont(10);
-            Xcas_int_key->labelsize(12);
-            Xcas_int_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_int_key->callback((Fl_Callback*)cb_Xcas_int_key);
-            Xcas_int_key->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_int_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_int_key
-          { Xcas_sigma_key = new xcas::No_Focus_Button(80, 490, 20, 25, gettext("\316\243"));
-            Xcas_sigma_key->tooltip(gettext("Sum"));
-            Xcas_sigma_key->box(FL_UP_BOX);
-            Xcas_sigma_key->color(FL_BACKGROUND_COLOR);
-            Xcas_sigma_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_sigma_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_sigma_key->labelfont(0);
-            Xcas_sigma_key->labelsize(10);
-            Xcas_sigma_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_sigma_key->callback((Fl_Callback*)cb_Xcas_sigma_key);
-            Xcas_sigma_key->align(Fl_Align(FL_ALIGN_CLIP));
-            Xcas_sigma_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_sigma_key
-          { Xcas_limit_key = new xcas::No_Focus_Button(60, 490, 20, 25, gettext("lim"));
-            Xcas_limit_key->tooltip(gettext("Limit"));
-            Xcas_limit_key->box(FL_UP_BOX);
-            Xcas_limit_key->shortcut(0x8006c);
-            Xcas_limit_key->color(FL_BACKGROUND_COLOR);
-            Xcas_limit_key->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_limit_key->labeltype(FL_NORMAL_LABEL);
-            Xcas_limit_key->labelfont(0);
-            Xcas_limit_key->labelsize(10);
-            Xcas_limit_key->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_limit_key->callback((Fl_Callback*)cb_Xcas_limit_key);
-            Xcas_limit_key->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_limit_key->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_limit_key
-          Xcas_calculus_group->end();
-        } // Fl_Group* Xcas_calculus_group
-        { Transcendental = new Fl_Group(100, 465, 150, 50);
-          { Trig_keyboard = new Fl_Group(100, 465, 150, 25);
-            { Xcas_Sinus_button = new xcas::No_Focus_Button(115, 465, 35, 25, gettext("sin"));
+        { Transcendental = new Fl_Group(235, 465, 175, 50);
+          { Trig_keyboard = new Fl_Group(235, 465, 175, 25);
+            { Xcas_Sinus_button = new xcas::No_Focus_Button(275, 465, 35, 25, gettext("sin"));
               Xcas_Sinus_button->tooltip(gettext("Sinus"));
               Xcas_Sinus_button->box(FL_UP_BOX);
               Xcas_Sinus_button->color(FL_BACKGROUND_COLOR);
@@ -4619,7 +4685,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Sinus_button->align(Fl_Align(FL_ALIGN_CLIP));
               Xcas_Sinus_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Sinus_button
-            { Xcas_Cosinus_button = new xcas::No_Focus_Button(165, 465, 35, 25, gettext("cos"));
+            { Xcas_Cosinus_button = new xcas::No_Focus_Button(325, 465, 35, 25, gettext("cos"));
               Xcas_Cosinus_button->box(FL_UP_BOX);
               Xcas_Cosinus_button->color(FL_BACKGROUND_COLOR);
               Xcas_Cosinus_button->selection_color(FL_BACKGROUND_COLOR);
@@ -4630,7 +4696,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Cosinus_button->align(Fl_Align(FL_ALIGN_CLIP));
               Xcas_Cosinus_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Cosinus_button
-            { Xcas_Tangeant_button = new xcas::No_Focus_Button(215, 465, 35, 25, gettext("tan"));
+            { Xcas_Tangeant_button = new xcas::No_Focus_Button(375, 465, 35, 25, gettext("tan"));
               Xcas_Tangeant_button->tooltip(gettext("Tangent"));
               Xcas_Tangeant_button->box(FL_UP_BOX);
               Xcas_Tangeant_button->color(FL_BACKGROUND_COLOR);
@@ -4642,7 +4708,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Tangeant_button->align(Fl_Align(FL_ALIGN_CLIP));
               Xcas_Tangeant_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Tangeant_button
-            { Xcas_Asinus_button = new xcas::No_Focus_Button(100, 465, 15, 25, gettext("a"));
+            { Xcas_Asinus_button = new xcas::No_Focus_Button(260, 465, 15, 25, gettext("a"));
               Xcas_Asinus_button->tooltip(gettext("Arcsinus"));
               Xcas_Asinus_button->box(FL_UP_BOX);
               Xcas_Asinus_button->color((Fl_Color)29);
@@ -4655,7 +4721,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Asinus_button->align(Fl_Align(FL_ALIGN_CENTER));
               Xcas_Asinus_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Asinus_button
-            { Xcas_Acosinus_button = new xcas::No_Focus_Button(150, 465, 15, 25, gettext("a"));
+            { Xcas_Acosinus_button = new xcas::No_Focus_Button(310, 465, 15, 25, gettext("a"));
               Xcas_Acosinus_button->tooltip(gettext("Arccosinus"));
               Xcas_Acosinus_button->box(FL_UP_BOX);
               Xcas_Acosinus_button->color((Fl_Color)29);
@@ -4668,7 +4734,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Acosinus_button->align(Fl_Align(FL_ALIGN_CENTER));
               Xcas_Acosinus_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Acosinus_button
-            { Xcas_Atangeant_button = new xcas::No_Focus_Button(200, 465, 15, 25, gettext("a"));
+            { Xcas_Atangeant_button = new xcas::No_Focus_Button(360, 465, 15, 25, gettext("a"));
               Xcas_Atangeant_button->tooltip(gettext("Arctangent"));
               Xcas_Atangeant_button->box(FL_UP_BOX);
               Xcas_Atangeant_button->color((Fl_Color)29);
@@ -4681,10 +4747,24 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Atangeant_button->align(Fl_Align(FL_ALIGN_CENTER));
               Xcas_Atangeant_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Atangeant_button
+            { Xcas_approx_key = new xcas::No_Focus_Button(235, 465, 25, 25, gettext("~"));
+              Xcas_approx_key->tooltip(gettext("Evalf"));
+              Xcas_approx_key->box(FL_UP_BOX);
+              Xcas_approx_key->shortcut(0x80061);
+              Xcas_approx_key->color(FL_BACKGROUND_COLOR);
+              Xcas_approx_key->selection_color(FL_BACKGROUND_COLOR);
+              Xcas_approx_key->labeltype(FL_NORMAL_LABEL);
+              Xcas_approx_key->labelfont(0);
+              Xcas_approx_key->labelsize(10);
+              Xcas_approx_key->labelcolor(FL_FOREGROUND_COLOR);
+              Xcas_approx_key->callback((Fl_Callback*)cb_Xcas_approx_key);
+              Xcas_approx_key->align(Fl_Align(FL_ALIGN_CENTER));
+              Xcas_approx_key->when(FL_WHEN_RELEASE);
+            } // xcas::No_Focus_Button* Xcas_approx_key
             Trig_keyboard->end();
           } // Fl_Group* Trig_keyboard
-          { Exp_keyboard = new Fl_Group(100, 490, 150, 25);
-            { Xcas_Exp_button = new xcas::No_Focus_Button(150, 490, 30, 25, gettext("exp"));
+          { Exp_keyboard = new Fl_Group(235, 490, 175, 25);
+            { Xcas_Exp_button = new xcas::No_Focus_Button(305, 490, 35, 25, gettext("exp"));
               Xcas_Exp_button->tooltip(gettext("Exponential"));
               Xcas_Exp_button->box(FL_UP_BOX);
               Xcas_Exp_button->color(FL_BACKGROUND_COLOR);
@@ -4696,7 +4776,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Exp_button->align(Fl_Align(FL_ALIGN_CLIP));
               Xcas_Exp_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Exp_button
-            { Xcas_Dix_puissance = new xcas::No_Focus_Button(215, 490, 35, 25, gettext("10^"));
+            { Xcas_Dix_puissance = new xcas::No_Focus_Button(375, 490, 35, 25, gettext("10^"));
               Xcas_Dix_puissance->box(FL_UP_BOX);
               Xcas_Dix_puissance->color(FL_BACKGROUND_COLOR);
               Xcas_Dix_puissance->selection_color(FL_BACKGROUND_COLOR);
@@ -4707,7 +4787,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Dix_puissance->align(Fl_Align(FL_ALIGN_CLIP));
               Xcas_Dix_puissance->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Dix_puissance
-            { Xcas_Ln10_button = new xcas::No_Focus_Button(180, 490, 35, 25, gettext("log10"));
+            { Xcas_Ln10_button = new xcas::No_Focus_Button(340, 490, 35, 25, gettext("log10"));
               Xcas_Ln10_button->tooltip(gettext("base 10 logarithm"));
               Xcas_Ln10_button->box(FL_UP_BOX);
               Xcas_Ln10_button->color(FL_BACKGROUND_COLOR);
@@ -4719,7 +4799,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Ln10_button->align(Fl_Align(FL_ALIGN_CLIP));
               Xcas_Ln10_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Ln10_button
-            { Xcas_Ln_button = new xcas::No_Focus_Button(120, 490, 30, 25, gettext("ln"));
+            { Xcas_Ln_button = new xcas::No_Focus_Button(270, 490, 35, 25, gettext("ln"));
               Xcas_Ln_button->tooltip(gettext("Natural logarithm"));
               Xcas_Ln_button->box(FL_UP_BOX);
               Xcas_Ln_button->color(FL_BACKGROUND_COLOR);
@@ -4731,61 +4811,25 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
               Xcas_Ln_button->align(Fl_Align(FL_ALIGN_CLIP));
               Xcas_Ln_button->when(FL_WHEN_RELEASE);
             } // xcas::No_Focus_Button* Xcas_Ln_button
+            { Xcas_Racine_carree = new xcas::No_Focus_Button(235, 490, 35, 25, gettext("sqrt"));
+              Xcas_Racine_carree->tooltip(gettext("Square root"));
+              Xcas_Racine_carree->box(FL_UP_BOX);
+              Xcas_Racine_carree->color(FL_BACKGROUND_COLOR);
+              Xcas_Racine_carree->selection_color(FL_BACKGROUND_COLOR);
+              Xcas_Racine_carree->labeltype(FL_NORMAL_LABEL);
+              Xcas_Racine_carree->labelfont(0);
+              Xcas_Racine_carree->labelsize(10);
+              Xcas_Racine_carree->labelcolor(FL_FOREGROUND_COLOR);
+              Xcas_Racine_carree->callback((Fl_Callback*)cb_Xcas_Racine_carree);
+              Xcas_Racine_carree->align(Fl_Align(FL_ALIGN_CLIP));
+              Xcas_Racine_carree->when(FL_WHEN_RELEASE);
+            } // xcas::No_Focus_Button* Xcas_Racine_carree
             Exp_keyboard->end();
           } // Fl_Group* Exp_keyboard
           Transcendental->end();
         } // Fl_Group* Transcendental
-        { Operations_keyboard = new Fl_Group(100, 415, 210, 100);
-          { Xcas_Plus = new xcas::No_Focus_Button(250, 440, 30, 25, gettext("+"));
-            Xcas_Plus->box(FL_UP_BOX);
-            Xcas_Plus->shortcut(0x2b);
-            Xcas_Plus->color(FL_BACKGROUND_COLOR);
-            Xcas_Plus->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Plus->labeltype(FL_NORMAL_LABEL);
-            Xcas_Plus->labelfont(0);
-            Xcas_Plus->labelsize(14);
-            Xcas_Plus->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Plus->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Plus->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Plus
-          { Xcas_Moins = new xcas::No_Focus_Button(280, 440, 30, 25, gettext("-"));
-            Xcas_Moins->tooltip(gettext("Subtract"));
-            Xcas_Moins->box(FL_UP_BOX);
-            Xcas_Moins->shortcut(0x2d);
-            Xcas_Moins->color(FL_BACKGROUND_COLOR);
-            Xcas_Moins->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Moins->labeltype(FL_NORMAL_LABEL);
-            Xcas_Moins->labelfont(0);
-            Xcas_Moins->labelsize(14);
-            Xcas_Moins->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Moins->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Moins->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Moins
-          { Xcas_Fois = new xcas::No_Focus_Button(250, 465, 30, 25, gettext("*"));
-            Xcas_Fois->box(FL_UP_BOX);
-            Xcas_Fois->shortcut(0x2a);
-            Xcas_Fois->color(FL_BACKGROUND_COLOR);
-            Xcas_Fois->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Fois->labeltype(FL_NORMAL_LABEL);
-            Xcas_Fois->labelfont(0);
-            Xcas_Fois->labelsize(14);
-            Xcas_Fois->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Fois->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Fois->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Fois
-          { Xcas_Divise = new xcas::No_Focus_Button(280, 465, 30, 25, gettext("/"));
-            Xcas_Divise->box(FL_UP_BOX);
-            Xcas_Divise->shortcut(0x2f);
-            Xcas_Divise->color(FL_BACKGROUND_COLOR);
-            Xcas_Divise->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Divise->labeltype(FL_NORMAL_LABEL);
-            Xcas_Divise->labelfont(0);
-            Xcas_Divise->labelsize(14);
-            Xcas_Divise->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Divise->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Divise->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Divise
-          { Xcas_Puissance = new xcas::No_Focus_Button(250, 490, 30, 25, gettext("^"));
+        { Operations_keyboard = new Fl_Group(205, 465, 30, 50);
+          { Xcas_Puissance = new xcas::No_Focus_Button(205, 465, 30, 25, gettext("^"));
             Xcas_Puissance->box(FL_UP_BOX);
             Xcas_Puissance->shortcut(0x5e);
             Xcas_Puissance->color(FL_BACKGROUND_COLOR);
@@ -4797,7 +4841,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_Puissance->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_Puissance->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_Puissance
-          { Xcas_C_mod = new xcas::No_Focus_Button(280, 490, 30, 25, gettext("%"));
+          { Xcas_C_mod = new xcas::No_Focus_Button(205, 490, 30, 25, gettext("%"));
             Xcas_C_mod->tooltip(gettext("Modulo"));
             Xcas_C_mod->box(FL_UP_BOX);
             Xcas_C_mod->color(FL_BACKGROUND_COLOR);
@@ -4809,60 +4853,12 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
             Xcas_C_mod->align(Fl_Align(FL_ALIGN_CENTER));
             Xcas_C_mod->when(FL_WHEN_RELEASE);
           } // xcas::No_Focus_Button* Xcas_C_mod
-          { Xcas_Inverse_button = new xcas::No_Focus_Button(100, 490, 20, 25, gettext("inv"));
-            Xcas_Inverse_button->tooltip(gettext("Inverse"));
-            Xcas_Inverse_button->box(FL_UP_BOX);
-            Xcas_Inverse_button->color(FL_BACKGROUND_COLOR);
-            Xcas_Inverse_button->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Inverse_button->labeltype(FL_NORMAL_LABEL);
-            Xcas_Inverse_button->labelfont(0);
-            Xcas_Inverse_button->labelsize(10);
-            Xcas_Inverse_button->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Inverse_button->align(Fl_Align(FL_ALIGN_CLIP));
-            Xcas_Inverse_button->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Inverse_button
-          { Xcas_Inferieur_button = new xcas::No_Focus_Button(250, 415, 20, 25, gettext("<"));
-            Xcas_Inferieur_button->tooltip(gettext("Inferior"));
-            Xcas_Inferieur_button->box(FL_UP_BOX);
-            Xcas_Inferieur_button->color(FL_BACKGROUND_COLOR);
-            Xcas_Inferieur_button->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Inferieur_button->labeltype(FL_NORMAL_LABEL);
-            Xcas_Inferieur_button->labelfont(0);
-            Xcas_Inferieur_button->labelsize(14);
-            Xcas_Inferieur_button->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Inferieur_button->align(Fl_Align(FL_ALIGN_CLIP));
-            Xcas_Inferieur_button->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Inferieur_button
-          { Xcas_Superieur = new xcas::No_Focus_Button(290, 415, 20, 25, gettext(">"));
-            Xcas_Superieur->box(FL_UP_BOX);
-            Xcas_Superieur->shortcut(0x2d);
-            Xcas_Superieur->color(FL_BACKGROUND_COLOR);
-            Xcas_Superieur->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Superieur->labeltype(FL_NORMAL_LABEL);
-            Xcas_Superieur->labelfont(0);
-            Xcas_Superieur->labelsize(14);
-            Xcas_Superieur->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Superieur->align(Fl_Align(FL_ALIGN_CENTER));
-            Xcas_Superieur->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Superieur
-          { Xcas_Equal_button = new xcas::No_Focus_Button(270, 415, 20, 25, gettext("="));
-            Xcas_Equal_button->tooltip(gettext("Equal"));
-            Xcas_Equal_button->box(FL_UP_BOX);
-            Xcas_Equal_button->color(FL_BACKGROUND_COLOR);
-            Xcas_Equal_button->selection_color(FL_BACKGROUND_COLOR);
-            Xcas_Equal_button->labeltype(FL_NORMAL_LABEL);
-            Xcas_Equal_button->labelfont(0);
-            Xcas_Equal_button->labelsize(14);
-            Xcas_Equal_button->labelcolor(FL_FOREGROUND_COLOR);
-            Xcas_Equal_button->align(Fl_Align(FL_ALIGN_CLIP));
-            Xcas_Equal_button->when(FL_WHEN_RELEASE);
-          } // xcas::No_Focus_Button* Xcas_Equal_button
           Operations_keyboard->end();
         } // Fl_Group* Operations_keyboard
         Xcas_Scientific_Keyboard->end();
       } // Fl_Group* Xcas_Scientific_Keyboard
-      { Numeric_numbers = new Fl_Group(310, 415, 75, 100);
-        { Xcas_Un = new xcas::No_Focus_Button(310, 465, 25, 25, gettext("1"));
+      { Numeric_numbers = new Fl_Group(100, 415, 105, 100);
+        { Xcas_Un = new xcas::No_Focus_Button(100, 465, 25, 25, gettext("1"));
           Xcas_Un->box(FL_UP_BOX);
           Xcas_Un->shortcut(0x31);
           Xcas_Un->color(FL_BACKGROUND_COLOR);
@@ -4874,7 +4870,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Un->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Un->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Un
-        { Xcas_Deux = new xcas::No_Focus_Button(335, 465, 25, 25, gettext("2"));
+        { Xcas_Deux = new xcas::No_Focus_Button(125, 465, 25, 25, gettext("2"));
           Xcas_Deux->box(FL_UP_BOX);
           Xcas_Deux->shortcut(0x32);
           Xcas_Deux->color(FL_BACKGROUND_COLOR);
@@ -4886,7 +4882,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Deux->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Deux->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Deux
-        { Xcas_Trois = new xcas::No_Focus_Button(360, 465, 25, 25, gettext("3"));
+        { Xcas_Trois = new xcas::No_Focus_Button(150, 465, 25, 25, gettext("3"));
           Xcas_Trois->box(FL_UP_BOX);
           Xcas_Trois->shortcut(0x33);
           Xcas_Trois->color(FL_BACKGROUND_COLOR);
@@ -4898,7 +4894,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Trois->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Trois->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Trois
-        { Xcas_Quatre = new xcas::No_Focus_Button(310, 440, 25, 25, gettext("4"));
+        { Xcas_Quatre = new xcas::No_Focus_Button(100, 440, 25, 25, gettext("4"));
           Xcas_Quatre->box(FL_UP_BOX);
           Xcas_Quatre->shortcut(0x34);
           Xcas_Quatre->color(FL_BACKGROUND_COLOR);
@@ -4910,7 +4906,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Quatre->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Quatre->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Quatre
-        { Xcas_Cinq = new xcas::No_Focus_Button(335, 440, 25, 25, gettext("5"));
+        { Xcas_Cinq = new xcas::No_Focus_Button(125, 440, 25, 25, gettext("5"));
           Xcas_Cinq->box(FL_UP_BOX);
           Xcas_Cinq->shortcut(0x35);
           Xcas_Cinq->color(FL_BACKGROUND_COLOR);
@@ -4922,7 +4918,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Cinq->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Cinq->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Cinq
-        { Xcas_Six = new xcas::No_Focus_Button(360, 440, 25, 25, gettext("6"));
+        { Xcas_Six = new xcas::No_Focus_Button(150, 440, 25, 25, gettext("6"));
           Xcas_Six->box(FL_UP_BOX);
           Xcas_Six->shortcut(0x36);
           Xcas_Six->color(FL_BACKGROUND_COLOR);
@@ -4934,7 +4930,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Six->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Six->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Six
-        { Xcas_Sept = new xcas::No_Focus_Button(310, 415, 25, 25, gettext("7"));
+        { Xcas_Sept = new xcas::No_Focus_Button(100, 415, 25, 25, gettext("7"));
           Xcas_Sept->box(FL_UP_BOX);
           Xcas_Sept->shortcut(0x37);
           Xcas_Sept->color(FL_BACKGROUND_COLOR);
@@ -4946,7 +4942,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Sept->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Sept->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Sept
-        { Xcas_Huit = new xcas::No_Focus_Button(335, 415, 25, 25, gettext("8"));
+        { Xcas_Huit = new xcas::No_Focus_Button(125, 415, 25, 25, gettext("8"));
           Xcas_Huit->box(FL_UP_BOX);
           Xcas_Huit->shortcut(0x38);
           Xcas_Huit->color(FL_BACKGROUND_COLOR);
@@ -4958,7 +4954,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Huit->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Huit->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Huit
-        { Xcas_Neuf = new xcas::No_Focus_Button(360, 415, 25, 25, gettext("9"));
+        { Xcas_Neuf = new xcas::No_Focus_Button(150, 415, 25, 25, gettext("9"));
           Xcas_Neuf->box(FL_UP_BOX);
           Xcas_Neuf->shortcut(0x39);
           Xcas_Neuf->color(FL_BACKGROUND_COLOR);
@@ -4970,7 +4966,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Neuf->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Neuf->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Neuf
-        { Xcas_Zero = new xcas::No_Focus_Button(310, 490, 25, 25, gettext("0"));
+        { Xcas_Zero = new xcas::No_Focus_Button(100, 490, 25, 25, gettext("0"));
           Xcas_Zero->box(FL_UP_BOX);
           Xcas_Zero->shortcut(0x30);
           Xcas_Zero->color(FL_BACKGROUND_COLOR);
@@ -4982,7 +4978,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Zero->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Zero->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Zero
-        { Xcas_Point = new xcas::No_Focus_Button(335, 490, 25, 25, gettext("."));
+        { Xcas_Point = new xcas::No_Focus_Button(125, 490, 25, 25, gettext("."));
           Xcas_Point->box(FL_UP_BOX);
           Xcas_Point->color(FL_BACKGROUND_COLOR);
           Xcas_Point->selection_color(FL_BACKGROUND_COLOR);
@@ -4993,7 +4989,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Point->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_Point->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Point
-        { Xcas_EEX = new xcas::No_Focus_Button(360, 490, 25, 25, gettext("E"));
+        { Xcas_EEX = new xcas::No_Focus_Button(150, 490, 25, 25, gettext("E"));
           Xcas_EEX->box(FL_UP_BOX);
           Xcas_EEX->color(FL_BACKGROUND_COLOR);
           Xcas_EEX->selection_color(FL_BACKGROUND_COLOR);
@@ -5004,10 +5000,72 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_EEX->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_EEX->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_EEX
+        { Xcas_Plus = new xcas::No_Focus_Button(175, 415, 30, 25, gettext("+"));
+          Xcas_Plus->box(FL_UP_BOX);
+          Xcas_Plus->shortcut(0x2b);
+          Xcas_Plus->color(FL_BACKGROUND_COLOR);
+          Xcas_Plus->selection_color(FL_BACKGROUND_COLOR);
+          Xcas_Plus->labeltype(FL_NORMAL_LABEL);
+          Xcas_Plus->labelfont(0);
+          Xcas_Plus->labelsize(14);
+          Xcas_Plus->labelcolor(FL_FOREGROUND_COLOR);
+          Xcas_Plus->align(Fl_Align(FL_ALIGN_CENTER));
+          Xcas_Plus->when(FL_WHEN_RELEASE);
+        } // xcas::No_Focus_Button* Xcas_Plus
+        { Xcas_Moins = new xcas::No_Focus_Button(175, 440, 30, 25, gettext("-"));
+          Xcas_Moins->tooltip(gettext("Subtract"));
+          Xcas_Moins->box(FL_UP_BOX);
+          Xcas_Moins->shortcut(0x2d);
+          Xcas_Moins->color(FL_BACKGROUND_COLOR);
+          Xcas_Moins->selection_color(FL_BACKGROUND_COLOR);
+          Xcas_Moins->labeltype(FL_NORMAL_LABEL);
+          Xcas_Moins->labelfont(0);
+          Xcas_Moins->labelsize(14);
+          Xcas_Moins->labelcolor(FL_FOREGROUND_COLOR);
+          Xcas_Moins->align(Fl_Align(FL_ALIGN_CENTER));
+          Xcas_Moins->when(FL_WHEN_RELEASE);
+        } // xcas::No_Focus_Button* Xcas_Moins
+        { Xcas_Fois = new xcas::No_Focus_Button(175, 465, 30, 25, gettext("*"));
+          Xcas_Fois->box(FL_UP_BOX);
+          Xcas_Fois->shortcut(0x2a);
+          Xcas_Fois->color(FL_BACKGROUND_COLOR);
+          Xcas_Fois->selection_color(FL_BACKGROUND_COLOR);
+          Xcas_Fois->labeltype(FL_NORMAL_LABEL);
+          Xcas_Fois->labelfont(0);
+          Xcas_Fois->labelsize(14);
+          Xcas_Fois->labelcolor(FL_FOREGROUND_COLOR);
+          Xcas_Fois->align(Fl_Align(FL_ALIGN_CENTER));
+          Xcas_Fois->when(FL_WHEN_RELEASE);
+        } // xcas::No_Focus_Button* Xcas_Fois
+        { Xcas_Divise = new xcas::No_Focus_Button(175, 490, 30, 25, gettext("/"));
+          Xcas_Divise->box(FL_UP_BOX);
+          Xcas_Divise->shortcut(0x2f);
+          Xcas_Divise->color(FL_BACKGROUND_COLOR);
+          Xcas_Divise->selection_color(FL_BACKGROUND_COLOR);
+          Xcas_Divise->labeltype(FL_NORMAL_LABEL);
+          Xcas_Divise->labelfont(0);
+          Xcas_Divise->labelsize(14);
+          Xcas_Divise->labelcolor(FL_FOREGROUND_COLOR);
+          Xcas_Divise->align(Fl_Align(FL_ALIGN_CENTER));
+          Xcas_Divise->when(FL_WHEN_RELEASE);
+        } // xcas::No_Focus_Button* Xcas_Divise
         Numeric_numbers->end();
       } // Fl_Group* Numeric_numbers
-      { Kbd_control = new Fl_Group(385, 415, 100, 100);
-        { Xcas_Echap = new xcas::No_Focus_Button(385, 415, 30, 25, gettext("esc"));
+      { Kbd_control = new Fl_Group(0, 415, 100, 100);
+        { Xcas_Undo_Key = new xcas::No_Focus_Button(65, 415, 35, 25, gettext("undo"));
+          Xcas_Undo_Key->tooltip(gettext("Undo last edit"));
+          Xcas_Undo_Key->box(FL_UP_BOX);
+          Xcas_Undo_Key->color(FL_BACKGROUND_COLOR);
+          Xcas_Undo_Key->selection_color(FL_BACKGROUND_COLOR);
+          Xcas_Undo_Key->labeltype(FL_NORMAL_LABEL);
+          Xcas_Undo_Key->labelfont(0);
+          Xcas_Undo_Key->labelsize(10);
+          Xcas_Undo_Key->labelcolor(FL_FOREGROUND_COLOR);
+          Xcas_Undo_Key->callback((Fl_Callback*)cb_Xcas_Undo_Key);
+          Xcas_Undo_Key->align(Fl_Align(FL_ALIGN_CLIP));
+          Xcas_Undo_Key->when(FL_WHEN_RELEASE);
+        } // xcas::No_Focus_Button* Xcas_Undo_Key
+        { Xcas_Echap = new xcas::No_Focus_Button(30, 415, 35, 25, gettext("esc"));
           Xcas_Echap->tooltip(gettext("Cancel (erase cmdline, stop interactive_plotode)"));
           Xcas_Echap->box(FL_UP_BOX);
           Xcas_Echap->shortcut(0xff1b);
@@ -5020,8 +5078,9 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Echap->callback((Fl_Callback*)cb_Xcas_Echap);
           Xcas_Echap->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_Echap->when(FL_WHEN_RELEASE);
+          Xcas_Echap->hide();
         } // xcas::No_Focus_Button* Xcas_Echap
-        { Xcas_Alpha = new xcas::No_Focus_Button(415, 465, 35, 25, gettext("abc"));
+        { Xcas_Alpha = new xcas::No_Focus_Button(30, 465, 35, 25, gettext("abc"));
           Xcas_Alpha->tooltip(gettext("Show/Hide alphabetic keyboard"));
           Xcas_Alpha->box(FL_UP_BOX);
           Xcas_Alpha->shortcut(0xff1b);
@@ -5035,7 +5094,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Alpha->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_Alpha->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Alpha
-        { Xcas_Cmds = new xcas::No_Focus_Button(450, 440, 35, 25, gettext("cmds"));
+        { Xcas_Cmds = new xcas::No_Focus_Button(30, 415, 35, 25, gettext("cmds"));
           Xcas_Cmds->tooltip(gettext("Show commands bandeau"));
           Xcas_Cmds->box(FL_UP_BOX);
           Xcas_Cmds->shortcut(0xff1b);
@@ -5049,7 +5108,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Cmds->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_Cmds->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_Cmds
-        { Xcas_Msg = new xcas::No_Focus_Button(420, 445, 65, 20, gettext("msg"));
+        { Xcas_Msg = new xcas::No_Focus_Button(35, 445, 65, 20, gettext("msg"));
           Xcas_Msg->tooltip(gettext("Show messages"));
           Xcas_Msg->box(FL_UP_BOX);
           Xcas_Msg->shortcut(0xff1b);
@@ -5064,7 +5123,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Msg->when(FL_WHEN_RELEASE);
           Xcas_Msg->hide();
         } // xcas::No_Focus_Button* Xcas_Msg
-        { Xcas_b7 = new xcas::No_Focus_Button(385, 425, 35, 20, gettext("b7"));
+        { Xcas_b7 = new xcas::No_Focus_Button(0, 425, 35, 20, gettext("b7"));
           Xcas_b7->tooltip(gettext("Set bit 7 for next key entry"));
           Xcas_b7->box(FL_UP_BOX);
           Xcas_b7->shortcut(0xff1b);
@@ -5079,7 +5138,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_b7->when(FL_WHEN_RELEASE);
           Xcas_b7->hide();
         } // xcas::No_Focus_Button* Xcas_b7
-        { Xcas_Ctrl = new xcas::No_Focus_Button(415, 415, 35, 25, gettext("ctrl"));
+        { Xcas_Ctrl = new xcas::No_Focus_Button(30, 415, 35, 25, gettext("ctrl"));
           Xcas_Ctrl->tooltip(gettext("Control"));
           Xcas_Ctrl->box(FL_UP_BOX);
           Xcas_Ctrl->shortcut(0xff1b);
@@ -5094,7 +5153,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_Ctrl->when(FL_WHEN_RELEASE);
           Xcas_Ctrl->hide();
         } // xcas::No_Focus_Button* Xcas_Ctrl
-        { Xcas_close_keyboard = new xcas::No_Focus_Button(450, 415, 35, 25, gettext("X"));
+        { Xcas_close_keyboard = new xcas::No_Focus_Button(0, 415, 30, 25, gettext("X"));
           Xcas_close_keyboard->tooltip(gettext("Close keyboard"));
           Xcas_close_keyboard->box(FL_UP_BOX);
           Xcas_close_keyboard->color((Fl_Color)17);
@@ -5107,7 +5166,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_close_keyboard->align(Fl_Align(FL_ALIGN_CENTER));
           Xcas_close_keyboard->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_close_keyboard
-        { Xcas_main_del_button = new xcas::No_Focus_Button(385, 490, 30, 25, gettext("@<"));
+        { Xcas_main_del_button = new xcas::No_Focus_Button(0, 490, 30, 25, gettext("@<"));
           Xcas_main_del_button->tooltip(gettext("Backspace"));
           Xcas_main_del_button->box(FL_UP_BOX);
           Xcas_main_del_button->shortcut(0x40076);
@@ -5121,7 +5180,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_main_del_button->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_main_del_button->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_main_del_button
-        { Xcas_main_paste_button = new xcas::No_Focus_Button(385, 440, 30, 25, gettext("paste"));
+        { Xcas_main_paste_button = new xcas::No_Focus_Button(65, 440, 35, 25, gettext("paste"));
           Xcas_main_paste_button->box(FL_UP_BOX);
           Xcas_main_paste_button->shortcut(0x40076);
           Xcas_main_paste_button->color(FL_BACKGROUND_COLOR);
@@ -5134,7 +5193,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_main_paste_button->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_main_paste_button->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_main_paste_button
-        { Xcas_main_enter_button = new xcas::No_Focus_Button(450, 490, 35, 25, gettext("@returnarrow"));
+        { Xcas_main_enter_button = new xcas::No_Focus_Button(65, 490, 35, 25, gettext("@returnarrow"));
           Xcas_main_enter_button->box(FL_UP_BOX);
           Xcas_main_enter_button->shortcut(0x40076);
           Xcas_main_enter_button->color((Fl_Color)167);
@@ -5147,7 +5206,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_main_enter_button->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_main_enter_button->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_main_enter_button
-        { Xcas_main_left_button = new xcas::No_Focus_Button(385, 465, 30, 25, gettext("@-1<-"));
+        { Xcas_main_left_button = new xcas::No_Focus_Button(0, 465, 30, 25, gettext("@-1<-"));
           Xcas_main_left_button->box(FL_UP_BOX);
           Xcas_main_left_button->color(FL_BACKGROUND_COLOR);
           Xcas_main_left_button->selection_color(FL_BACKGROUND_COLOR);
@@ -5159,7 +5218,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_main_left_button->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_main_left_button->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_main_left_button
-        { Xcas_main_down_button = new xcas::No_Focus_Button(415, 490, 35, 25, gettext("@-12"));
+        { Xcas_main_down_button = new xcas::No_Focus_Button(30, 490, 35, 25, gettext("@-12"));
           Xcas_main_down_button->box(FL_UP_BOX);
           Xcas_main_down_button->color(FL_BACKGROUND_COLOR);
           Xcas_main_down_button->selection_color(FL_BACKGROUND_COLOR);
@@ -5171,7 +5230,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_main_down_button->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_main_down_button->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_main_down_button
-        { Xcas_main_up_button = new xcas::No_Focus_Button(415, 440, 35, 25, gettext("@-18"));
+        { Xcas_main_up_button = new xcas::No_Focus_Button(30, 440, 35, 25, gettext("@-18"));
           Xcas_main_up_button->box(FL_UP_BOX);
           Xcas_main_up_button->color(FL_BACKGROUND_COLOR);
           Xcas_main_up_button->selection_color(FL_BACKGROUND_COLOR);
@@ -5183,7 +5242,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_main_up_button->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_main_up_button->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_main_up_button
-        { Xcas_main_right_button = new xcas::No_Focus_Button(450, 465, 35, 25, gettext("@-1->"));
+        { Xcas_main_right_button = new xcas::No_Focus_Button(65, 465, 35, 25, gettext("@-1->"));
           Xcas_main_right_button->box(FL_UP_BOX);
           Xcas_main_right_button->color(FL_BACKGROUND_COLOR);
           Xcas_main_right_button->selection_color(FL_BACKGROUND_COLOR);
@@ -5195,8 +5254,9 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_main_right_button->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_main_right_button->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_main_right_button
-        { Xcas_main_tab_button = new xcas::No_Focus_Button(415, 415, 35, 25, gettext("tab"));
+        { Xcas_main_tab_button = new xcas::No_Focus_Button(0, 440, 30, 25, gettext("tab"));
           Xcas_main_tab_button->box(FL_UP_BOX);
+          Xcas_main_tab_button->shortcut(0xff09);
           Xcas_main_tab_button->color(FL_BACKGROUND_COLOR);
           Xcas_main_tab_button->selection_color(FL_BACKGROUND_COLOR);
           Xcas_main_tab_button->labeltype(FL_NORMAL_LABEL);
@@ -5319,7 +5379,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
           Xcas_NXT_Key->align(Fl_Align(FL_ALIGN_CLIP));
           Xcas_NXT_Key->when(FL_WHEN_RELEASE);
         } // xcas::No_Focus_Button* Xcas_NXT_Key
-        { Xcas_CST_Key = new xcas::No_Focus_Button(390, 515, 30, 30, gettext("cust"));
+        { Xcas_CST_Key = new xcas::No_Focus_Button(390, 515, 30, 30, gettext("CST"));
           Xcas_CST_Key->tooltip(gettext("Custom menu"));
           Xcas_CST_Key->box(FL_UP_BOX);
           Xcas_CST_Key->shortcut(0xffc8);
@@ -5606,6 +5666,10 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
     Xcas_DispG_Window_->resizable(Xcas_DispG_Window_);
   } // xcas::DispG_Window* Xcas_DispG_Window_
   xcas::Xcas_Main_Window=Xcas_Main_Window_;
+  xcas::Xcas_MainTab=Xcas_Main_Tab;        
+  #ifdef EMCC2
+  Xcas_Main_Window_->border(0);
+  #endif
     xcas_main_tab=Xcas_Main_Tab;
   xcas::Xcas_DispG=Xcas_DispG_;
   giac::my_gprintf=xcas::xcas_gprintf;
@@ -5622,7 +5686,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
   Xcas_Ln_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
   Xcas_Dix_puissance->callback((Fl_Callback* )xcas::Xcas_input_1arg);
   Xcas_Ln10_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
-  Xcas_Inverse_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
+  //Xcas_Inverse_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
   Xcas_Inferieur_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
   Xcas_Equal_button->callback((Fl_Callback* )xcas::Xcas_input_char);
   Xcas_a_key->callback((Fl_Callback *)xcas::Xcas_input_char);
@@ -5651,23 +5715,23 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
   Xcas_x_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_y_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_z_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Inferieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Superieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Inferieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Superieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Backslash_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Parenthese_ouvrante_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Parenthese_fermante_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Espace_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Point_exclamation_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Crochet_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Crochet_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Accolade_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Accolade_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Crochet_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Crochet_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Accolade_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Accolade_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Deux_points_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Equal_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Equal_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Guillemet_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Souligne_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Diese_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-  Xcas_Pi_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+  //Xcas_Pi_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Alpha_virgule_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Alpha_point_virgule_key->callback((Fl_Callback *)xcas::Xcas_input_char);
   Xcas_Alpha_quote_key->callback((Fl_Callback *)xcas::Xcas_input_char);
@@ -5808,6 +5872,15 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
   Xcas_help_weibull->callback(cb_Assistant_ItemName);
   Xcas_help_gammad->callback(cb_Assistant_ItemName);
   Xcas_help_betad->callback(cb_Assistant_ItemName);
+  Xcas_Alg_simplify->callback(cb_Assistant_ItemName);
+  Xcas_Alg_factor->callback(cb_Assistant_ItemName);
+  Xcas_Calc_diff->callback(cb_Assistant_ItemName);
+  Xcas_Calc_integrate->callback(cb_Assistant_ItemName);
+  Xcas_Calc_sum->callback(cb_Assistant_ItemName);
+  Xcas_Calc_limit->callback(cb_Assistant_ItemName);
+  Xcas_Plot_plot->callback(cb_Assistant_ItemName);
+  Xcas_Plot_plotparam->callback(cb_Assistant_ItemName);
+  Xcas_Plot_plotpolar->callback(cb_Assistant_ItemName);
   
   Xcas_help_debug->callback(cb_Assistant_ItemName);
   
@@ -5836,12 +5909,6 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
   #endif
   #endif
   // First take control of signals
-  signal(SIGINT,giac::ctrl_c_signal_handler);
-  giac::child_id=1;
-  giac::print_rewrite_prod_inv=true;
-  doc_prefix=giac::read_env(giac::context0); // Set giac::language and modes from environment
-  xcas::read_aide("aide_cas",giac::language(giac::context0));
-  giac::set_language(giac::language(giac::context0),giac::context0);
   // Add spreadsheet menu
   Fl_Menu_Item * tmpitem = xcas::Tableur_menu;
   xcas::copy_menu(Xcas_main_menu,gettext("Spreadsheet")+std::string("/"),tmpitem);
@@ -5856,7 +5923,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
   xcas::menu2rpn_callback=cb_Insert_ItemName;
   // Add RPN-like menus, skip the first four items
   Fl_Menu_Item * menu_xcas_tmp= (Fl_Menu_Item *)Xcas_main_menu->menu();
-  for (int i=0;i<6;i++){
+  for (int i=0;i<5;i++){
    if (menu_xcas_tmp->text)
     xcas::nextfl_menu(menu_xcas_tmp);
   }
@@ -5976,6 +6043,18 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
   #endif
   #endif
     Xcas_Main_Window_->label(windowname.c_str());
+  #ifdef EMCC2
+  int res=init_fs();
+  if (res==1){
+        if (Xcas_Main_Tab->children()){
+          xcas::History_Fold * hf = dynamic_cast<xcas::History_Fold *>(Xcas_Main_Tab->child(0));
+          if (hf && hf->pack && hf->pack->children() < 2 ) { hf->pack->close(""); Xcas_Main_Tab->remove(hf);}
+        }
+    load_filename("/data/session.xw",false);
+  }
+    chdir("/data");
+    emscripten_set_main_loop(Xcas_emscripten_main_loop, 0, true);
+  #else
     while (running){
       while (Xcas_Main_Window_->visible() || Xcas_Main_Window_->shown() ) {
         Fl::wait();
@@ -5983,6 +6062,7 @@ Fl_Window* Xcas_run(int argc,char ** argv) {
       running=!Xcas_save_all(Xcas_Main_Tab);
       if (running) Xcas_Main_Window_->show();
     }
+  #endif
     return 0;
   return Xcas_DispG_Window_;
 }
@@ -5992,6 +6072,7 @@ int main(int argc,char ** argv) {
   #ifdef HAVE_LIBMICROPYTHON
       python_heap=micropy_init(pythonjs_stack_size,pythonjs_heap_size);
   #endif
+  xcas::qr_update=Xcas_qrupdate;
   if (argc==2 && strlen(argv[1])==0)
     argc=1;
   if (getenv("XCAS_AUTOSAVE_FOLDER")){
@@ -6001,6 +6082,12 @@ int main(int argc,char ** argv) {
   }
   #if defined WIN32 && !defined __MINGW_H
   Xcas_Numworks_menu->deactivate();
+  #endif
+  #ifdef EMCC2
+  Xcas_Numworks_menu->deactivate();
+  Xcas_Print->deactivate();
+  Xcas_Print_Latex->deactivate();
+  Xcas_screen_capture->deactivate();
   #endif
   #if defined WIN32 && defined __MINGW_H
   #undef chdir
@@ -6046,7 +6133,9 @@ int main(int argc,char ** argv) {
   Fl::gl_visual(FL_RGB | FL_DEPTH | FL_ACCUM | FL_ALPHA);
   #endif
   xcas::fonts_available=Fl::set_fonts(0);
+  #ifndef EMCC2
   fl_register_images();
+  #endif
   Xcas_run(argc,argv);
   #ifdef WITH_GNUPLOT
   giac::kill_gnuplot();
