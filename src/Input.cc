@@ -40,6 +40,7 @@
 #include "help.h"
 #include "global.h"
 #include "Python.h"
+#include "hist.h"
 #include <iostream>
 #include <fstream>
 #ifdef HAVE_UNISTD_H
@@ -367,6 +368,7 @@ namespace xcas {
     static Fl_Input * input = 0;
     static Fl_Multiline_Output * output = 0;
     static Fl_Hold_Browser * examples = 0;
+    static Fl_Box * invisible = 0;
     static Fl_Input * argtab[TAB_ARGS]={0,0,0,0,0,0};
     int L=16;
     const giac::context * contextptr=giac::context0;
@@ -421,19 +423,20 @@ namespace xcas {
       button2 = new Fl_Button(2*dx/3+2,2,dx/3-4,L+2);
       button2->label(gettext("Details"));
       button2->tooltip(gettext("Show full HTML help in browser"));
-      browser = new Fl_Hold_Browser(2,2*L+4,dx/2-2,dy/2-(2*L+4));
+      invisible = new Fl_Box(button0->x(),button0->y()+button0->h(),dx,L+2);
+      browser = new Fl_Hold_Browser(2,invisible->y()+invisible->h(),dx/2-2,0.4*dy-(2*L+4));
       browser->format_char(0);
       browser->type(2);
       browser->label(gettext("Index"));
       browser->align(FL_ALIGN_TOP);
       browser->callback((Fl_Callback*)handle_tab_cb_browser);
       // order is important: related,syns, examples,input,output
-      related = new Fl_Hold_Browser(dx/2+2,2*L+4,dx/2-2,dy/4-(L+2));
+      related = new Fl_Hold_Browser(dx/2+2,2*L+4,dx/2-2,0.2*dy-(L+2));
       related->label(gettext("Related"));
       related->format_char(0);
       related->align(FL_ALIGN_TOP);
       related->tooltip(gettext("Click for help on related command"));
-      syns = new Fl_Hold_Browser(dx/2+2,related->y()+related->h()+L+2,dx/2-2,dy/4-(2*L+4));
+      syns = new Fl_Hold_Browser(dx/2+2,related->y()+related->h()+L+2,dx/2-2,0.2*dy-(2*L+4));
       syns->format_char(0);
       syns->label(gettext("Synonyms"));
       syns->align(FL_ALIGN_TOP);
@@ -460,7 +463,6 @@ namespace xcas {
       examples->tooltip(gettext("Left-click: copy example to commandline, right-click: fill in template with example values"));
       handle_tab_w->end();
       handle_tab_w->resizable(handle_tab_w);
-      change_group_fontsize(handle_tab_w,L-2);
     }
     else {
       browser->clear();
@@ -501,6 +503,15 @@ namespace xcas {
       string bt=browser->text(i);
       update_examples(bt,examples,related,syns,output,argtab,giac::language(contextptr));
       handle_tab_w->show();
+      change_group_fontsize(handle_tab_w,L);
+#ifdef EMCC2
+      handle_tab_w->border(0);
+      Fl_Window * mainw=xcas::Xcas_Main_Window;
+      if (mainw){
+	handle_tab_w->resize(0,0,mainw->w(),mainw->h());
+	mainw->hide();
+      }
+#endif
       handle_tab_w->hotspot(handle_tab_w);
       Fl::focus(input);
       for (;;) {
@@ -508,7 +519,14 @@ namespace xcas {
 	  r=0; break;
 	}
 	Fl_Widget *o = Fl::readqueue();
-	if (!o) Fl::wait();
+	if (!o){
+#ifdef EMCC2
+          if (Xcas_Main_Window)
+            Xcas_emscripten_main_loop();
+          else
+#endif
+            Fl::wait();
+        }
 	else {
 	  if (o == topic_help){ help_fltk(input->value()); }
 	  if (o == button0) {r = 0; break;}
@@ -563,7 +581,10 @@ namespace xcas {
 	      }
 	    }
 	  }
-	  if (o == handle_tab_w) { r=1; break; }
+	  if (o == handle_tab_w) {
+	    //if (xcas::Xcas_Main_Window) xcas::Xcas_Main_Window->show();
+	    r=1; break;
+	  }
 	  if (o == input){
 	    if (Fl::event_key(FL_Enter) || Fl::event_key(FL_KP_Enter)){
 	      if (Fl::event_state(FL_SHIFT |FL_CTRL | FL_ALT)){
@@ -610,7 +631,8 @@ namespace xcas {
 	foc->window()->show();
 	else 
       */
-	handle_tab_w->hide();
+      if (xcas::Xcas_Main_Window) xcas::Xcas_Main_Window->show();
+      handle_tab_w->hide();
       // Xcas_help_window->hide();
       i=browser->value();
     }
@@ -707,6 +729,9 @@ namespace xcas {
   }
 
   void Multiline_Input_tab::match(){
+#ifdef EMCC2
+    return;
+#endif
     static bool recursive_call=false;
     if (mark()!=position())
       return;
@@ -991,7 +1016,7 @@ namespace xcas {
 	    return 1;
 	  }
 	  break;
-#ifndef __APPLE__
+#if !defined __APPLE__ //&& !defined EMCC2
 	case '(':
 	  // Fl::belowmouse(this);
 	  str=motclef(string(value()).substr(0,position()));
@@ -1237,6 +1262,7 @@ namespace xcas {
       }
       return res;
     }
+#ifndef EMCC2
     string s(value()),ans;
     if (position()<int(s.size()))
       s=s.substr(0,position());
@@ -1260,6 +1286,7 @@ namespace xcas {
     }
     Fl::focus(this);
     handle(FL_FOCUS);
+#endif
     return 1;
   }
 

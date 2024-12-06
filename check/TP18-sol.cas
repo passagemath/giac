@@ -121,7 +121,7 @@ jj:=F4(j);jj^3;
  H4:=transpose(matrix(eval([op(A),seq(seq([1,l[u],l[v]],v=1..4),u=1..4)])));
  nullspace(H4); 
 /*  -----------------------------------------------Exercice------------------------------*/
- distham:=(u,v)-> add(u[i]<>v[i],i=1..dim(u));
+ distham:=(u,v)-> add(ifte(u[i]<>v[i],1,0),i=1..dim(u));
  C:=ranm(2,10,2);
 distham(C[1],C[2]);
  C:=ranm(200,10,3);

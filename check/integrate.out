@@ -17,7 +17,7 @@
 1/sqrt(2)*exp(-t^2/2)*2/t*sqrt(t*x),
 (-3*cos(t)/8*exp(-(3*x+1)/cos(t))+exp(-(3*x+1)/cos(t))*(2*cos(t)/(4+(4*cos(t))^2)*cos(6*x)-4*cos(t)*cos(t)/(4+(4*cos(t))^2)*sin(6*x))+exp(-(3*x+1)/cos(t))*(-8*cos(t)/(64+(32*cos(t))^2)*cos(12*x)+32*cos(t)*cos(t)/(64+(32*cos(t))^2)*sin(12*x)))/3,
 2*sqrt(x^2-1),
-2*(1/2*ln(abs(tan(x)-1))-1/4*ln(tan(x)^2+1)),
+ln(abs(-cos(x)+sin(x))),
 sin(2*x)/2,
 -ln(abs(cos(x)))+1/2*(tan(x)^2-ln(tan(x)^2+1)),
 -x+ln(exp(x)^2+1),

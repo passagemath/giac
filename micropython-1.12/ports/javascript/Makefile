@@ -6,8 +6,8 @@ QSTR_DEFS = qstrdefsport.h
 
 include $(TOP)/py/py.mk
 
-CC = emcc -g4
-LD = emcc -g4
+CC = emcc -g -Wno-error=unused-but-set-variable -Wno-error=array-bounds
+LD = emcc -g
 
 INC += -I.
 INC += -I../../py
@@ -23,10 +23,10 @@ else
 	CPP += -I$(EMCC)/system/include/libc -I$(EMCC)/system/include/libcxx
 endif
 
-CFLAGS = -m32 -Wall -Werror $(INC)  $(COPT)
+CFLAGS = -m32 -Wall -Werror $(INC)  $(COPT) 
 LDFLAGS = -m32 -Wl,-Map=$@.map,--cref -Wl,--gc-sections -s ERROR_ON_UNDEFINED_SYMBOLS=0
 
-CFLAGS += -O0 -DNDEBUG -DMICROPY_LIB -DEMCC
+CFLAGS += -O0 -DNDEBUG -DMICROPY_LIB -DEMCC -DHAVE_LIBFLTK #
 CFLAGS += -fdata-sections -ffunction-sections
 
 ifneq ($(FROZEN_MPY_DIR),)
@@ -90,7 +90,7 @@ OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIB:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 
-JSFLAGS = -O0 -s EXPORTED_FUNCTIONS="['_mp_js_init', '_mp_js_init_repl', '_mp_js_do_str', '_mp_js_process_char', '_mp_hal_get_interrupt_char', '_mp_keyboard_interrupt']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']" -s "BINARYEN_TRAP_MODE='clamp'" --memory-init-file 0 --js-library library.js
+JSFLAGS = -O0 -s EXPORTED_FUNCTIONS="['_mp_js_init', '_mp_js_init_repl', '_mp_js_do_str', '_mp_js_process_char', '_mp_hal_get_interrupt_char', '_mp_keyboard_interrupt']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']" --js-library library.js # -s "BINARYEN_TRAP_MODE='clamp'" --memory-init-file 0 
 
 all: $(BUILD)/micropython.js
 

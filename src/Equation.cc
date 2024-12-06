@@ -3048,7 +3048,12 @@ namespace xcas {
     xcas::History_Pack * hp=get_history_pack(this);
     giac::context * cptr=hp?hp->contextptr:0;
     //bool ok=
+#ifdef EMCC2
+    fx=protecteval(fx,eval_level(cptr),cptr);
+    replace_selection_wo_save(fx);
+#else
     make_thread(fx,eval_level(cptr),Equation_eval_callback,this,cptr);
+#endif
   }
 
   gen Equation::get_selection(){
@@ -3211,9 +3216,9 @@ namespace xcas {
     int newh=min(e.dy+scrollsize+1,maxh); // =max(min(vv.dy+20,400),60);
     increase_size(this,newh-h());
     int largeur=labelsize();
-    vscroll->resize(x()+Fl_Group::w()-largeur,y(),largeur,Fl_Group::h()-labelsize());
-    hscroll->resize(x(),y()+Fl_Group::h()-labelsize(),Fl_Group::w()-2*largeur,labelsize());
-    menubar->resize(hscroll->x()+hscroll->w(),hscroll->y(),this->w()-hscroll->w(),hscroll->h());
+    vscroll->resize(x()+Fl_Group::w()-2*largeur,y(),2*largeur,Fl_Group::h()-2*largeur);
+    hscroll->resize(x(),y()+Fl_Group::h()-1.3*largeur,Fl_Group::w()-3*largeur,1.3*largeur);
+    menubar->resize(hscroll->x()+hscroll->w(),hscroll->y(),3*largeur,hscroll->h());
   }
 
   bool Equation::replace_selection_wo_save(const gen & f,bool active_search){
@@ -4610,7 +4615,12 @@ namespace xcas {
 	eq->save_data();
 	xcas::History_Pack * hp=get_history_pack(eq);
 	giac::context * cptr=hp?hp->contextptr:0;
+#ifdef EMCC2
+        gen evaled_g=protecteval(symbolic(u,eq->get_selection()),eval_level(cptr),cptr);
+        eq->replace_selection_wo_save(evaled_g);
+#else
 	make_thread(symbolic(u,eq->get_selection()),eval_level(cptr),Equation_eval_callback,eq,cptr);
+#endif
       }
     }
   }
@@ -4678,7 +4688,7 @@ namespace xcas {
   }
 
   Fl_Menu_Item Equation_menu[] = {
-    {gettext("M"), 0,  0, 0, 64, 0, 0, 14, 56},
+    {gettext("Menu"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("Select all"), 0,  (Fl_Callback*)cb_Equation_Select, 0, 0, 0, 0, 14, 56},
     {gettext("Edit selection"), 0,  (Fl_Callback*)cb_Equation_Editselection, 0, 0, 0, 0, 14, 56},
     {gettext("simplify"), 0,  (Fl_Callback*)cb_Equation_Simplify, 0, 0, 0, 0, 14, 56},
@@ -4695,13 +4705,14 @@ namespace xcas {
 
   void Equation::add_scroll_menu(){
     int largeur=labelsize();
-    vscroll=new Equation_Scrollbar(x()+Fl_Group::w()-largeur,y(),largeur,Fl_Group::h()-labelsize(),this,true);
+    vscroll=new Equation_Scrollbar(x()+Fl_Group::w()-2*largeur,y(),2*largeur,Fl_Group::h()-largeur,this,true);
     vscroll->labelsize(largeur);
-    hscroll=new Equation_Scrollbar(x(),y()+Fl_Group::h()-labelsize(),Fl_Group::w()-2*largeur,labelsize(),this,false);
+    int hh=1.3*largeur;
+    hscroll=new Equation_Scrollbar(x(),y()+Fl_Group::h()-hh,Fl_Group::w()-3*largeur,hh,this,false);
     hscroll->labelsize(largeur);
     Fl_Group::add(vscroll);
     Fl_Group::add(hscroll);
-    menubar = new Fl_Menu_Bar(hscroll->x()+hscroll->w(),hscroll->y(),this->w()-hscroll->w(),hscroll->h());
+    menubar = new Fl_Menu_Bar(hscroll->x()+hscroll->w(),hscroll->y(),3*largeur,hscroll->h());
     int s= Equation_menu->size();
     Fl_Menu_Item * menuitem = new Fl_Menu_Item[s];
     for (int i=0;i<s;++i)
@@ -4814,9 +4825,9 @@ namespace xcas {
   void Equation::resize(int x, int y, int w, int h){
     Fl_Widget::resize(x,y,w,h);
     int L=giac::giacmin(20,labelsize());
-    vscroll->resize(x+Fl_Group::w()-L,y,L,Fl_Group::h()-L);
-    hscroll->resize(x,y+Fl_Group::h()-L,Fl_Group::w()-2*L,L);
-    menubar->resize(hscroll->x()+hscroll->w(),hscroll->y(),2*L,L);
+    vscroll->resize(x+Fl_Group::w()-2*L,y,2*L,Fl_Group::h()-2*L);
+    hscroll->resize(x,y+Fl_Group::h()-1.3*L,Fl_Group::w()-3*L,1.3*L);
+    menubar->resize(hscroll->x()+hscroll->w(),hscroll->y(),3*L,hscroll->h());
     setscroll();
   }
 

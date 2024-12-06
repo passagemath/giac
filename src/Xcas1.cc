@@ -31,6 +31,7 @@
 #include <FL/Fl_Counter.H>
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Hold_Browser.H>
+#include <FL/Fl_Multiline_Output.H>
 #endif
 #include "Xcas1.h"
 #include "Input.h"
@@ -41,6 +42,10 @@
 #include "Editeur.h"
 #include "Print.h"
 #include "Help1.h"
+#ifdef EMCC2
+#include "hist.h"
+#include <emscripten.h>
+#endif
 #include <iostream>
 #include <fstream>
 #ifdef HAVE_SSTREAM
@@ -96,6 +101,7 @@ namespace xcas {
   int xcas_dispg_entries=0;
   Fl_Window * Xcas_DispG_Window=0;
   Fl_Window * Xcas_Main_Window=0;
+  Fl_Widget * Xcas_MainTab=0;
   Fl_Button *Xcas_DispG_Cancel=0;
   Fl_Button *Xcas_Cancel=0;
   bool file_save_context=true;
@@ -803,6 +809,7 @@ namespace xcas {
       return;
     eq->attr.fontsize=labelfontsize;
     eq->labelsize(labelfontsize);
+    eq->menubar->labelsize(labelfontsize);
     eq->resize(eq->x(),eq->y(),eq->w(),eq->h());
     eq->set_data(eq->get_data());
     eq->adjust_widget_size();
@@ -810,10 +817,12 @@ namespace xcas {
 
   void change_group_fontsize(Fl_Widget * w,int labelfontsize){
     w->labelsize(labelfontsize);
+    if (Fl_Scroll * scr=dynamic_cast<Fl_Scroll *>(w))
+      scr->scrollbar_size(3*labelfontsize/2);
     w->redraw();
     if (Equation * eq=dynamic_cast<Equation *>(w)){
       change_equation_fontsize(eq,labelfontsize);
-      return;
+      //return;
     }
     Fl_Group * g = dynamic_cast<Fl_Group *>(w);
     if (!g)
@@ -863,6 +872,8 @@ namespace xcas {
 	cc->textsize(labelfontsize);
       if (Fl_Group * og=dynamic_cast<Fl_Group *>(o))
 	change_group_fontsize(og,labelfontsize);
+      if (Fl_Browser_ * os =dynamic_cast<Fl_Browser_ *>(o))
+	os->scrollbar_size(3*labelfontsize/2);
       if (HScroll * os =dynamic_cast<HScroll *>(o)){
 	// resize childs according to new scrollbar width
 	os->resize(os->x(),os->y(),os->w(),os->h());
@@ -1022,7 +1033,27 @@ namespace xcas {
     // Re-add idle function
     Fl::add_idle(xcas::Xcas_idle_function,0);
     return res;
-  }  
+  }
+
+  Fl_Widget * make_gen_output(Fl_Widget * w,const gen & evaled_g){
+    Gen_Output * o = new Gen_Output(w->x(),w->y(),w->w(),w->labelsize()+7);
+    o->textsize(w->labelsize());
+    o->value(evaled_g);
+    o->textcolor(FL_BLUE);
+    fl_font(FL_HELVETICA,w->labelsize());
+    int hss=int(fl_width(o->Fl_Output::value()))+4;
+    if (hss<=w->w())
+      return o;
+    if (find_graph2d3d(w) || (evaled_g.type==_VECT && evaled_g.subtype==_LOGO__VECT))
+      return o;
+    o->resize(w->x(),w->y(),hss,w->labelsize()+7);
+    Fl_Scroll * s = new Fl_Scroll(w->x(),w->y(),w->w(),2*w->labelsize()+9);
+    s->hscrollbar.resize(s->hscrollbar.x(),w->y()+w->labelsize()+7,s->hscrollbar.w(),w->labelsize());
+    s->box(FL_FLAT_BOX);
+    s->end();
+    s->add(o);
+    return s;
+  }    
 
   Fl_Widget * in_Xcas_eval(Fl_Widget * w,const giac::gen & evaled_g0,int pretty_output,GIAC_CONTEXT){
     gen evaled_g=evaled_g0;
@@ -1157,21 +1188,7 @@ namespace xcas {
 	return res;
       }
     }
-    Gen_Output * o = new Gen_Output(w->x(),w->y(),w->w(),w->labelsize()+7);
-    o->textsize(w->labelsize());
-    o->value(evaled_g);
-    o->textcolor(FL_BLUE);
-    fl_font(FL_HELVETICA,w->labelsize());
-    int hss=int(fl_width(o->Fl_Output::value()))+4;
-    if (hss<=w->w())
-      return o;
-    o->resize(w->x(),w->y(),hss,w->labelsize()+7);
-    Fl_Scroll * s = new Fl_Scroll(w->x(),w->y(),w->w(),2*w->labelsize()+9);
-    s->hscrollbar.resize(s->hscrollbar.x(),w->y()+w->labelsize()+7,s->hscrollbar.w(),w->labelsize());
-    s->box(FL_FLAT_BOX);
-    s->end();
-    s->add(o);
-    return s;
+    return make_gen_output(w,evaled_g);
   }
 
   void Xcas_eval_callback(const giac::gen & evaled_g,void * param){
@@ -1184,6 +1201,7 @@ namespace xcas {
     Fl_Group * gr = wid->parent();
     if (!hp || !gr)
       return;
+    // CERR << "" << evaled_g << '\n';
 #ifdef HAVE_LIBPTHREAD
     // cerr << "eval lock" << '\n';
     int locked=pthread_mutex_trylock(&interactive_mutex);
@@ -1347,6 +1365,47 @@ namespace xcas {
       return 0;
     gen g=add_autosimplify(g_,contextptr);
     giac::gen evaled_g;
+#ifdef EMCC2
+    //*logptr(contextptr) << "Xcas_eval " << g << '\n';
+    evaled_g=protecteval(g,eval_level(contextptr),contextptr);
+    //*logptr(contextptr) << "After_eval " << evaled_g << '\n';
+    if (Log_Output * lout=find_log_output(gr))
+      output_resize_parent(lout,false);
+    Fl_Group * hpp = parent_skip_scroll(hp);
+    if (evaled_g.type==_STRNG){
+      int nl=1;
+      const string & s=*evaled_g._STRNGptr;
+      for (int i=0;i<s.size();++i){
+        if (s[i]=='\n')
+          ++nl;
+      }
+      Fl_Multiline_Output * o = new Fl_Multiline_Output(w->x(),w->y(),w->w(),nl*(w->labelsize()+7));
+      o->textsize(w->labelsize());
+      o->value(s.c_str());
+      o->textcolor(FL_MAGENTA);
+      fl_font(FL_HELVETICA,w->labelsize());
+      return o;
+    }
+    if (Logo * logo=dynamic_cast<Logo *>(hpp)){
+      return make_gen_output(w,evaled_g);
+    }
+    if (hpp){
+      int N=hpp->children();
+      for (int i=0;i<N;++i){
+        Graph2d3d * geo = dynamic_cast<Graph2d3d *>(hpp->child(i));
+        if (geo){
+          geo->add(evaled_g);
+          geo->no_handle=false;
+          // hp->focus(hp_pos+1,false);
+          return make_gen_output(w,evaled_g);
+        }
+      }
+    }
+    // *logptr(contextptr) << "Xcas_evaled " << g << '\n';
+    Fl_Widget * wid=in_Xcas_eval(gr->child(gr->children()-1),evaled_g,1,contextptr);
+    // if res!=0
+    return wid;
+#else
     // if w 2nd brother is a graph2d3d, return a graph2d3d with the same
     // config
     Fl_Widget * res = 0;
@@ -1374,8 +1433,8 @@ namespace xcas {
     giac::history_in(contextptr).push_back(g_);
     // commented otherwise ans() does not work
     // giac::history_out.push_back(g);
-    Fl_Output * out=0;
     bool graphres=res;
+    Fl_Output * out=0;
     out =new Fl_Output(w->x(),w->y(),w->w(),w->labelsize());
     out->labelsize(w->labelsize());
     if (!res)
@@ -1393,6 +1452,7 @@ namespace xcas {
     }
     out->value(ok?gettext("Computing..."):gettext("Unable to launch thread. Press STOP to interrupt."));
     return res;
+#endif
   }
 
   Fl_Widget * Xcas_eval(Fl_Widget * w) {
@@ -1550,7 +1610,12 @@ namespace xcas {
       if (s.empty())
 	return s;
       res = replace_html5(s);
-      return '+'+res+'&' ;
+      int xpos=(pos%2)*400;
+      int ypos=(pos/2)*400;
+      ++pos;
+      string spos=print_INT_(xpos)+","+print_INT_(ypos)+",";
+      return "cas="+spos+res+'&';
+      return '+'+res+'&';
     }
     if (const Fl_Group * g=dynamic_cast<const Fl_Group *>(o)){
       int ypos=0;
@@ -1645,7 +1710,10 @@ namespace xcas {
     }
     if (const Editeur * ed=dynamic_cast<const Editeur *>(o)){
       string s=unlocalize(ed->value());
-      res += '\n'+print_INT_(s.size())+" "+print_INT_(ed->editor->pythonjs)+" "+string(ed->output->value())+" ,\n"+s;
+      res += '\n'+print_INT_(s.size())+" "+print_INT_(ed->editor->pythonjs);
+      if (ed->output)
+        res += " "+string(ed->output->value());
+      res += " ,\n"+s;
       return res;
     }
     if (const Xcas_Text_Editor * ed=dynamic_cast<const Xcas_Text_Editor *>(o)){
@@ -4382,6 +4450,13 @@ namespace xcas {
   }
 
   bool get_font(Fl_Font & police,int & taille){
+#ifdef EMCC2
+    taille=EM_ASM_INT({
+        let f=Number(window.prompt('New fontsize?',$0));
+        return f;
+      },taille);
+    return taille>=12 && taille<=48;
+#else
     static Fl_Return_Button * button0 = 0 ;
     static Fl_Button * button1 =0;
     static char label[400];
@@ -4461,6 +4536,7 @@ namespace xcas {
     police=Fl_Font(textobj->font);
     taille=textobj->size;
     return true;
+#endif
   }
 
   /*

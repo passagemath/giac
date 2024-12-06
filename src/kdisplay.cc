@@ -1334,7 +1334,7 @@ namespace giac {
     {"plotlist(list)", 0, "Graphe d'une liste", "[3/2,2,1,1/2,3,2,3/2]", "[1,13],[2,10],[3,15],[4,16]", CAT_CATEGORY_PLOT | XCAS_ONLY},
     {"plotode(f(t,y), [t=tmin..tmax,y],[t0,y0])", 0, "Graphe de solution d'equation differentielle y'=f(t,y), y(t0)=y0.", "sin(t*y),[t=-3..3,y],[0,1]", 0, CAT_CATEGORY_PLOT | XCAS_ONLY},
     {"plotparam([x,y],t)", 0, "Graphe en parametriques. Par exemple plotparam([sin(3t),cos(2t)],t,0,pi) ou plotparam(exp(i*t),t,0,pi)", "[sin(3t),cos(2t)],t,0,pi", "[t^2,t^3],t=-1..1,tstep=0.1", CAT_CATEGORY_PLOT | (CAT_CATEGORY_3D << 8) | XCAS_ONLY},
-    {"plotpolar(r,theta)", 0, "Graphe en polaire.","cos(3*x),x,0,pi", "1/(1+cos(x)),x=0..pi,xstep=0.05", CAT_CATEGORY_PLOT | XCAS_ONLY},
+    {"plotpolar(r,theta)", 0, "Graphe en polaire.","cos(3*x),x,0,pi", "1/(1+cos(x)),x=0..pi,tstep=0.05", CAT_CATEGORY_PLOT | XCAS_ONLY},
     {"plotseq(f(x),x=[u0,m,M],n)", 0, "Trace f(x) sur [m,M] et n termes de la suite recurrente u_{n+1}=f(u_n) de 1er terme u0.","sqrt(2+x),x=[6,0,7],5", 0, CAT_CATEGORY_PLOT | XCAS_ONLY},
     {"plus_point", "plus_point", "Option d'affichage", "#display=blue+plus_point", 0, CAT_CATEGORY_PROGCMD  | XCAS_ONLY},
     {"point(x,y[,z])", 0, "Point", "1,2", "1,2,3", CAT_CATEGORY_PLOT | (CAT_CATEGORY_2D << 8) |  (CAT_CATEGORY_3D << 16) | XCAS_ONLY},
@@ -12770,23 +12770,32 @@ namespace xcas {
       return g.print();
     return giac::print_DOUBLE_(g._DOUBLE_val,n);
   }
-  const int tracemaxdepth=10; // protection against too many embedded derivatives for curve study
-  int symb_depth(const gen & g,int curdepth,int maxdepth){
+  const int tracemaxdepth=9; // protection against too many embedded derivatives for curve study
+  // protection against too complex derivatives for curve study
+  int symb_depth(const gen & g,int curdepth,int maxdepth,bool sum=false){
     if (g.type==_VECT){
       vecteur & v =*g._VECTptr;
+      int curmax=0;
       for (int i=0;i<v.size();++i){
-        curdepth=symb_depth(v[i],curdepth,maxdepth);
-        if (curdepth>maxdepth)
+        int cur=symb_depth(v[i],curdepth,maxdepth);
+        if (cur>maxdepth)
           return curdepth;
+        if (sum){
+          if (cur>curmax)
+            curmax=cur;
+        }
+        else
+          curdepth=cur;
       }
+      if (sum)
+        curdepth=curmax;
     }
     if (g.type!=_SYMB)
       return curdepth;
     if (curdepth==maxdepth)
       return maxdepth+1;
-    return symb_depth(g._SYMBptr->feuille,curdepth+1,maxdepth);
+    return symb_depth(g._SYMBptr->feuille,curdepth+1,maxdepth,g._SYMBptr->sommet==at_plus);
   }
-
 
   void Graph2d::tracemode_set(int operation){
     if (plot_instructions.empty())
@@ -12886,6 +12895,8 @@ namespace xcas {
           tmax=im(Gv.back(),contextptr);
           doit=true;
         }
+        else
+          tstep=(tmax-tmin)/(Gv.size()-1);
         if (doit){
           tstep=(tmax-tmin)/(Gv.size()-1);
           if (tracemode_mark<tmin._DOUBLE_val)
@@ -15192,21 +15203,21 @@ namespace xcas {
       gen value;
       if (listormat) // select line l, col c
 	xcas::eqw_select(eq.data,line,col,true,value);
+#define EQW_TAILLE 54
       if (eqdata.dx>LCD_WIDTH_PX){
-	if (dx<-20)
-	  dx=-20;
-	if (dx>eqdata.dx-LCD_WIDTH_PX+20)
-	  dx=eqdata.dx-LCD_WIDTH_PX+20;
+	if (dx<-EQW_TAILLE)
+	  dx=-EQW_TAILLE;
+	if (dx>eqdata.dx-LCD_WIDTH_PX+EQW_TAILLE)
+	  dx=eqdata.dx-LCD_WIDTH_PX+EQW_TAILLE;
       }
-#define EQW_TAILLE 18
-      if (eqdata.dy>LCD_HEIGHT_PX-2*EQW_TAILLE){
-	if (dy-eqdata.y<LCD_HEIGHT_PX-2*EQW_TAILLE)
-	  dy=eqdata.y+LCD_HEIGHT_PX-2*EQW_TAILLE;
-	if (dy-eqdata.y>eqdata.dy+32)
-	  dy=eqdata.y+eqdata.dy+32;
+      if (eqdata.dy>LCD_HEIGHT_PX-EQW_TAILLE){
+	if (dy-eqdata.y<LCD_HEIGHT_PX-EQW_TAILLE)
+	  dy=eqdata.y+LCD_HEIGHT_PX-EQW_TAILLE;
+	if (dy-eqdata.y>eqdata.dy+EQW_TAILLE)
+	  dy=eqdata.y+eqdata.dy+EQW_TAILLE;
       }
       waitforvblank();
-      drawRectangle(0, 0, LCD_WIDTH_PX, 205,COLOR_WHITE);
+      drawRectangle(0, STATUS_AREA_PX, LCD_WIDTH_PX, LCD_HEIGHT_PX-STATUS_AREA_PX,COLOR_WHITE);
       // Bdisp_AllClr_VRAM();
       int save_clip_ymin=clip_ymin;
       clip_ymin=STATUS_AREA_PX;
@@ -15346,7 +15357,7 @@ namespace xcas {
       if (key==KEY_CTRL_CLIP){
 	xcas::Equation_adjust_xy(eq.data,xleft,ytop,xright,ybottom,gsel,gselparent,gselpos,0);
 	if (gsel==0)
-	  gsel==&eq.data;
+	  gsel=&eq.data;
 	// cout << "var " << g << " " << eq.data << "\n";
 	if (xcas::do_select(*gsel,true,value) && value.type==_EQW){
 	  //cout << g << ":=" << value._EQWptr->g << "\n";
@@ -15372,7 +15383,7 @@ namespace xcas {
 	    vector<int> goto_sel;
 	    xcas::Equation_adjust_xy(eq.data,xleft,ytop,xright,ybottom,gsel,gselparent,gselpos,&goto_sel);
 	    if (gsel==0)
-	      gsel==&eq.data;
+	      gsel=&eq.data;
 	    // cout << "var " << g << " " << eq.data << "\n";
 	    if (xcas::do_select(*gsel,true,value) && value.type==_EQW){
 	      //cout << g << ":=" << value._EQWptr->g << "\n";
@@ -15623,6 +15634,8 @@ namespace xcas {
 	    if (doit)
 	      dy += value._EQWptr->dy+eq.attr.fontsize/2;
 	  }
+          else
+            dy += eq.attr.fontsize/2;
 	  continue;
 	}
 	if (key==KEY_CTRL_PAGEUP && doit){
@@ -15633,6 +15646,8 @@ namespace xcas {
 	  if (line<nlines-1 && col>=0 && xcas::eqw_select(eq.data,line,col,false,value)){
 	    if (doit)
 	      dy -= value._EQWptr->dy+eq.attr.fontsize/2;
+            else
+              dy -= eq.attr.fontsize/2;
 	    ++line;
 	    xcas::eqw_select(eq.data,line,col,true,value);
 	  }

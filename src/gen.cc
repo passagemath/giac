@@ -110,7 +110,7 @@ extern "C" uint32_t mainThreadStack[];
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#if defined FXCG || defined HP39
+#if defined FXCG || defined HP39 //|| defined NUMWORKS_SLOTAB
 #define ALLOCSMALL
 #endif
 
@@ -119,6 +119,13 @@ namespace giac {
   // 32 bytes structure: 4096/32=128 slots of memory
   // ALLOCA  constants must be multiples of 2*32
   const int ALLOC16=8*32; // symbolic
+#ifdef NUMWORKS_SLOTAB
+  const int ALLOC24=8*32; // complex, identificateur, mpz_t
+  static unsigned int freeslot24[ALLOC24/32]={
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+  };
+#else
   const int ALLOC24=16*32; // complex, identificateur, mpz_t
   // #define ALLOC32 3*32 // not used
   // unsigned os_python_heap=0x88068000; // free memory area, used by Python heap
@@ -129,6 +136,7 @@ namespace giac {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff,0xffffffff, 0xffffffff, 
   };
+#endif
   static unsigned int freeslot16[ALLOC16/32]={
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -1685,6 +1693,7 @@ namespace giac {
       delete (ref_polynome *) (* ((ulonglong * ) this) >> 16);
       break;
     case _FRAC:
+      _FRACptr->den=_FRACptr->num=0;
       delete (ref_fraction *) (* ((ulonglong * ) this) >> 16);
       break;
     case _SPOL1:
@@ -2881,6 +2890,12 @@ namespace giac {
       return double(g0.val);
     if (g0.type==_DOUBLE_)
       return g0;
+    if (g0.type==_IDNT && contextptr && level){
+      sym_tab::const_iterator it=contextptr->tabptr->find(g0._IDNTptr->id_name);
+      if (it!=contextptr->tabptr->end()){
+        return evalf2double_nock(it->second,level-1,contextptr);
+      }
+    }
     if (g0.is_symb_of_sommet(at_program))
       return g0;
     if (g0.type==_FLOAT_ || g0.type==_FRAC || g0.type==_ZINT || g0.type==_REAL)
@@ -7282,6 +7297,10 @@ namespace giac {
 	return minus_inf;
       return unsigned_inf;
     }
+    if (a.is_symb_of_sommet(at_inv) && a._SYMBptr->feuille==b)
+      return 1;
+    if (b.is_symb_of_sommet(at_inv) && b._SYMBptr->feuille==a)
+      return 1;
     if (a.type==_INT_ && a.val==0 )
       return a;
     if (a.type==_DOUBLE_ && a._DOUBLE_val==0 )
@@ -8699,9 +8718,41 @@ namespace giac {
     inline bool operator () (const gen & a,const gen &b){ return f(a,b); }
   };
 
+  void my_qsort(iterateur it,iterateur itend,bool (*f)(const gen &a,const gen &b)){
+    if (itend-it<=1)
+      return;
+    int n=(itend-it);
+    iterateur itmid=it+n/2;
+    my_qsort(it,itmid,f);
+    my_qsort(itmid,itend,f);
+    iterateur ita=it,itb=itmid;
+    vecteur res; res.reserve(n);
+    for (;ita!=itmid && itb!=itend;){
+      if (f(*ita,*itb)){
+        res.push_back(*ita);
+        ++ita;
+      }
+      else {
+        res.push_back(*itb);
+        ++itb;
+      }
+    }
+    for (;ita!=itmid;++ita)
+      res.push_back(*ita);
+    for (;itb!=itend;++itb)
+      res.push_back(*itb);
+    iterateur jt=res.begin();
+    for (;it!=itend;++it,++jt)
+      *it=*jt;
+  }
+
   void gen_sort_f(iterateur it,iterateur itend,bool (*f)(const gen &a,const gen &b)){
+#if 0
+    my_qsort(it,itend,f);
+#else
     f_compare m(f);
     sort(it,itend,m);
+#endif
   }
 
 
@@ -9192,7 +9243,7 @@ namespace giac {
     return !v.empty() && is_undef(v.front());
   }
   bool is_undef(const polynome & p){
-    return !p.coord.empty() && is_undef(p.coord.front());
+    return !p.coord.empty() && is_undef(p.coord.front().value);
   }
   // we are using exponent as undef marker because coeff=undef is used 
   // for Landau notation O(x^exponent)
@@ -10803,6 +10854,37 @@ namespace giac {
     gen acopy(a),bCopy(b),r;
     for (;;){
       if (is_exactly_zero(bCopy)){
+#if 0 
+	complex<double> c=gen2complex_d(acopy);
+	double d=arg(c);
+	int quadrant=int(std::floor((2*d)/M_PI));
+        reim(acopy,bCopy,r,context0);
+        if (!is_positive(-bCopy,context0)){
+          if (is_positive(r,context0)){
+            if (quadrant!=0)
+              CERR << "cplxgcd 0 " << acopy << "\n";
+            return acopy;
+          }
+          if (quadrant!=-1)
+            CERR << "cplxgcd -1 " << acopy << "\n";
+          // re>=0, im<0
+	  return acopy*cst_i;          
+        }
+        else {
+          if (is_positive(-r,context0)){
+            if (is_zero(bCopy))
+              return -r;
+            if (quadrant!=-2 && quadrant!=2)
+              CERR << "cplxgcd 2 " << acopy << "\n";
+            return -acopy;
+          }
+          if (is_zero(bCopy))
+            return r;
+          if (quadrant!=1)
+            CERR << "cplxgcd 1 " << acopy << "\n";
+          return -acopy*cst_i;
+        }
+#else
 	complex<double> c=gen2complex_d(acopy);
 	double d=arg(c);
 	int quadrant=int(std::floor((2*d)/M_PI));
@@ -10818,6 +10900,7 @@ namespace giac {
 	default:
 	  return acopy;
 	}
+#endif
       }
       r=acopy%bCopy;
       acopy=bCopy;

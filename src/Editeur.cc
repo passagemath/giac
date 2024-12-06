@@ -1,4 +1,7 @@
 // -*- mode:C++ ; compile-command: "g++ -DHAVE_CONFIG_H -I. -I.. -I../include -I../../giac/include -g -c Editeur.cc" -*-
+#ifdef EMCC2
+#include <emscripten.h>
+#endif
 #include "Editeur.h"
 #include "Input.h"
 #include "Tableur.h"
@@ -522,7 +525,7 @@ namespace xcas {
 
   std::string editeur_load(Fl_Text_Editor * e){
     if (e){
-      char * newfile = load_file_chooser("Insert program", ("*."+dynamic_cast<Editeur *>(e->parent())->extension).c_str(), "",0,false);
+      const char * newfile = load_file_chooser("Insert program", ("*."+dynamic_cast<Editeur *>(e->parent())->extension).c_str(), "",0,false);
       if ( file_not_available(newfile) )
 	return "";
       e->buffer()->insertfile(newfile,e->insert_position());
@@ -539,7 +542,7 @@ namespace xcas {
 	if (i)
 	  cb_Editeur_Save(m,0);
       }
-      char * newfile = load_file_chooser("Insert program", ("*."+dynamic_cast<Editeur *>(e->parent())->extension).c_str(), "",0,false);
+      const char * newfile = load_file_chooser("Insert program", ("*."+dynamic_cast<Editeur *>(e->parent())->extension).c_str(), "",0,false);
       if ( file_not_available(newfile) )
 	return;
       e->buffer()->loadfile(newfile);
@@ -558,7 +561,11 @@ namespace xcas {
   }
 
   void editeur_insert(Fl_Text_Editor * e,const std::string & newfile,int mode){
-    ifstream in(newfile.c_str());
+    ifstream in;
+    if (mode==7)
+      in.open(newfile.c_str(),std::ios::binary);
+    else
+      in.open(newfile.c_str());
     char ch;
     string tmp;
     const context * contextptr = get_context(e);
@@ -567,6 +574,16 @@ namespace xcas {
       if (in.eof())
 	break;
       tmp += ch;
+    }
+    if (mode==7){
+      if (tmp.size()<0x4f || tmp[0x4a]!='P' || tmp[0x4b]!='Y'){
+        fl_alert(gettext("Expecting TI83 Python appvar"));
+        return;
+      }
+      mode=256;
+      tmp=tmp.substr(0x4f,tmp.size()-0x4f-2);
+      e->insert(tmp.c_str());
+      return;
     }
     if (mode<0 || ((mode&0xff)==xcas_mode(contextptr) && (mode>=256)==python_compat(contextptr))){
       e->insert(tmp.c_str());
@@ -671,7 +688,7 @@ namespace xcas {
   void cb_editeur_insert(Fl_Menu_ * m,const string & extension,int mode,bool lock=false){
     Fl_Text_Editor * e = find_editor(m);
     if (e){
-      char * newfile = load_file_chooser("Insert program",("*"+extension).c_str(), ("session"+extension).c_str(),0,false);
+      const char * newfile = load_file_chooser("Insert program",("*"+extension).c_str(), ("session"+extension).c_str(),0,false);
       if ( file_not_available(newfile) )
 	return;
       editeur_insert(e,newfile,mode);
@@ -715,10 +732,14 @@ namespace xcas {
     cb_editeur_insert(m,".ti",3);
   }
 
+  static void cb_Editeur_Insert_TI83(Fl_Menu_* m , void*) {
+    cb_editeur_insert(m,".8xv",7);
+  }
+
   static void cb_Editeur_Export_Maple(Fl_Menu_* m , void*) {
     Fl_Text_Editor * e = find_editor(m);
     if (e){
-      char * newfile = file_chooser("Export program", "*.map", "session.map");
+      const char * newfile = file_chooser("Export program", "*.map", "session.map");
       editeur_export(e,newfile,1);
     }
   }
@@ -726,7 +747,7 @@ namespace xcas {
   static void cb_Editeur_Export_Xcas(Fl_Menu_* m , void*) {
     Fl_Text_Editor * e = find_editor(m);
     if (e){
-      char * newfile = file_chooser("Export program", "*.cxx", "session.cxx");
+      const char * newfile = file_chooser("Export program", "*.cxx", "session.cxx");
       editeur_export(e,newfile,0);
     }
   }
@@ -734,7 +755,7 @@ namespace xcas {
   static void cb_Editeur_Export_Python(Fl_Menu_* m , void*) {
     Fl_Text_Editor * e = find_editor(m);
     if (e){
-      char * newfile = file_chooser("Export program", "*.py", "session.py");
+      const char * newfile = file_chooser("Export program", "*.py", "session.py");
       editeur_export(e,newfile,256);
     }
   }
@@ -742,7 +763,7 @@ namespace xcas {
   static void cb_Editeur_Export_Mupad(Fl_Menu_* m , void*) {
     Fl_Text_Editor * e = find_editor(m);
     if (e){
-      char * newfile = file_chooser("Export program", "*.mu", "session.mu");
+      const char * newfile = file_chooser("Export program", "*.mu", "session.mu");
       editeur_export(e,newfile,2);
     }
   }
@@ -750,7 +771,7 @@ namespace xcas {
   static void cb_Editeur_Export_Ti(Fl_Menu_* m , void*) {
     Fl_Text_Editor * e = find_editor(m);
     if (e){
-      char * newfile = file_chooser("Export program", "*.ti", "session.ti");
+      const char * newfile = file_chooser("Export program", "*.ti", "session.ti");
       editeur_export(e,newfile,3);
     }
   }
@@ -799,7 +820,7 @@ namespace xcas {
       if (Editeur * ed = dynamic_cast<Editeur *>(m->parent()))
 	extension=ed->extension;
       for (;;){
-	char * newfile ;
+	const char * newfile ;
 	if (extension.empty())
 	  newfile = file_chooser("Store program", "*", ("session"+print_INT_(program_counter)).c_str());
 	else
@@ -989,7 +1010,7 @@ namespace xcas {
 	continue;
       }
       if (o==loadtarbut){
-	char * newfile = load_file_chooser("Open archive", "*.tar", "",0,false);
+	const char * newfile = load_file_chooser("Open archive", "*.tar", "",0,false);
 	if (!newfile) continue;
 	char * newbuf=file_gettar(newfile);
 	tar_first_modif_offset=0;
@@ -1011,7 +1032,7 @@ namespace xcas {
 	continue;
       }
       if (o==savetarbut){
-	char * newfile = file_chooser("Store archive", "*.tar", "numworks.tar");
+	const char * newfile = file_chooser("Store archive", "*.tar", "numworks.tar");
 	if (newfile){
 	  bool res=tar_savefile(buf,newfile);
 	}
@@ -1023,7 +1044,7 @@ namespace xcas {
       if (o==br){ // display file info at bottom?
       }
       if (o==addfilebut){
-	char * newfile = load_file_chooser("Insert file", "*", "",1,false);
+	const char * newfile = load_file_chooser("Insert file", "*", "",1,false);
 	if (!newfile || file_not_available(newfile))
 	  continue;
 	tar_addfile(buf,newfile,0);
@@ -1749,11 +1770,11 @@ namespace xcas {
 	}
 	else {
 	  if (!is_context_busy(contextptr)){
-#if 1
+#ifndef EMCC2
 	    make_thread(g,eval_level(contextptr),logo_eval_callback,e,contextptr);
 	    // protecteval(g,eval_level(contextptr),contextptr);
 #else // crashes sometimes, perhaps something non reentrant
-	      thread_eval(g,eval_level(contextptr),contextptr);
+            protecteval(g,eval_level(contextptr),contextptr);
 #endif
 	  }
 	  l->t->redraw();
@@ -2367,6 +2388,7 @@ namespace xcas {
 	    s+=":={";
 	}
 	s+="\n";
+        if (python) s+="    ";
 	if (!python && strlen(locs->value())){
 	  s+=python?"    # local ":"  var ";
 	  s+=locs->value();
@@ -2823,6 +2845,7 @@ namespace xcas {
     {gettext("Insert"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("File"), 0,  (Fl_Callback*)cb_Editeur_Insert_File, 0, 0, 0, 0, 14, 56},
     {gettext("Numworks Xcas session"), 0,  (Fl_Callback*)cb_Editeur_Insert_Numworks, 0, 0, 0, 0, 14, 56},
+    {gettext("TI83 program"), 0,  (Fl_Callback*)cb_Editeur_Insert_TI83, 0, 0, 0, 0, 14, 56},
     {gettext("Xcas text"), 0,  (Fl_Callback*)cb_Editeur_Insert_Xcas, 0, 0, 0, 0, 14, 56},
     {gettext("Xcas Python text"), 0,  (Fl_Callback*)cb_Editeur_Insert_Python, 0, 0, 0, 0, 14, 56},
     {gettext("Maple text"), 0,  (Fl_Callback*)cb_Editeur_Insert_Maple, 0, 0, 0, 0, 14, 56},
@@ -2864,6 +2887,16 @@ namespace xcas {
     {gettext("Shrink editor"), 0xffc3,  (Fl_Callback *) cb_Editeur_Shrink, 0, 0, 0, 0, 14, 56},
     {0}, // end Edit
     {gettext("Add"), 0,  0, 0, 64, 0, 0, 14, 56},
+#ifdef EMCC2
+    {gettext("new function"), 0,  (Fl_Callback *) cb_prg_func, 0, 0, 0, 0, 14, 56},
+    {gettext("return"), 0,  (Fl_Callback *) cb_prg_return, 0, 0, 0, 0, 14, 56},
+    {gettext("new test"), 0,  (Fl_Callback *) cb_prg_si, 0, 0, 0, 0, 14, 56},
+    {gettext("new loop"), 0,  (Fl_Callback *) cb_prg_pour, 0, 0, 0, 0, 14, 56},
+    {gettext("break"), 0,  (Fl_Callback *) cb_prg_break, 0, 0, 0, 0, 14, 56},
+    {gettext("continue"), 0,  (Fl_Callback *) cb_prg_continue, 0, 0, 0, 0, 14, 56},
+    {gettext("print"), 0,  (Fl_Callback *) cb_prg_print, 0, 0, 0, 0, 14, 56},
+    {gettext("input"), 0,  (Fl_Callback *) cb_prg_input, 0, 0, 0, 0, 14, 56},
+#else
     {gettext("Func"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("new function"), 0,  (Fl_Callback *) cb_prg_func, 0, 0, 0, 0, 14, 56},
     {gettext("local"), 0,  (Fl_Callback *) cb_prg_local, 0, 0, 0, 0, 14, 56},
@@ -2891,7 +2924,8 @@ namespace xcas {
     {gettext("break"), 0,  (Fl_Callback *) cb_prg_break, 0, 0, 0, 0, 14, 56},
     {gettext("continue"), 0,  (Fl_Callback *) cb_prg_continue, 0, 0, 0, 0, 14, 56},
     {0}, // end Loop
-    {0}, // end Prg
+#endif
+    {0}, // end Add
     {0} // end menu
   };
 
@@ -2943,17 +2977,25 @@ namespace xcas {
     }
     Fl_Group::current(this);
     int L=(3*labelsize())/2;
+    if (L<30)
+      L=30;
     Fl_Text_Buffer * b = new Fl_Text_Buffer;
     editor=new Xcas_Text_Editor(x,y+L,w,h-L,b,l);
     editor->Fl_Text_Display::textsize(labelsize());
     editor->Fl_Text_Display::linenumber_width(3*labelsize());
     editor->labelsize(labelsize());
     log = 0;
-    if (logo){
-      menubar = new Fl_Menu_Bar(x,y,w/2,L);
+    if (
+#ifdef EMCC2
+        1
+#else
+        logo
+#endif
+        ){
+      menubar = new Fl_Menu_Bar(x,y,logo?3*w/4:w/2,L);
     }
     else {
-      menubar = new Fl_Menu_Bar(x,y,w/4,L);
+      menubar = new Fl_Menu_Bar(x,y,w/3,L);
     }
     int s= Editeur_menu->size();
     Fl_Menu_Item * menuitem = new Fl_Menu_Item[s];
@@ -2961,25 +3003,26 @@ namespace xcas {
       *(menuitem+i)=*(Editeur_menu+i);
     menubar->menu (menuitem);
     change_menu_fontsize(menuitem,3,labelsize()); // 3=#submenus
-    linenumber=0; nxt_button=0; exec_button=0; func_button=0; si_button=0; pour_button=0;
+    linenumber=0; nxt_button=0; exec_button=0; func_button=0; si_button=0; pour_button=0; output=0;
     if (!logo){
-      linenumber = new Fl_Value_Input(x+w/3-w/12,y,w/12,L);
+      linenumber = new Fl_Value_Input(x+menubar->w()-w/12,y,w/12,L);
       linenumber->tooltip(gettext("Line number"));
       linenumber->callback((Fl_Callback *)cb_Editeur_Gotoline);
       linenumber->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
-      nxt_button = new Fl_Button(x+w/3,y,w/12,L);
+      nxt_button = new Fl_Button(x+menubar->w(),y,w/12,L);
       nxt_button->labelsize(labelsize());
       nxt_button->label(gettext("nxt"));
       nxt_button->tooltip(gettext("Find next occurrence (defined by Edit->Search)"));
       nxt_button->callback((Fl_Callback *) cb_Editeur_Next);
       if (parent()==window()){
-	exec_button = new Save_Focus_Button(x+w/3-w/12,y,w/12,L);
+	exec_button = new Save_Focus_Button(x+menubar->w()-w/12,y,w/12,L);
 	exec_button->callback((Fl_Callback *)cb_Editeur_Exec);
 	exec_button->labelsize(labelsize());
 	exec_button->label(gettext("exe"));
 	exec_button->tooltip(gettext("Exec line in current widget"));
       }
       else {
+#ifndef EMCC2
 	func_button = new Fl_Button(nxt_button->x()+nxt_button->w(),y,w/12,L);
 	func_button->labelsize(labelsize());
 	func_button->label(gettext("Func"));
@@ -2994,10 +3037,11 @@ namespace xcas {
 	pour_button->labelsize(labelsize());
 	pour_button->label(gettext("Loop"));
 	pour_button->tooltip(gettext("Assistant for loop creation"));
-	pour_button->callback((Fl_Callback *) cb_prg_pour);	
+	pour_button->callback((Fl_Callback *) cb_prg_pour);
+#endif
       }
     }
-    button = new Fl_Button(x+w/2+w/6,y,w/12,L);
+    button = new Fl_Button(x+w/2+(logo?(w/4):(w/6)),y,logo?w/4:w/12,L);
     button->labelsize(labelsize());
     // button->label(logo?"OK":"OK (F9)");
     button->label("OK");
@@ -3005,15 +3049,16 @@ namespace xcas {
     button->tooltip(gettext("Parse current program"));
     button->callback((Fl_Callback *) logo?cb_Editeur_Exec_All:cb_Editeur_Parse);
     button->shortcut(0xffc6); // FIXME: quick fix, otherwise Esc leaves xcas
-    save_button = new Fl_Button(x+w/2+w/4,y,w/12,L);
-    save_button->labelsize(labelsize());
-    save_button->label("Save");
-    save_button->tooltip(gettext("Save current program"));
-    save_button->callback((Fl_Callback *) cb_Editeur_Save);
-    output = new Fl_Input(x+w/2+w/4+save_button->w(),y,w-w/2-w/4-save_button->w(),L);
-    output->labelsize(labelsize());
-    end();
-
+    if (!logo){
+      save_button = new Fl_Button(x+w/2+w/4,y,w/12,L);
+      save_button->labelsize(labelsize());
+      save_button->label("Save");
+      save_button->tooltip(gettext("Save current program"));
+      save_button->callback((Fl_Callback *) cb_Editeur_Save);
+      output = new Fl_Input(x+w/2+w/4+save_button->w(),y,w-w/2-w/4-save_button->w(),L);
+      output->labelsize(labelsize());
+    }
+    end();  
     b->add_modify_callback(style_update, editor); 
     b->add_modify_callback(Editor_changed_cb, editor); 
     resizable(editor);
@@ -3083,6 +3128,9 @@ namespace xcas {
   }
 
   void Xcas_Text_Editor::match(){
+#ifdef EMCC2
+    return;
+#endif
     static bool recursive=false;
     if (buffer()->selected())
       return;
@@ -3371,10 +3419,7 @@ namespace xcas {
     }
     // increase_size(this,((nl>1 ||wid)?22:9)+nl*(labelsize()+3)-h());
     double fs = 1.05*fl_height(textfont(), textsize()); 
-    int newsize=(nl>1?23:10)+int(nl*fs+.5);
-#ifdef WIN32
-    newsize += 2;
-#endif
+    int newsize=(nl>1?23:16)+int(nl*fs+.5);
     if (nl==1){
       fl_font(FL_HELVETICA,labelsize());
       double taille=1.4*fl_width(s.c_str());
@@ -3406,6 +3451,10 @@ namespace xcas {
 #endif
 
   void Xcas_Text_Editor::set_tooltip(){
+#ifdef EMCC2
+    tooltip("");
+    return;
+#endif
     string toolt;
     History_Pack * hp=get_history_pack(this);
     giac::context * contextptr=get_context(this);
@@ -3667,6 +3716,10 @@ namespace xcas {
     if (event==FL_KEYBOARD){
       Xcas_input_focus=this;
       // FIXME: add 2 ([]) and 12 ({})
+      if (Fl::event_text() && Fl::event_text()[0]==26){ // undo
+        kf_undo(26,this);
+        return 1;
+      }
       if (Fl::event_text() && Fl::event_text()[0]==6){
 	cb_Editeur_Search(this,0);
 	return 1;
@@ -3688,6 +3741,14 @@ namespace xcas {
 	return 1;
       }
       int change_focus=0;
+#if 0 // defined(EMCC2)
+      if (Fl::event_text()){
+	char ch=Fl::event_text()[0];
+	EM_ASM({
+	    console.log("Editeur ",$0);
+	  },ch);
+      }
+#endif
       if (Fl::event_text() && Fl::event_text()[0]=='\r' && Fl::event_state(FL_CTRL)){
 	if (ed)
 	  ed->eval();
@@ -3696,7 +3757,8 @@ namespace xcas {
 	return 1;
       }
       if (
-	  (!ed && Fl::event_text() && (Fl::event_text()[0]=='\r') && !Fl::event_state(FL_SHIFT | FL_ALT) )	  
+	  (!ed && (Fl::event_text() && (Fl::event_text()[0]=='\r') || (Fl::event_key()==FL_Enter || Fl::event_key()==FL_KP_Enter) )
+	   && !Fl::event_state(FL_SHIFT | FL_ALT) )	  
 	  ){
 	if (tableur){
 	  do_callback();
@@ -3737,14 +3799,15 @@ namespace xcas {
         buffer()->remove(j+1,ip);
         free(ch);
       }
-      if (xcas_main_tab && xcas_main_tab->children() && Fl::event_state(FL_CTRL) && Fl::event_text() && (Fl::event_text()[0]==9 || (Fl::event_text()[0]>='0' && Fl::event_text()[0]<='9') )){
+      bool keytab=Fl::event_text()[0]==9 || Fl::event_key()==FL_Tab;
+      if (xcas_main_tab && xcas_main_tab->children() && Fl::event_state(FL_CTRL) && Fl::event_text() && (keytab || (Fl::event_text()[0]>='0' && Fl::event_text()[0]<='9') )){
         int n=-1;
         if (Fl::event_text()[0]>='0' && Fl::event_text()[0]<='9'){
           n=Fl::event_text()[0]-'0';
           if (n>=xcas_main_tab->children())
             n=xcas_main_tab->children()-1;
         }
-        else if (Fl::event_text()[0]==9){
+        else if (keytab){
           Fl_Widget * cur=xcas_main_tab->value();
           for (int i=0;i<xcas_main_tab->children();++i){
             if (xcas_main_tab->child(i)==cur){
@@ -3764,11 +3827,13 @@ namespace xcas {
         }
         return 1;
       }
-      if (Fl::event_key()==FL_F+1 || (!ed && Fl::event_text() && (Fl::event_text()[0]==9)) ){
+      if (Fl::event_key()==FL_F+1 || (!ed && Fl::event_text() && keytab) ){
+#ifndef EMCC2 // can not call help completion because it opens a modal window where Fl::wait() is called and Fl::wait() is not reentrant
 	if (completion())
+#endif
 	  return 1;
       }
-      if (Fl::event_text() && (Fl::event_text()[0]==9 || Fl::event_key()==FL_Escape)){
+      if (Fl::event_text() && (keytab || Fl::event_key()==FL_Escape)){
 	if (tableur){
 	  if (tableur->editing){
 	    tableur->editing=false;
@@ -3876,12 +3941,16 @@ namespace xcas {
       return 1;
     }
     int ip=insert_position();
+#if 1
+    char before_ch=buffer()->char_at(giacmax(ip-1,0));
+#else
     char *ch=buffer()->text();
     char before_ch=ch[giacmax(ip-1,0)];
     free(ch);
+#endif
     int res=Fl_Text_Editor::handle(event);
     int newip=insert_position();
-    if (event==FL_KEYBOARD && ip==newip){
+    if (event==FL_KEYBOARD && ip==newip && (Fl::event_key()==FL_Right || (Fl::event_key()==FL_Left && ip==0))){
       char *ch=buffer()->text();
       if (Fl::event_key()==FL_Right && ip==strlen(ch))
         insert_position(0);

@@ -85,15 +85,6 @@ using namespace giac;
 namespace xcas {
 #endif // ndef NO_NAMESPACE_XCAS
 
-  const int QRDISP_WIDTH=200,QRDISP_HEIGHT=200;
-  class QRGraph:public Fl_Widget {
-  public:
-    int QRscale,size_border;
-    string filename;
-    unsigned char data[QRDISP_WIDTH][QRDISP_HEIGHT];
-    virtual FL_EXPORT void draw();
-    QRGraph(int x,int y,int scale=3,const char * f="qrcode"):QRscale(scale),Fl_Widget(x,y,200*scale,200*scale),filename(f){};
-  };
   void QRGraph::draw(){
     fl_color(FL_WHITE);
     fl_rectf(x(), y(), w(), h());
@@ -241,7 +232,11 @@ namespace xcas {
       static QRGraph * gr=0;
       static Fl_Menu_Bar * menubar=0;
       static Fl_Multiline_Input * in=0;
+#ifdef EMCC2
+      int initscale=1;
+#else
       int initscale=3;
+#endif
       if (!w){
         Fl_Group::current(0);
         w=new Fl_Window(20+200*initscale,70+200*initscale);
@@ -1108,7 +1103,7 @@ namespace xcas {
   static void cb_Graph3dpng(Fl_Menu_* m , void*) {
     Graph2d3d * gr = find_graph2d3d(m);
     if (Graph3d * gr3 = dynamic_cast<Graph3d *>(gr)){
-      char * filename = file_chooser(gettext("Export to PNG file"),"*.png","session.png");
+      const char * filename = file_chooser(gettext("Export to PNG file"),"*.png","session.png");
       if(!filename) return;
       gr3->opengl2png(filename);
     }
@@ -1533,6 +1528,7 @@ namespace xcas {
       else {
 	gr->tracemode |= 4;
 	gr->autoscale(false);
+        gr->orthonormalize();
       }
       gr->tracemode_set();
     }
@@ -1545,6 +1541,7 @@ namespace xcas {
       else {
 	gr->tracemode |= 8;
 	gr->autoscale(false);
+        gr->orthonormalize();
       }
       gr->tracemode_set();
     }
@@ -1626,19 +1623,8 @@ namespace xcas {
   };
 
   Fl_Menu_Item Graph2d3d_menu[] = {
-    {gettext("M"), 0,  0, 0, 64, 0, 0, 14, 56},
-    {gettext("View"), 0,  0, 0, 64, 0, 0, 14, 56},
-    {gettext("Autoscale"), 0,  (Fl_Callback*)cb_Graph2d3d_Autoscale, 0, 0, 0, 0, 14, 56},
-    {gettext("Autoscale (full)"), 0,  (Fl_Callback*)cb_Graph2d3d_AutoscaleFull, 0, 0, 0, 0, 14, 56},
-    {gettext("Orthonormalize (2-d)"), 0,  (Fl_Callback*)cb_Graph2d3d_Orthonormalize, 0, 0, 0, 0, 14, 56},
-    {gettext("Zoom in"), 0,  (Fl_Callback*)cb_Graph2d3d_Zoomin, 0, 0, 0, 0, 14, 56},
-    {gettext("Zoom out"), 0,  (Fl_Callback*)cb_Graph2d3d_Zoomout, 0, 0, 0, 0, 14, 56},
-    {gettext("Frame move on"), 0,  (Fl_Callback*)cb_Graph2d3d_Frameon, 0, 0, 0, 0, 14, 56},
-    {gettext("Frame move off"), 0,  (Fl_Callback*)cb_Graph2d3d_Frameoff, 0, 0, 0, 0, 14, 56},
-    {gettext("Previous"), 0,  (Fl_Callback*)cb_Graph2d3d_Previous, 0, 0, 0, 0, 14, 56},
-    {gettext("Next"), 0,  (Fl_Callback*)cb_Graph2d3d_Next, 0, 0, 0, 0, 14, 56},
+    {gettext("+"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("Config"), 0,  (Fl_Callback*)cb_Graph2d3d_Config, 0, 0, 0, 0, 14, 56},
-    {0},
     {gettext("Curves"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("Info current curve (F2)"), 0,  (Fl_Callback *) cb_Graph_curve_infos, 0, 0, 0, 0, 14, 56},
     {gettext("Switch tangent (F3)"), 0,  (Fl_Callback *) cb_Graph_switch_tangent, 0, 0, 0, 0, 14, 56},
@@ -1655,6 +1641,17 @@ namespace xcas {
     {gettext("Set t or x, mark position"), 0,  (Fl_Callback *) cb_Graph_set_mark, 0, 0, 0, 0, 14, 56},
     {gettext("Area"), 0,  (Fl_Callback *) cb_Graph_area, 0, 0, 0, 0, 14, 56},
     {gettext("Arc length"), 0,  (Fl_Callback *) cb_Graph_arclength, 0, 0, 0, 0, 14, 56},
+    {0},
+    {gettext("View"), 0,  0, 0, 64, 0, 0, 14, 56},
+    {gettext("Autoscale"), 0,  (Fl_Callback*)cb_Graph2d3d_Autoscale, 0, 0, 0, 0, 14, 56},
+    {gettext("Autoscale (full)"), 0,  (Fl_Callback*)cb_Graph2d3d_AutoscaleFull, 0, 0, 0, 0, 14, 56},
+    {gettext("Orthonormalize (2-d)"), 0,  (Fl_Callback*)cb_Graph2d3d_Orthonormalize, 0, 0, 0, 0, 14, 56},
+    {gettext("Zoom in"), 0,  (Fl_Callback*)cb_Graph2d3d_Zoomin, 0, 0, 0, 0, 14, 56},
+    {gettext("Zoom out"), 0,  (Fl_Callback*)cb_Graph2d3d_Zoomout, 0, 0, 0, 0, 14, 56},
+    {gettext("Frame move on"), 0,  (Fl_Callback*)cb_Graph2d3d_Frameon, 0, 0, 0, 0, 14, 56},
+    {gettext("Frame move off"), 0,  (Fl_Callback*)cb_Graph2d3d_Frameoff, 0, 0, 0, 0, 14, 56},
+    {gettext("Previous"), 0,  (Fl_Callback*)cb_Graph2d3d_Previous, 0, 0, 0, 0, 14, 56},
+    {gettext("Next"), 0,  (Fl_Callback*)cb_Graph2d3d_Next, 0, 0, 0, 0, 14, 56},
     {0},
     {gettext("Trace"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("Trace clear"), 0,  (Fl_Callback *) cb_Graph_Traceclear, 0, 0, 0, 0, 14, 56},
@@ -1745,6 +1742,7 @@ namespace xcas {
     bdownright->tooltip(gettext("Decrease z (3-d)/Zoom out in y (2-d)"));
     bdownright->callback(cb_graph_buttons);
     by += bh;
+#if 0
     Fl_Button * bback = new Fl_Button(bx,by,bw,bh,"@-1<-");
     bback->tooltip(gettext("Back in cfg history"));
     bback->callback(cb_graph_buttons);
@@ -1758,20 +1756,21 @@ namespace xcas {
     Fl_Button * bpause = new Fl_Button(bx+bw,by,bw,bh,"@>|");
     bpause->tooltip(gettext("Stop or restart animation"));
     bpause->callback(cb_graph_buttons);
-    Fl_Menu_Bar * bauto = new Fl_Menu_Bar(bx+2*bw,by,bw,bh,"auto");
-    bauto->tooltip(gettext("Autoscale"));
-    int s= Autoscale_menu->size();
-    Fl_Menu_Item * automenuitem = new Fl_Menu_Item[Autoscale_menu->size()];
-    for (int i=0;i<s;++i)
-      *(automenuitem+i)=*(Autoscale_menu+i);
-    bauto->menu (automenuitem);    
-    menubar= new Fl_Menu_Bar(bx,by,bw,bh,"+");
+#endif
+    menubar= new Fl_Menu_Bar(bx,by,3*bw/2,bh,"+");
     menubar->tooltip(gettext("Graphic menu"));
-    s= Graph2d3d_menu->size();
+    int s= Graph2d3d_menu->size();
     Fl_Menu_Item * menuitem = new Fl_Menu_Item[Graph2d3d_menu->size()];
     for (int i=0;i<s;++i)
       *(menuitem+i)=*(Graph2d3d_menu+i);
     menubar->menu (menuitem);    
+    Fl_Menu_Bar * bauto = new Fl_Menu_Bar(bx+3*bw/2,by,3*bw/2,bh,"auto");
+    bauto->tooltip(gettext("Autoscale"));
+    s= Autoscale_menu->size();
+    Fl_Menu_Item * automenuitem = new Fl_Menu_Item[Autoscale_menu->size()];
+    for (int i=0;i<s;++i)
+      *(automenuitem+i)=*(Autoscale_menu+i);
+    bauto->menu (automenuitem);    
     button_group->end();
     int param_group_y=button_group->y()+button_group->h();
     param_group = new Fl_Group(x+w-legende_size,param_group_y,legende_size,mouse_param_group->h()-button_group->h()-mouse_position->h());
@@ -3034,7 +3033,7 @@ namespace xcas {
   const char * latexfilename(const char * filename_){
     if (filename_)
       return filename_;
-    char * filename=file_chooser(gettext("LaTeX filaneme"), "*.tex", "session.tex");
+    const char * filename=file_chooser(gettext("LaTeX filaneme"), "*.tex", "session.tex");
     if (!filename)
       return 0;
     static string s=remove_extension(filename)+".tex";
@@ -3129,16 +3128,11 @@ namespace xcas {
       param_group->resize(x,y,W,this->y()-y+h());
       mouse_param_group->init_sizes();
       mouse_param_group->redraw();
+      button_group->redraw();
     }
   }
 
   void Graph2d3d::resize(int X,int Y,int W,int H){
-    /*
-    if (parent() && !dynamic_cast<Figure *>(parent()) && !dynamic_cast<Tableur_Group *>(parent()) && mouse_param_group){
-      if (parent()->w()!=w()+mouse_param_group->w())
-	resize_mouse_param_group(parent()->w()-w());
-    }
-    */
     Fl_Widget::resize(X,Y,W,H);
   }
 
@@ -4466,6 +4460,24 @@ namespace xcas {
   int Graph2d3d::handle(int event){
     if (no_handle)
       return 0;
+#if 1
+    Fl_Group * gr=parent();
+    if (gr){
+      int W2=gr->w()-legende_size;
+      if (hp){
+        if (Figure * fig=dynamic_cast<Figure*>(gr)){
+          if (fig->disposition==0)
+            W2-=hp->w();
+        }
+      }
+      if (w()!=W2){
+        resize(x(),y(),W2,h());
+        resize_mouse_param_group(legende_size);
+        gr->init_sizes();
+        gr->redraw();
+      }
+    }
+#endif
     context * contextptr=hp?hp->contextptr:get_context(this);
 #ifdef HAVE_LIBPTHREAD
     // cerr << "handle lock" << '\n';
@@ -4635,7 +4647,7 @@ namespace xcas {
 	  return 1;
 	case 'C': case 'c': /* screen capture */
 	  if (Graph3d * gr3 = dynamic_cast<Graph3d *>(this)){
-	    char * filename = file_chooser(gettext("Export to PNG file"),"*.png","session.png");
+	    const char * filename = file_chooser(gettext("Export to PNG file"),"*.png","session.png");
 	    if(!filename) return 1;
 	    gr3->opengl2png(filename);
 	    return 1;
@@ -5988,22 +6000,80 @@ namespace xcas {
     return true;
   }
 
-  int symb_depth(const gen & g,int curdepth,int maxdepth){
+  // protection against too complex derivatives for curve study
+  int symb_depth(const gen & g,int curdepth,int maxdepth,bool sum=false){
     if (g.type==_VECT){
       vecteur & v =*g._VECTptr;
+      int curmax=0;
       for (int i=0;i<v.size();++i){
-        curdepth=symb_depth(v[i],curdepth,maxdepth);
-        if (curdepth>maxdepth)
+        int cur=symb_depth(v[i],curdepth,maxdepth);
+        if (cur>maxdepth)
           return curdepth;
+        if (sum){
+          if (cur>curmax)
+            curmax=cur;
+        }
+        else
+          curdepth=cur;
       }
+      if (sum)
+        curdepth=curmax;
     }
     if (g.type!=_SYMB)
       return curdepth;
     if (curdepth==maxdepth)
       return maxdepth+1;
-    return symb_depth(g._SYMBptr->feuille,curdepth+1,maxdepth);
+    return symb_depth(g._SYMBptr->feuille,curdepth+1,maxdepth,g._SYMBptr->sommet==at_plus);
   }
 
+  gen * x0ptr(){
+    static gen * ptr=0;
+    if (!ptr){
+      ptr=new gen;
+      *ptr=gen("x0",context0);
+    }
+    return ptr;
+  }
+  gen * x1ptr(){
+    static gen * ptr=0;
+    if (!ptr){
+      ptr=new gen;
+      *ptr=gen("x1",context0);
+    }
+    return ptr;
+  }
+  gen * x2ptr(){
+    static gen * ptr=0;
+    if (!ptr){
+      ptr=new gen;
+      *ptr=gen("x2",context0);
+    }
+    return ptr;
+  }
+  gen * y0ptr(){
+    static gen * ptr=0;
+    if (!ptr){
+      ptr=new gen;
+      *ptr=gen("y0",context0);
+    }
+    return ptr;
+  }
+  gen * y1ptr(){
+    static gen * ptr=0;
+    if (!ptr){
+      ptr=new gen;
+      *ptr=gen("y1",context0);
+    }
+    return ptr;
+  }
+  gen * y2ptr(){
+    static gen * ptr=0;
+    if (!ptr){
+      ptr=new gen;
+      *ptr=gen("y2",context0);
+    }
+    return ptr;
+  }
   void Graph2d3d::tracemode_set(int operation){
     redraw();
 #ifndef NO_STDEXCEPT
@@ -6063,27 +6133,45 @@ namespace xcas {
     G=remove_at_pnt(G);
     tracemode_disp.clear();
     string curve_infos1,curve_infos2;
-    gen parameq,x,y,t,tmin,tmax,tstep;
+    gen parameq,x,y,t,tmin,tmax,tstep,x1,x2,y1,y2,z1,z2; int Gd=0;
     // extract position at tracemode_i
-    if (G.is_symb_of_sommet(at_curve) && symb_depth(G._SYMBptr->feuille[0][0],0,tracemaxdepth)<tracemaxdepth){
+    if (G.is_symb_of_sommet(at_curve) && (Gd=symb_depth(G._SYMBptr->feuille[0][0],0,tracemaxdepth))<tracemaxdepth){
       gen c=G._SYMBptr->feuille[0];
       parameq=c[0];
-      // simple expand for i*ln(x)
-      bool b=do_lnabs(contextptr);
-      do_lnabs(false,contextptr);
-      reim(parameq,x,y,contextptr);
-      do_lnabs(b,contextptr);
       t=c[1];
-      gen x1=derive(x,t,contextptr);
-      gen x2=derive(x1,t,contextptr);
-      gen y1=derive(y,t,contextptr);
-      gen y2=derive(y1,t,contextptr);
-      sto(x,gen("x0",contextptr),contextptr);
-      sto(x1,gen("x1",contextptr),contextptr);
-      sto(x2,gen("x2",contextptr),contextptr);
-      sto(y,gen("y0",contextptr),contextptr);
-      sto(y1,gen("y1",contextptr),contextptr);
-      sto(y2,gen("y2",contextptr),contextptr);
+      if (parameq==trace_parameq && t==trace_t){
+        x=trace_x0;
+        x1=trace_x1;
+        x2=trace_x2;
+        y=trace_y0;
+        y1=trace_y1;
+        y2=trace_y2;
+        z1=trace_z1;
+        z2=trace_z2;
+      }
+      else {
+        trace_t=t;
+        trace_parameq=parameq;
+        z1=trace_z1=derive(parameq,t,contextptr);
+        z2=trace_z2=derive(z1,t,contextptr);
+        // simple expand for i*ln(x)
+        bool b=do_lnabs(contextptr);
+        do_lnabs(false,contextptr);
+        reim(parameq,x,y,contextptr);
+        do_lnabs(b,contextptr);
+        trace_x0=x;
+        trace_x1=x1=derive(x,t,contextptr);
+        trace_x2=x2=derive(x1,t,contextptr);
+        trace_y0=y;
+        trace_y1=y1=derive(y,t,contextptr);
+        trace_y2=y2=derive(y1,t,contextptr);
+        sto(x,*x0ptr(),contextptr);
+        sto(x1,*x1ptr(),contextptr);
+        sto(x2,*x2ptr(),contextptr);
+        sto(y,*y0ptr(),contextptr);
+        sto(y1,*y1ptr(),contextptr);
+        sto(y2,*y2ptr(),contextptr);
+      }
       tmin=c[2];
       tmax=c[3];
       tmin=evalf_double(tmin,1,contextptr);
@@ -6106,6 +6194,8 @@ namespace xcas {
           tmax=im(Gv.back(),contextptr);
           doit=true;
         }
+        else
+          tstep=(tmax-tmin)/(Gv.size()-1);
         if (doit){
           tstep=(tmax-tmin)/(Gv.size()-1);
           if (tracemode_mark<tmin._DOUBLE_val)
@@ -6325,31 +6415,38 @@ namespace xcas {
 	  if (tracemode & 2){
             // make sure G is the right point, e.g. for plotpolar(sqrt(cos(2x)))
             G=subst(parameq,t,curt,false,contextptr);
-	    gen G1=derive(parameq,t,contextptr);
-	    gen G1t=subst(G1,t,curt,false,contextptr);
+	    //gen G1=derive(parameq,t,contextptr);
+	    gen G1t=subst(z1,t,curt,false,contextptr);
 	    gen G1x,G1y; reim(G1t,G1x,G1y,contextptr);
+            // gen G1x=subst(x1,t,curt,false,contextptr),G1y=subst(y1,t,curt,false,contextptr);
 	    gen m=evalf_double(G1y/G1x,1,contextptr);
 	    if (m.type==_DOUBLE_)
 	      tracemode_add += ", m="+giac::print_DOUBLE_(m._DOUBLE_val,3);
 	    gen T(_vector(makesequence(_point(G,contextptr),_point(G+G1t,contextptr)),contextptr));
 	    tracemode_disp.push_back(T);
-	    gen G2(derive(G1,t,contextptr));
-	    gen G2t=subst(G2,t,curt,false,contextptr);
-	    gen G2x,G2y; reim(G2t,G2x,G2y,contextptr);
-	    gen det(G1x*G2y-G2x*G1y);
-	    gen Tn=sqrt(G1x*G1x+G1y*G1y,contextptr);
-	    gen R=evalf_double(Tn*Tn*Tn/det,1,contextptr);
-	    gen centre=G+R*(-G1y+cst_i*G1x)/Tn;
-	    if (tracemode & 4){
-	      gen N(_vector(makesequence(_point(G,contextptr),_point(centre,contextptr)),contextptr));
-	      tracemode_disp.push_back(N);
-	    }
-	    if (tracemode & 8){
-	      if (R.type==_DOUBLE_)
-		tracemode_add += ", R="+giac::print_DOUBLE_(R._DOUBLE_val,3);
-	      tracemode_disp.push_back(_cercle(makesequence(centre,R),contextptr));
-	    }
-	  }
+            if (tracemode & 0xc){
+              //gen G2(derive(G1,t,contextptr));
+              gen G2t=subst(z2,t,curt,false,contextptr);
+              gen G2x,G2y; reim(G2t,G2x,G2y,contextptr);
+              // gen G2x=subst(x2,t,curt,false,contextptr),G2y=subst(y2,t,curt,false,contextptr);
+              //dbg_printf("tracemode G2x=%s G2y=%s\n",G2x.print().c_str(),G2y.print().c_str());
+              //gen det(re(G1t*conj(G2t,contextptr),contextptr)); 
+              gen det(G1x*G2y-G2x*G1y);
+              gen Tn=abs(G1t,contextptr);
+              gen R=evalf_double(Tn*Tn*Tn/det,1,contextptr);
+              gen centre=G+R*cst_i*G1t/Tn;
+              // gen centre=G+R*(-G1y+cst_i*G1x)/Tn;
+              if (tracemode & 4){
+                gen N(_vector(makesequence(_point(G,contextptr),_point(centre,contextptr)),contextptr));
+                tracemode_disp.push_back(N);
+              }
+              if (tracemode & 8){
+                if (R.type==_DOUBLE_)
+                  tracemode_add += ", R="+giac::print_DOUBLE_(R._DOUBLE_val,3);
+                tracemode_disp.push_back(_cercle(makesequence(centre,R),contextptr));
+              }
+            }
+          }
 	}
       }
     }
@@ -6984,7 +7081,7 @@ namespace xcas {
     if (s.empty()){
       // Get filename
       for (;;){
-	char * newfile = file_chooser(gettext("Save figure"), "*.cas", "session.cas");
+	const char * newfile = file_chooser(gettext("Save figure"), "*.cas", "session.cas");
 	if ( (!newfile) || (!*newfile))
 	  return;
 	s=newfile; // remove_path(newfile);
@@ -7057,7 +7154,7 @@ namespace xcas {
     if (!f->geo->hp)
       return "";
     if (f){
-      char * newfile = load_file_chooser(gettext("Insert figure"), "*.cas", "",0,false);
+      const char * newfile = load_file_chooser(gettext("Insert figure"), "*.cas", "",0,false);
       if ( file_not_available(newfile))
 	return "";
       // Put newfile in selection and paste to f->geo->hp
@@ -7589,10 +7686,10 @@ namespace xcas {
 	fcnfield->value(gr->fcnfield.c_str());
       xmin->value(gr->window_xmin);
       xmax->value(gr->window_xmax);
-      xstep->value((xmax->value()-xmin->value())/64);
+      xstep->value((xmax->value()-xmin->value())/(modeplot==2?16:64));
       ymin->value(gr->window_xmin);
       ymax->value(gr->window_xmax);
-      ystep->value((xmax->value()-xmin->value())/64);
+      ystep->value((xmax->value()-xmin->value())/(modeplot==2?16:64));
     }
     int r=-1;
     w->set_modal();
@@ -8611,7 +8708,7 @@ namespace xcas {
     double save_vert_latex=giac::vert_latex;
     giac::vert_latex=xunit*h();
     string thename="tortue"+print_INT_(nsession)+".tex";
-    char * filename = file_chooser(gettext("Export to LaTeX"),"*.tex",thename.c_str());
+    const char * filename = file_chooser(gettext("Export to LaTeX"),"*.tex",thename.c_str());
 
     if (filename)
       graph2tex(filename,turtlevect2vecteur(*turtleptr),0,w(),0,h(),xunit,xunit,true,get_context(this));
@@ -8827,8 +8924,10 @@ namespace xcas {
 #endif
     // cerr << event << '\n';
     if ( (event==FL_ENTER) || (event==FL_LEAVE) ){
+#ifndef EMCC2
       if (event==FL_LEAVE)
 	redraw_cap_only=true;
+#endif
       redraw();
       return 1;
     }
@@ -9169,11 +9268,6 @@ namespace xcas {
 
   Fl_Menu_Item Logo_menu[] = {
     {gettext("M"), 0,  0, 0, 64, 0, 0, 14, 56},
-    {gettext("Mesh"), 0,  0, 0, 64, 0, 0, 14, 56},
-    {gettext("None"), 0,  (Fl_Callback*)cb_Logo_None, 0, 0, 0, 0, 14, 56},
-    {gettext("Square"), 0,  (Fl_Callback*)cb_Logo_Square, 0, 0, 0, 0, 14, 56},
-    {gettext("Triangle"), 0,  (Fl_Callback*)cb_Logo_Triangle, 0, 0, 0, 0, 14, 56},
-    {0},
     {gettext("View"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("Zoom in"), 0,  (Fl_Callback*)cb_Logo_Zoomin, 0, 0, 0, 0, 14, 56},
     {gettext("Zoom out"), 0,  (Fl_Callback*)cb_Logo_Zoomout, 0, 0, 0, 0, 14, 56},
@@ -9183,6 +9277,11 @@ namespace xcas {
     {gettext("Down"), 0,  (Fl_Callback*)cb_Logo_Down, 0, 0, 0, 0, 14, 56},
     {gettext("ShowPosition"), 0,  (Fl_Callback*)cb_Logo_ShowPosition, 0, 0, 0, 0, 14, 56},
     {gettext("HidePosition"), 0,  (Fl_Callback*)cb_Logo_HidePosition, 0, 0, 0, 0, 14, 56},
+    {0},
+    {gettext("Mesh"), 0,  0, 0, 64, 0, 0, 14, 56},
+    {gettext("None"), 0,  (Fl_Callback*)cb_Logo_None, 0, 0, 0, 0, 14, 56},
+    {gettext("Square"), 0,  (Fl_Callback*)cb_Logo_Square, 0, 0, 0, 0, 14, 56},
+    {gettext("Triangle"), 0,  (Fl_Callback*)cb_Logo_Triangle, 0, 0, 0, 0, 14, 56},
     {0},
     {gettext("Export/Print"), 0,  0, 0, 64, 0, 0, 14, 56},
     {gettext("EPS/PNG and preview"), 0,  (Fl_Callback*)cb_Logo_Preview, 0, 0, 0, 0, 14, 56},
@@ -9201,6 +9300,8 @@ namespace xcas {
     box(FL_FLAT_BOX);
     if (L>H/2)
       L=H/2;
+    if (L<30)
+      L=30;
     Fl_Group::current(this);
     xcas::HScroll * s = new xcas::HScroll (X,Y,W/4,H);
     s->box(FL_FLAT_BOX);
@@ -9217,9 +9318,11 @@ namespace xcas {
     t =  new Turtle(X+W/4,Y,W/2,H-L);
     t->labelsize(L);
     t->turtleptr=&giac::turtle_stack(context0); // will be overwritten by new_logo in History.cc
-    t->turtlezoom=2;
-    int bw=(W/2-5*L/2)/14; 
-    button_group = new Fl_Group(X+W/4,Y+H-L,bw*14,L);
+    if (W>=800 && H-L>400)
+      t->turtlezoom=2;
+    int nbut=6;//14;
+    int bw=(W/2-5*L/2)/nbut; 
+    button_group = new Fl_Group(X+W/4,Y+H-L,bw*nbut,L);
     int bx=button_group->x(),by=button_group->y();
     No_Focus_Button * avance = new No_Focus_Button(bx,by,bw,L);
     avance->label(gettext("fw"));
@@ -9241,55 +9344,72 @@ namespace xcas {
     tg->tooltip(gettext("Turtle turns left n degrees"));
     tg->callback((Fl_Callback *) cb_Logo_button);
     bx += bw;
-    No_Focus_Button * pc = new No_Focus_Button(bx,by,bw,L);
-    pc->label(gettext("ss"));
-    pc->tooltip(gettext("Turtle steps to the left from n steps"));
-    pc->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
-    No_Focus_Button * sa = new No_Focus_Button(bx,by,bw,L);
-    sa->label(gettext("ju"));
-    sa->tooltip(gettext("Turtle jumps n steps"));
-    sa->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
-    No_Focus_Button * cr = new No_Focus_Button(bx,by,bw,L);
-    cr->label(gettext("pe"));
-    cr->tooltip(gettext("Change pen color"));
-    cr->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
-    No_Focus_Button * ro = new No_Focus_Button(bx,by,bw,L);
-    ro->label(gettext("ci"));
-    ro->tooltip(gettext("Circle arc"));
-    ro->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
-    No_Focus_Button * di = new No_Focus_Button(bx,by,bw,L);
-    di->label(gettext("di"));
-    di->tooltip(gettext("Filled circle arc"));
-    di->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
-    No_Focus_Button * rp = new No_Focus_Button(bx,by,bw,L);
-    rp->label(gettext("fr"));
-    rp->tooltip(gettext("Filled rectangle"));
-    rp->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
-    No_Focus_Button * tp = new No_Focus_Button(bx,by,bw,L);
-    tp->label(gettext("ft"));
-    tp->tooltip(gettext("Filled triangle"));
-    tp->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
     No_Focus_Button * ec = new No_Focus_Button(bx,by,bw,L);
     ec->label(gettext("ec"));
     ec->tooltip(gettext("Write to the right of the turtle"));
     ec->callback((Fl_Callback *) cb_Logo_button);
     bx += bw;
-    No_Focus_Button * sg = new No_Focus_Button(bx,by,bw,L);
-    sg->label(gettext("sg"));
-    sg->tooltip(gettext("Sign picture"));
-    sg->callback((Fl_Callback *) cb_Logo_button);
-    bx += bw;
     No_Focus_Button * ef = new No_Focus_Button(bx,by,bw,L);
     ef->label(gettext("cl"));
     ef->tooltip(gettext("Clear all"));
     ef->callback((Fl_Callback *) cb_Logo_button);
+    bx += bw;
+    if (nbut>6){
+      No_Focus_Button * pc = new No_Focus_Button(bx,by,bw,L);
+      pc->label(gettext("ss"));
+      pc->tooltip(gettext("Turtle steps to the left from n steps"));
+      pc->callback((Fl_Callback *) cb_Logo_button);
+      bx += bw;
+    }
+    if (nbut>7){
+      No_Focus_Button * sa = new No_Focus_Button(bx,by,bw,L);
+      sa->label(gettext("ju"));
+      sa->tooltip(gettext("Turtle jumps n steps"));
+      sa->callback((Fl_Callback *) cb_Logo_button);
+      bx += bw;
+    }
+    if (nbut>8){
+      No_Focus_Button * cr = new No_Focus_Button(bx,by,bw,L);
+      cr->label(gettext("pe"));
+      cr->tooltip(gettext("Change pen color"));
+      cr->callback((Fl_Callback *) cb_Logo_button);
+      bx += bw;
+    }
+    if (nbut>9){
+      No_Focus_Button * ro = new No_Focus_Button(bx,by,bw,L);
+      ro->label(gettext("ci"));
+      ro->tooltip(gettext("Circle arc"));
+      ro->callback((Fl_Callback *) cb_Logo_button);
+      bx += bw;
+    }
+    if (nbut>10){
+      No_Focus_Button * di = new No_Focus_Button(bx,by,bw,L);
+      di->label(gettext("di"));
+      di->tooltip(gettext("Filled circle arc"));
+      di->callback((Fl_Callback *) cb_Logo_button);
+      bx += bw;
+    }
+    if (nbut>11){
+      No_Focus_Button * rp = new No_Focus_Button(bx,by,bw,L);
+      rp->label(gettext("fr"));
+      rp->tooltip(gettext("Filled rectangle"));
+      rp->callback((Fl_Callback *) cb_Logo_button);
+      bx += bw;
+    }
+    if (nbut>12){
+      No_Focus_Button * tp = new No_Focus_Button(bx,by,bw,L);
+      tp->label(gettext("ft"));
+      tp->tooltip(gettext("Filled triangle"));
+      tp->callback((Fl_Callback *) cb_Logo_button);
+      bx += bw;
+    }
+    if (nbut>13){
+      No_Focus_Button * sg = new No_Focus_Button(bx,by,bw,L);
+      sg->label(gettext("sg"));
+      sg->tooltip(gettext("Sign picture"));
+      sg->callback((Fl_Callback *) cb_Logo_button);
+      bx+=bw;
+    }
     button_group->end();
     menubar = new Fl_Menu_Bar(button_group->x()+button_group->w(),button_group->y(),W/2-button_group->w(),L);
     int ls= Logo_menu->size();
@@ -9344,6 +9464,8 @@ namespace xcas {
     int L=labelsize();
     if (L>H/2)
       L=H/2;
+    if (L<30)
+      L=30;
     int hph=hp->h();
     Fl_Group * g =  hp->parent();
     if (Fl_Scroll * scroll = dynamic_cast<Fl_Scroll *>(g))

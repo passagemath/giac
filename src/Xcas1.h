@@ -49,6 +49,7 @@ namespace xcas {
   extern Fl_Window * getkeywin;
   extern Fl_Window * Xcas_DispG_Window;
   extern Fl_Window * Xcas_Main_Window;
+  extern Fl_Widget * Xcas_MainTab;
   extern Fl_Button *Xcas_DispG_Cancel;
   extern Fl_Button *Xcas_Cancel;
   extern Fl_Double_Window * Xcas_Debug_Window;

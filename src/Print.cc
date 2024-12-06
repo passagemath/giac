@@ -40,7 +40,6 @@
 
 using namespace std;
 using namespace giac;
-
 #ifdef FL_DEVICE 
 
 //#include <FL/Fl_Printer.H>
@@ -71,6 +70,12 @@ using namespace giac;
 #ifndef NO_NAMESPACE_XCAS
 namespace xcas {
 #endif // ndef NO_NAMESPACE_XCAS
+#ifdef EMCC2
+  bool printer_landscape=false;
+  void widget_ps_print(Fl_Widget * widget,const std::string & fname0,bool eps,int pngpdf,bool preview,bool hidemouseparam,bool askusersize){}
+  void widget_print(Fl_Widget * widget){}
+#else
+
 
 #ifdef FL_DEVICE 
   double pixel_scale=0.21*FL_MM; // 1000 pixels=21 cm
@@ -845,7 +850,7 @@ namespace xcas {
       fname1="session";
     string fname(remove_extension(fname1)+(eps?".eps":".ps"));
     if (!eps || pngpdf){
-      char * filename = file_chooser(eps?"Print to EPS/PNG/PDF file":"Print to PS file",eps?"*.eps":"*.ps",fname.c_str());
+      const char * filename = file_chooser(eps?"Print to EPS/PNG/PDF file":"Print to PS file",eps?"*.eps":"*.ps",fname.c_str());
       if(!filename) return;
       fname=remove_extension(filename)+(eps?".eps":".ps");
     }
@@ -1001,6 +1006,8 @@ namespace xcas {
 #endif
   }
 
+#endif // EMCC2
+  
 #ifndef NO_NAMESPACE_XCAS
 } // namespace xcas
 #endif // ndef NO_NAMESPACE_XCAS

@@ -2063,7 +2063,7 @@ id="matr_case' + i + '_' + j + '">' + oldval + '</textarea><div class="matrixcel
       //var sforum=encodeURIComponent('[url]'+s+'[/url]');
       sforum = '[url=' + sforum + ']'+fname+'[/url]';
         //console.log(sforum);
-      $id('theforumlink').innerHTML = sforum;
+      $id('theforumlink').value = sforum;
       var copy = "<button title=";
       copy += UI.langue == -1 ? "'Partager cette session sur le forum'" : "'Share this session on the forum'";
       copy += " class='bouton' onclick='var tmp=$id(\"theforumlink\"); tmp.style.display=\"inline\";tmp.select();document.execCommand(\"copy\");tmp.style.display=\"none\"; ";

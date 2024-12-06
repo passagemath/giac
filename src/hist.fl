@@ -8,6 +8,9 @@ code_name {.cxx}
 decl {\#include <algorithm>} {public local
 }
 
+decl {\#include "qrcodegen.h"} {public local
+}
+
 decl {\#include "Xcas1.h"} {public local
 }
 
@@ -29,6 +32,14 @@ decl {\#include <FL/fl_show_colormap.H>} {public local
 declblock {\#ifdef FL_DEVICE} {open after {\#endif}
 } {
   decl {\#include <FL/gl.h>} {private local
+  }
+}
+
+declblock {\#ifdef EMCC2} {open after {\#endif}
+} {
+  decl {\#include <emscripten.h>
+  \#include "opengl.h"
+  void Xcas_emscripten_main_loop();} {private local
   }
 }
 
@@ -74,6 +85,9 @@ declblock {\#ifdef HAVE_MALLOC_H} {open after {\#endif}
   }
 }
 
+decl {Fl_Group * qrgroup=0; xcas::QRGraph * qrwid=0; xcas::No_Focus_Button *qrforum=0,*qremail=0; Fl_Menu_Bar *qrmenu=0;} {private local
+}
+
 decl {char ** xcas_argv;} {private local
 }
 
@@ -99,6 +113,38 @@ decl {std::string rpn_menu_string[6],rpnn_menu_string[5],doc_prefix("doc/fr/"); 
 }
 
 decl {giac::vecteur home_menu, rpnn_menu[5];} {private local
+}
+
+Function {Xcas_qrresize()} {return_type void
+} {
+  code {int h1=Xcas_Keyboard_Group->h(),h2=Xcas_Scientific_Keyboard->h();
+          int L=Xcas_Keyboard_Group->labelsize();
+          //if (L<26) L=26; if (L>50) L=50;
+          int H=giac::giacmin(h1-2*h2,Xcas_Keyboard_Group->w()-3*L);
+          int scale=H/qrwid->size_border;
+            if (scale>=2){
+              qrwid->QRscale=scale;
+              int X=Xcas_Keyboard_Group->x();
+              int Y=Xcas_Keyboard_Group->y()+Xcas_Keyboard_Group->h()-H;
+              qrgroup->resize(X,Y,H+3*L,H);
+              int S=4*L/3;
+              xcas::change_group_fontsize(qrgroup,L);
+              //qrmenu->labelsize(20);
+              //qrforum->labelsize(L);
+              //qremail->labelsize(L);
+              qrwid->resize(X+3*L,Y,H,H);
+              qrmenu->resize(X,Y+L/3,3*L,S);
+              qrforum->resize(X,Y+7*L/3,3*L,S);
+              qremail->resize(X,Y+13*L/3,3*L,S);
+\#ifdef EMCC2
+              qrforum->hide();
+              qremail->hide();
+\#endif
+              qrgroup->show();
+              qrgroup->redraw();
+            }
+            else
+              qrgroup->hide();} {}
 }
 
 Function {Xcas_alt_ctrl_cb(int i)} {return_type void
@@ -331,6 +377,8 @@ Function {rpn_button(xcas::No_Focus_Button * wid,int i)} {return_type void
      make_thread(giac::symbolic(giac::at_of,makevecteur(e,eqwptr->get_selection())),eval_level(cptr),xcas::Equation_eval_callback,eqwptr,cptr);
      return;
   }
+  if (e.is_symb_of_sommet(giac::at_equal))
+    e=e[1];
   if (e.type==giac::_FUNC){
     xcas::help_output(e._FUNCptr->ptr()->s,giac::language(contextptr));
     if (eqwptr){
@@ -413,30 +461,174 @@ Function {show_rpn_menu(unsigned i)} {return_type void
 
 Function {Xcas_resize_mainwindow()} {return_type void
 } {
-  code {int h=Xcas_Main_Window_->h();
-    int w_=Xcas_Main_Window_->w(),i=Xcas_Main_Window_->labelsize(),y=i+4;
+  code {int h=Xcas_Main_Window_->h(),w_=Xcas_Main_Window_->w();
+    int i=Xcas_Main_Window_->labelsize(),y=i+4;
     int dy=0;
     int bs=Xcas_Messages->visible()?4*y:0;
     int bottom=bs;
-    int kh=4*(i+5); // keyboard size
-    int bh=(i+5); // bandeau size
-    if (Xcas_Keyboard_Group->visible()) dy += kh ;
+    int kh=4*(i+5); // keyboard vertical size
+    int bh=(i+25); // bandeau size
     if (Xcas_Bandeau_Keys->visible()) dy += bh;
     Xcas_main_menu->resize(0,0,w_,y);
-    Xcas_Main_Tab->resize(0,y,w_,h-y-bottom-dy);
-    Xcas_Main_Tab->redraw();
-    Xcas_Keyboard_Group->resize(0,h-bottom-dy,w_,kh);
+    int kw=w_;
+    if (h>=w_){ // keyboard below
+      //if (h>1300) kh*=3.5; else 
+      if (h>1000) kh*=2.75; else if (h>=800) kh*=2.25;  else if (h>=600) kh*=1.5;
+      if (Xcas_Keyboard_Group->visible()) dy += kh ;
+      int qr=0;
+      if (!Xcas_Bandeau_Keys->visible() && h-y-bottom-dy>2*370) qr=370;
+      Xcas_Main_Tab->resize(0,y,w_,h-y-bottom-dy-qr);
+      Xcas_Main_Tab->redraw();
+      int kbdy=Xcas_Main_Tab->y()+Xcas_Main_Tab->h();
+      Xcas_Keyboard_Group->resize(0,kbdy,w_,kh+qr);
+      Kbd_control->resize(0,kbdy,0.44*kw,kh/2);
+      Numeric_numbers->resize(0.44*kw,kbdy,0.56*kw,kh/2);
+      Xcas_Alpha_Keyboard->resize(0, kbdy+kh/2,kw,kh/2);
+      Xcas_Scientific_Keyboard->resize(0, kbdy+kh/2,kw,kh/2);
+    } else { // keyboard right
+      double lambda=0.36;
+      kw=lambda*w_;
+      if (Xcas_Keyboard_Group->visible())
+        Xcas_Main_Tab->resize(0,y,w_-kw,h-y-bottom-dy);
+      else
+        Xcas_Main_Tab->resize(0,y,w_,h-y-bottom-dy);
+      Xcas_Main_Tab->redraw();
+      int dw=5,ww=dw+(1-lambda)*w_; kw-=dw;
+      int yy=y+dw;
+      kh=h-yy-bottom-dy; 
+      Xcas_Keyboard_Group->resize(ww,yy,kw,kh);
+      const int maxkbdsize=8*36; if (kh>maxkbdsize) kh=maxkbdsize;
+      Kbd_control->resize(ww,yy,0.44*kw,kh/2);
+      Numeric_numbers->resize(ww+0.44*kw,yy,0.56*kw,kh/2);
+      Xcas_Alpha_Keyboard->resize(ww, yy+kh/2,kw,kh/2);
+      Xcas_Scientific_Keyboard->resize(ww, yy+kh/2,kw,kh/2);
+    }
+      if (!qrwid){
+        int L=20;
+        qrgroup=new Fl_Group(0,0,L,3*L);
+static Fl_Menu_Item qrmenu_menu[] = {
+    {gettext("Clone"), 0,  0, 0, 64, 0, 0, 14, 56},
+    {gettext("Forum"), 0,  (Fl_Callback*)xcas::cb_qrforum, 0, 0, 0, 0, 14, 56},
+    {gettext("Email"), 0,  (Fl_Callback*)xcas::cb_qremail, 0, 0, 0, 0, 14, 56},
+    {gettext("QRcode Xcas FLTK"), 0,  (Fl_Callback*)xcas::cb_qrxcas, 0, 0, 0, 0, 14, 56},
+    {gettext("QRcode XcasJS"), 0,  (Fl_Callback*)xcas::cb_qrjcas, 0, 0, 0, 0, 14, 56},
+    {gettext("QRcode calculatrice"), 0,  (Fl_Callback*)xcas::cb_qrkcas, 0, 0, 0, 0, 14, 56},
+    {gettext("QRcode Xcasfr"), 0,  (Fl_Callback*)xcas::cb_qrwcas, 0, 0, 0, 0, 14, 56},
+    {gettext("QRcode Tableaufr"), 0,  (Fl_Callback*)xcas::cb_qrtcas, 0, 0, 0, 0, 14, 56},
+    {gettext("Xcas FLTK"), 0,  (Fl_Callback*)xcas::cb_qrxcas2, 0, 0, 0, 0, 14, 56},
+    {gettext("XcasJS"), 0,  (Fl_Callback*)xcas::cb_qrjcas2, 0, 0, 0, 0, 14, 56},
+    {gettext("calculatrice"), 0,  (Fl_Callback*)xcas::cb_qrkcas2, 0, 0, 0, 0, 14, 56},
+    {gettext("Xcasfr"), 0,  (Fl_Callback*)xcas::cb_qrwcas2, 0, 0, 0, 0, 14, 56},
+    {gettext("Tableaufr"), 0,  (Fl_Callback*)xcas::cb_qrtcas2, 0, 0, 0, 0, 14, 56},
+    {0},
+    {0},
+  };
+        qrmenu = new Fl_Menu_Bar(0,0,L,L,"Clone");
+        qrmenu->menu(qrmenu_menu);
+        qrforum = new xcas::No_Focus_Button(0,L,L,L);
+        qrforum->label(gettext("Forum"));
+        qrforum->tooltip(gettext("Forum"));
+        qrforum->callback((Fl_Callback *) xcas::cb_qrforum);
+        qremail = new xcas::No_Focus_Button(0,2*L,L,L);
+        qremail->label(gettext("Email"));
+        qremail->tooltip(gettext("Email"));
+        qremail->callback((Fl_Callback *) xcas::cb_qremail);
+        qrwid=new xcas::QRGraph(0,0,1 /* initscale */);
+        qrgroup->end();
+        qrgroup->hide();
+        Xcas_Keyboard_Group->add(qrgroup);
+      }
+    if (qrwid && qrwid->size_border){
+      Xcas_qrresize();
+    }
+    // alpha and sci kbd below controls and numbers
     Xcas_Keyboard_Group->redraw();
     Xcas_Bandeau_Keys->resize(0,h-bottom-bh,w_,bh);
+\#if 1 // def EMCC2
+    Xcas_close_bandeau->hide();
+    Xcas_Bandeau_Keys_Group->resize(0,h-bottom-bh,w_,bh);
+\#endif
     Xcas_Bandeau_Keys->redraw();
     Xcas_Messages->resize(0,h-bottom,w_,bs);
     Xcas_Messages->redraw();
     Xcas_Main_Window_->init_sizes();} {}
 }
 
+Function {Xcas_qrupdate(int i)} {return_type void
+} {
+  code {if (qrwid){
+        enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;  // Error correction level
+        // Make the QR Code symbol
+        uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
+        uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
+        int pos=0;
+        std::string S;
+        S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/giac/xcas.html\#filename=";
+        if (giac::absint(i)==2) S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/kcasfr.html\#filename=";
+        else if (giac::absint(i)==3) S="https://xcas.univ-grenoble-alpes.fr/xcasjs/\#filename=";
+        else if (giac::absint(i)==4) S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasfr.html\#filename=";
+        else if (giac::absint(i)==5) S="https://www-fourier.univ-grenoble-alpes.fr/~parisse/tableaufr.html\#filename=";
+        string session;
+\#ifdef EMCC2
+        char *str = (char*)EM_ASM_PTR({
+           var jsString = UI.getfrom();
+           return stringToNewUTF8(jsString);
+        });
+        if (str){
+          if (strlen(str)) session=string("@")+str;
+          free(str);
+        }
+        fprintf(stdout,"from %s\\n",session.c_str());
+\#endif
+        S += session.empty()?Xcas_current_session_name():session;
+        S+="&"+xcas::widget_html5(Xcas_current_session(),pos);
+\#ifdef EMCC2
+  EM_ASM({
+    UI.updatemaillink(UTF8ToString($0));
+  },S.c_str());
+\#endif
+        if (i==-256){
+           S="[url="+S+"]"+"session Xcas"+"[/url]";
+           Fl::copy(S.c_str(),S.size(),1);
+           static int alertforum=1;
+           if (alertforum) { fl_alert("%s",gettext("Link copied to clipboard")); alertforum=0; }
+           S="https://xcas.univ-grenoble-alpes.fr/forum/viewforum.php?f=25";
+        }
+        if (i==-512){
+          string uS=xcas::urlencode(S.c_str());
+          S = "mailto:email@fr?subject=session Xcas&body=Bonjour%0d%0aVeuillez suivre ce lien : <"+uS+">";
+        }
+        if (i<=0)
+          giac::system_browser_command(S.c_str());
+        bool ok=qrcodegen_encodeText(S.c_str(), tempBuffer, qrcode, errCorLvl,qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true);
+        if (ok){
+          int initscale=2;
+          memset(qrwid->data,255,sizeof(qrwid->data));
+          qrwid->filename="qr"+giac::remove_path(giac::remove_extension(Xcas_current_session_name()));
+          int size = qrcodegen_getSize(qrcode);
+          int border = 4; // 177+2*4==QR_WIDTH/HEIGHT
+          qrwid->size_border=size+2*border;
+          for (int y = -border; y < size + border; y++) {
+            for (int x = -border; x < size + border; x++) {
+              qrwid->data[border+x][border+y]=qrcodegen_getModule(qrcode, x, y)?0:255;
+            }
+          }
+          Xcas_qrresize();
+        }
+      }} {}
+}
+
 Function {Xcas_change_labelsize(int i)} {return_type void
 } {
-  code {xcas::change_group_fontsize(Xcas_Main_Window_,i);
+  code {\#ifdef EMCC2
+    EM_ASM({
+      console.log('labelsize',$0);
+    },i);
+\#endif
+    cerr << "New labelsize " << i << "\\n";
+    xcas::change_group_fontsize(Xcas_Main_Window_,i);
+    if (xcas::handle_tab_w)  
+      xcas::change_group_fontsize(xcas::handle_tab_w,i);
     Xcas_resize_mainwindow();
     if (xcas::Xcas_Debug_Window){ 
       xcas::Xcas_Debug_Window->labelfont(Xcas_Main_Window_->labelfont());
@@ -459,7 +651,10 @@ Function {Xcas_change_labelsize(int i)} {return_type void
 
 Function {Xcas_widget_size(const giac::gen & g,const giac::context * cptr)} {return_type {giac::gen}
 } {
-  code {int f=14,ff=0;
+  code {int f=18,ff=0;
+\#ifdef EMCC2
+   f=24;
+\#endif
     int x=Xcas_Main_Window_->x(),y=Xcas_Main_Window_->y(),w=Xcas_Main_Window_->w(),h=Xcas_Main_Window_->h();
     const giac::context * contextptr=Xcas_get_context();
     if (g.type==giac::_VECT){
@@ -639,7 +834,11 @@ Function {Xcas_widget_size(const giac::gen & g,const giac::context * cptr)} {ret
       ff=0;
     Xcas_Main_Window_->labelfont(ff);
     Xcas_change_labelsize(f);
+\#ifdef EMCC2
+    Xcas_Main_Window_->resize(0,0,w-2,h-(h>w?100:30));
+\#else
     Xcas_Main_Window_->resize(x,y,w,h);
+\#endif
     Xcas_resize_mainwindow(); 	
     return giac::plus_one;} {}
 }
@@ -922,7 +1121,11 @@ Function {load_autorecover_data()} {open
     std::string configname=giac::home_directory()+giac::xcasrc();
 \#endif //
    if (!giac::is_file_available(configname.c_str())){
-    Xcas_widget_size(giac::makevecteur(18,40,90,900,550,0,0,1),0);
+\#ifdef EMCC2
+    Xcas_widget_size(giac::makevecteur(24,40,90,900,485,0,0,1),0);
+\#else
+    Xcas_widget_size(giac::makevecteur(14,40,90,900,485,0,0,1),0);
+\#endif
     FILE * f =fopen(configname.c_str(),"w");
     if (f){
       fclose(f);
@@ -950,7 +1153,7 @@ Function {load_autorecover_data()} {open
 \#ifdef IPAQ // default with bandeau
      std::string configs="widget_size(12,1,1,300,240,1,2,1,";
 \#else // ifndef IPAQ, 
-     std::string configs="widget_size(16,40,90,900,550,"+giac::print_INT_(n!=0)+",2,0,";
+     std::string configs="widget_size(16,40,90,900,485,"+giac::print_INT_(n!=0)+",2,0,";
 \#endif // IPAQ
      configs += '7';
      configs += ','; 
@@ -1133,17 +1336,58 @@ std::ofstream of((giac::home_directory()+giac::xcasrc()).c_str());
      of << "insmod(" << it->print(contextptr) << ");" << std::endl;} {}
 }
 
+Function {Xcas_emscripten_main_loop()} {open
+} {
+  code {\#ifdef EMCC2
+  Fl::wait(); 
+  if (1){
+     // resize? (if there is an orientation change)
+     int W,H;
+     W=EM_ASM_INT({
+ 	// console.log("w h",window.innerWidth,window.innerHeight);
+ 	return window.innerWidth;
+       });
+     H=EM_ASM_INT({
+ 	return window.innerHeight;
+       });
+     if (H<480) H=480;
+     //if (H>1024) H=1024;
+     if (giac::absint(W-Xcas_Main_Window_->w())>=32 ||
+         giac::absint(H-Xcas_Main_Window_->h())>=32 ){
+       if (H>W){
+ 	if (Xcas_Main_Window_->labelsize()<36)
+           Xcas_change_labelsize(36);
+       }  
+       else {
+ 	if (Xcas_Main_Window_->labelsize()>24)
+ 	  Xcas_change_labelsize(24);
+       }
+       Xcas_Main_Window_->resize(0,0,W-2,H-(H>W?100:30));
+       if (xcas::handle_tab_w) xcas::handle_tab_w->resize(0,0,W-2,H-2);
+       Xcas_resize_mainwindow();
+     }
+   }
+\#endif} {}
+}
+
 Function {Xcas_run(int argc,char ** argv)} {open
 } {
+  code {//stack_check_init(256*1024);
+signal(SIGINT,giac::ctrl_c_signal_handler);
+giac::child_id=1;
+giac::print_rewrite_prod_inv=true;
+doc_prefix=giac::read_env(giac::context0); // Set giac::language and modes from environment
+xcas::read_aide("aide_cas",giac::language(giac::context0));
+giac::set_language(giac::language(giac::context0),giac::context0);} {}
   Fl_Window Xcas_Main_Window_ {
     label {Xcas New Interface} open
-    xywh {315 131 865 530} type Single resizable visible
+    xywh {559 182 865 530} type Single resizable visible
   } {
-    Fl_Menu_Bar Xcas_main_menu {open
+    Fl_Menu_Bar Xcas_main_menu {
       xywh {0 0 775 25}
     } {
       Submenu Xcas_file_menu {
-        label File open
+        label File
         xywh {0 0 100 20}
       } {
         MenuItem Xcas_new_session {
@@ -1170,6 +1414,11 @@ Function {Xcas_run(int argc,char ** argv)} {open
           label Import
           xywh {0 0 100 20}
         } {
+          MenuItem Xcas_open_ti83 {
+            label {TI83/84}
+            callback {load_history(-7);}
+            xywh {15 15 100 20}
+          }
           MenuItem Xcas_open_casio {
             label Khicas
             callback {load_history(-1);}
@@ -1222,7 +1471,7 @@ Function {Xcas_run(int argc,char ** argv)} {open
           }
           MenuItem Xcas_QRcode2 {
             label {QRcode Xcas web}
-            callback {int pos=0;std::string html5="https://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasfr.html\#filename="+Xcas_current_session_name()+"&"+xcas::widget_html5(Xcas_current_session(),pos); if (!xcas::QRdisp(html5.c_str())) fl_alert(gettext("Unable to convert to a QR code."));} selected
+            callback {int pos=0;std::string html5="https://www-fourier.univ-grenoble-alpes.fr/~parisse/xcasfr.html\#filename="+Xcas_current_session_name()+"&"+xcas::widget_html5(Xcas_current_session(),pos); if (!xcas::QRdisp(html5.c_str())) fl_alert(gettext("Unable to convert to a QR code."));}
             xywh {10 10 100 20} shortcut 0x80072
           }
           MenuItem Xcas_CloneOffline {
@@ -1522,6 +1771,11 @@ Function {Xcas_run(int argc,char ** argv)} {open
           label {Export as}
           xywh {0 0 100 20}
         } {
+          MenuItem Xcas_Export_Khicas_TI83 {
+            label {TI83/84}
+            callback {xcas::History_cb_Save_as_xcas_ti83(Xcas_current_session(),0);}
+            xywh {65 65 100 20}
+          }
           MenuItem Xcas_Export_Khicas_Casio {
             label {HP Prime, Casio}
             callback {xcas::History_cb_Save_as_xcas_casio(Xcas_current_session(),0);}
@@ -2464,7 +2718,7 @@ giac::html_help_init("aide_cas",language(contextptr),true,true);}
         }
       }
       Submenu Xcas_help_CASmenu {
-        label Toolbox open
+        label Toolbox
         xywh {20 20 100 20}
       } {
         MenuItem Xcas_Add_Entry {
@@ -2476,6 +2730,11 @@ giac::html_help_init("aide_cas",language(contextptr),true,true);}
           label {New comment}
           callback {xcas::History_cb_New_Comment_Input(Xcas_current_session(),0);}
           xywh {40 40 100 20} shortcut 0x8007a
+        }
+        MenuItem Xcas_Add_Expression {
+          label {New expression}
+          callback {xcas::History_cb_New_Equation(Xcas_current_session(),0);}
+          xywh {130 130 100 20} shortcut 0x80065
         }
         Submenu Xcas_help_equations {
           label Equations
@@ -2895,16 +3154,6 @@ giac::html_help_init("aide_cas",language(contextptr),true,true);}
           }
         }
       }
-      Submenu Xcas_help_expression {
-        label Expression
-        xywh {40 40 100 20}
-      } {
-        MenuItem Xcas_Add_Expression {
-          label {New expression}
-          callback {xcas::History_cb_New_Equation(Xcas_current_session(),0);}
-          xywh {125 125 100 20} shortcut 0x80065
-        }
-      }
       Submenu Xcas_help_allcmds {
         label Cmds
         xywh {85 85 100 20}
@@ -3199,10 +3448,6 @@ if (f && plotparam_dialog(f,arg,2)){
         label Phys open
         xywh {95 95 100 20}
       } {}
-      Submenu Xcas_help_scolaire {
-        label Highschool open
-        xywh {75 75 100 20}
-      } {}
       Submenu Xcas_help_tortue {
         label Turtle open
         xywh {65 65 100 20}
@@ -3213,220 +3458,189 @@ if (f && plotparam_dialog(f,arg,2)){
           xywh {105 105 100 20} shortcut 0x8006c
         }
       }
+      Submenu Xcas_help_scolaire {
+        label Highschool open
+        xywh {75 75 100 20}
+      } {}
     }
     Fl_Tabs Xcas_Main_Tab {open
       xywh {0 25 775 360} selection_color 215 resizable
       class {xcas::Xcas_Tabs}
     } {}
     Fl_Group Xcas_Keyboard_Group {open
-      xywh {0 410 490 110}
+      xywh {0 410 510 110}
     } {
-      Fl_Group Xcas_Alpha_Keyboard {
-        xywh {0 415 310 100} hide
+      Fl_Group Xcas_Alpha_Keyboard {open
+        xywh {205 415 305 105} hide
       } {
         Fl_Button Xcas_a_key {
           label a
-          xywh {0 415 30 25} color 10 labelsize 10
+          xywh {205 415 35 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_b_key {
           label b
-          xywh {30 415 25 25} color 10 labelsize 10
+          xywh {240 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_c_key {
           label c
-          xywh {55 415 25 25} color 10 labelsize 10
+          xywh {270 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_d_key {
           label d
-          xywh {80 415 25 25} color 10 labelsize 10
+          xywh {300 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_e_key {
           label e
-          xywh {105 415 25 25} color 10 labelsize 10
+          xywh {330 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_f_key {
           label f
-          xywh {130 415 25 25} color 10 labelsize 10
+          xywh {360 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_g_key {
           label g
-          xywh {155 415 25 25} color 10 labelsize 10
+          xywh {390 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_h_key {
           label h
-          xywh {180 415 25 25} color 10 labelsize 10
+          xywh {420 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_i_key {
           label i
-          xywh {205 415 25 25} color 10 labelsize 10
+          xywh {450 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_j_key {
           label j
-          xywh {230 415 25 25} color 10 labelsize 10
+          xywh {480 415 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_k_key {
           label k
-          xywh {255 415 25 25} color 10 labelsize 10
+          xywh {205 440 35 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_l_key {
           label l
-          xywh {280 415 30 25} color 10 labelsize 10
+          xywh {240 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_m_key {
           label m
-          xywh {0 440 30 25} color 10 labelsize 10
+          xywh {270 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_n_key {
           label n
-          xywh {30 440 25 25} color 10 labelsize 10
+          xywh {300 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_o_key {
           label o
-          xywh {55 440 25 25} color 10 labelsize 10
+          xywh {330 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_p_key {
           label p
-          xywh {80 440 25 25} color 10 labelsize 10
+          xywh {360 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_q_key {
           label q
-          xywh {105 440 25 25} color 10 labelsize 10
+          xywh {390 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_r_key {
           label r
-          xywh {130 440 25 25} color 10 labelsize 10
+          xywh {420 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_s_key {
           label s
-          xywh {155 440 25 25} color 10 labelsize 10
+          xywh {450 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_t_key {
           label t
-          xywh {180 440 25 25} color 10 labelsize 10
+          xywh {480 440 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_u_key {
           label u
-          xywh {205 440 25 25} color 10 labelsize 10
+          xywh {205 465 35 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_v_key {
           label v
-          xywh {230 440 25 25} color 10 labelsize 10
+          xywh {240 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_w_key {
           label w
-          xywh {255 440 25 25} color 10 labelsize 10
+          xywh {270 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_x_key {
           label x
-          xywh {280 440 30 25} color 10 labelsize 10
+          xywh {300 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_y_key {
           label y
-          xywh {0 465 30 25} color 10 labelsize 10
+          xywh {330 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_z_key {
           label z
-          xywh {30 465 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Inferieur_key {
-          label {<}
-          xywh {55 465 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Superieur_key {
-          label {>}
-          xywh {80 465 25 25} color 10 labelsize 10
+          xywh {360 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Backslash_key {
           label {\\}
-          xywh {30 490 25 25} color 10 labelsize 10
+          xywh {240 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Parenthese_ouvrante_key {
           label {(}
-          xywh {105 465 25 25} color 10 labelsize 10
+          xywh {390 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Parenthese_fermante_key {
           label {)}
-          xywh {130 465 25 25} color 10 labelsize 10
+          xywh {420 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Espace_key {
           label { }
-          xywh {255 490 25 25} color 10 labelsize 10
+          xywh {450 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Point_exclamation_key {
           label {!}
-          xywh {180 490 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Crochet_fermant_key {
-          label {]}
-          xywh {180 465 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Crochet_ouvrant_key {
-          label {[}
-          xywh {155 465 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Accolade_ouvrant_key {
-          label {\{}
-          xywh {205 465 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Accolade_fermant_key {
-          label {\}}
-          xywh {230 465 25 25} color 10 labelsize 10
+          xywh {390 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Deux_points_key {
           label {:}
-          xywh {130 490 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Equal_key {
-          label {=}
-          xywh {155 490 25 25} color 10 labelsize 10
+          xywh {360 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Guillemet_key {
           label {"}
-          xywh {280 465 30 25} color 10 labelsize 10
+          xywh {480 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Souligne_key {
           label _
-          xywh {55 490 25 25} color 10 labelsize 10
+          xywh {270 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Majuscule_key {
@@ -3550,17 +3764,12 @@ if (Xcas_Greek_key->label()==std::string("A")){
 \#endif
 }
 Xcas_Alpha_Keyboard->redraw();}
-          xywh {0 490 30 25} color 1 labelsize 10
+          xywh {205 490 35 25} color 1 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Diese_key {
           label {\#}
-          xywh {205 490 25 25} color 10 labelsize 10
-          class {xcas::No_Focus_Button}
-        }
-        Fl_Button Xcas_Pi_key {
-          label {Π}
-          xywh {230 490 25 25} color 10 labelsize 10
+          xywh {420 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Greek_key {
@@ -3638,420 +3847,449 @@ else {
 }
 \#endif
 Xcas_Alpha_Keyboard->redraw();}
-          xywh {280 490 30 25} color 1 selection_color 0 labelfont 12
+          xywh {480 490 30 25} color 1 selection_color 0 labelfont 12
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Alpha_virgule_key {
           label {,}
-          xywh {80 490 25 25} color 10 labelsize 10
+          xywh {300 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Alpha_point_virgule_key {
           label {;}
-          xywh {105 490 25 25} color 10 labelsize 10
+          xywh {330 490 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Alpha_quote_key {
           label {'}
-          xywh {255 465 25 25} color 10 labelsize 10
+          xywh {450 465 30 25} color 10 labelsize 10
           class {xcas::No_Focus_Button}
         }
       }
-      Fl_Group Xcas_Scientific_Keyboard {open
-        xywh {0 415 310 100}
+      Fl_Group Xcas_Scientific_Keyboard {
+        xywh {205 415 280 100}
       } {
-        Fl_Group Lettre_keyboard {open
-          xywh {0 415 50 50}
+        Fl_Group Lettre_keyboard {
+          xywh {435 465 50 50}
         } {
           Fl_Button Xcas_Variable_x {
             label x
-            xywh {0 415 25 25} shortcut 0x78 labelsize 10
+            xywh {435 465 25 25} shortcut 0x78 labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Variable_y {
             label y
-            xywh {25 415 25 25} shortcut 0x79 labelsize 10
+            xywh {460 465 25 25} shortcut 0x79 labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Variable_z {
             label z
-            xywh {0 440 25 25} shortcut 0x7a labelsize 10
+            xywh {435 490 25 25} shortcut 0x7a labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Variable_t {
             label t
-            xywh {25 440 25 25} shortcut 0x74 labelsize 10
+            xywh {460 490 25 25} shortcut 0x74 labelsize 10
             class {xcas::No_Focus_Button}
           }
         }
-        Fl_Group Xcas_Delim_keyboard {
-          xywh {50 415 140 50}
+        Fl_Group Xcas_Delim_keyboard {open
+          xywh {205 415 280 50}
         } {
+          Fl_Menu_Bar Xcas_calculus_group {open
+            xywh {205 415 165 25}
+          } {
+            MenuItem Xcas_Helpon {
+              label { ? }
+              callback {Fl_Widget * w=xcas::Xcas_input_focus;
+           if (xcas::Xcas_Text_Editor * ed=dynamic_cast<xcas::Xcas_Text_Editor *>(w))
+             ed->completion();}
+              tooltip {Help on current command} xywh {30 30 31 20} labelsize 10
+            }
+            Submenu Xcas_Alg_Menubutton {
+              label alg open
+              xywh {400 420 45 25} labelsize 10
+            } {
+              MenuItem Xcas_Alg_simplify {
+                label simplify
+                callback {Fl::e_text=(char *)"simplify(";Fl::e_length=9; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {20 20 31 20} labelsize 10
+              }
+              MenuItem Xcas_Alg_factor {
+                label factor
+                callback {Fl::e_text=(char *)"factor(";Fl::e_length=7; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {20 20 31 20} labelsize 10
+              }
+            }
+            Submenu Xcas_Calc_Menubutton {
+              label calc open
+              xywh {445 420 45 25} labelsize 10
+            } {
+              MenuItem Xcas_Calc_diff {
+                label {∂}
+                callback {Fl::e_text=(char *)"diff(";;Fl::e_length=5; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {30 30 31 20} labelsize 10
+              }
+              MenuItem Xcas_Calc_integrate {
+                label {∫}
+                callback {Fl::e_text=(char *)"integrate(";Fl::e_length=11; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {30 30 31 20} labelsize 10
+              }
+              MenuItem Xcas_Calc_sum {
+                label sum
+                callback {Fl::e_text=(char *)"sum(";
+Fl::e_length=4; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {30 30 31 20} labelsize 10
+              }
+              MenuItem Xcas_Calc_limit {
+                label limit
+                callback {Fl::e_text=(char *)"limit(";
+Fl::e_length=6; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {30 30 31 20} labelsize 10
+              }
+            }
+            Submenu Xcas_Plot_Menubutton {
+              label plot open
+              xywh {400 445 45 25} labelsize 10
+            } {
+              MenuItem Xcas_Plot_plot {
+                label plot
+                callback {Fl::e_text=(char *)"plot(";Fl::e_length=5; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {30 30 31 20} labelsize 10
+              }
+              MenuItem Xcas_Plot_plotparam {
+                label plotparam
+                callback {Fl::e_text=(char *)"plotparam(";Fl::e_length=10; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {30 30 31 20} labelsize 10
+              }
+              MenuItem Xcas_Plot_plotpolar {
+                label plotpolar
+                callback {Fl::e_text=(char *)"plotpolar(";Fl::e_length=10; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {40 40 31 20} labelsize 10
+              }
+            }
+            Submenu Xcas_Prg_Menubutton {
+              label prg
+              xywh {445 445 45 25} labelsize 10
+            } {
+              MenuItem Xcas_Prg_si {
+                label si
+                callback {Fl::e_text=(char *)" si alors sinon fsi; ";Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {10 10 31 20} labelsize 10
+              }
+              MenuItem Xcas_Prg_pour {
+                label pour
+                callback {Fl::e_text=(char *)" pour de jusque faire  fpour; ";Fl::e_length=30; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {10 10 31 20} labelsize 10
+              }
+              MenuItem Xcas_Prg_tantque {
+                label tantque
+                callback {Fl::e_text=(char *)" tantque faire ftantque; ";Fl::e_length=25; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {10 10 31 20} labelsize 10
+              }
+              MenuItem Xcas_Prg_repeter {
+                label repeter
+                callback {Fl::e_text=(char *)" repeter jusqua ; ";Fl::e_length=18; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {10 10 31 20} labelsize 10
+              }
+              MenuItem Xcas_Prg_fonction {
+                label fonction
+                callback {Fl::e_text=(char *)"f(x,y):= { local ;  }";
+Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {10 10 31 20} labelsize 10
+              }
+              MenuItem Xcas_Prg_return {
+                label return
+                callback {Fl::e_text=(char *)"return ;";
+Fl::e_length=8; xcas::fl_handle(xcas::Xcas_input_focus);Fl::focus(xcas::Xcas_input_focus);}
+                xywh {10 10 31 20} labelsize 10
+              }
+            }
+          }
+          Fl_Button Xcas_Quote {
+            label {'}
+            tooltip Quote xywh {370 415 25 25} labelsize 10
+            class {xcas::No_Focus_Button}
+          }
           Fl_Button Xcas_Double_quote {
             label {"}
-            tooltip {String delimiter} xywh {70 415 30 25} labelsize 10
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Parentheses {
-            label {(}
-            xywh {100 440 25 25} labelsize 10
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Brackets {
-            label {{}}
-            tooltip {Bloc delimiter (set delimiter in maple compatible mode)} xywh {130 415 30 25} labelsize 10
+            tooltip {String delimiter} xywh {395 415 30 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Crochets {
             label {[]}
-            tooltip {List, vector, matrix delimiter} xywh {100 415 30 25} labelsize 10
+            tooltip {List, vector, matrix delimiter} xywh {425 415 30 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
-          Fl_Button Xcas_Quote {
-            label {'}
-            tooltip Quote xywh {50 415 20 25} labelsize 10
+          Fl_Button Xcas_Brackets {
+            label {{}}
+            tooltip {Bloc delimiter (set delimiter in maple compatible mode)} xywh {455 415 30 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Virgule {
             label {,}
-            xywh {125 440 20 25}
+            xywh {350 440 25 25}
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Semi_button {
             label {;}
-            xywh {160 415 30 25} labelsize 10
+            xywh {405 440 30 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Sto {
-            label {:=}
-            tooltip Assign xywh {70 440 30 25} labelsize 10
+            label {=}
+            tooltip Assign xywh {230 440 30 25} labelsize 10
+            class {xcas::No_Focus_Button}
+          }
+          Fl_Button Xcas_Parentheses {
+            label {(}
+            xywh {320 440 30 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Keyboard_suchthat {
             label {|}
-            xywh {50 440 20 25}
+            xywh {205 440 20 25}
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Keyboard_rp {
             label {)}
-            xywh {145 440 25 25} labelsize 10
+            xywh {375 440 30 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_RPN_space {
             label { }
-            xywh {170 440 20 25} labelsize 10
+            xywh {435 440 25 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
-        }
-        Fl_Group Cst_keyboard {open
-          xywh {190 415 60 50}
-        } {
-          Fl_Button Xcas_Cst_i {
-            label i
-            callback {const giac::context * contextptr=Xcas_get_context();
-Xcas_input_0arg(Xcas_Cst_i,giac::printi(contextptr));}
-            tooltip {Complex square root of -1} xywh {190 440 30 25} shortcut 0x69 labelsize 10
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Cst_pi {
-            label {π}
-            callback {Xcas_input_0arg(Xcas_Cst_pi,"pi");}
-            tooltip {The pi number} xywh {220 415 30 25} labelsize 10
+          Fl_Button Xcas_Equal_button {
+            label {:}
+            tooltip Equal xywh {205 440 25 25} align 64
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_Keyboard_infinity {
             label oo
             callback {Xcas_input_0arg(Xcas_Keyboard_infinity,"+infinity");}
-            tooltip {Infinity (unsigned)} xywh {190 415 30 25} labelsize 10
+            tooltip {Infinity (unsigned)} xywh {460 440 25 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
-          Fl_Button Xcas_Racine_carree {
-            label sqrt
-            callback {xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"sqrt",true);}
-            tooltip {Square root} xywh {220 440 30 25} labelsize 10 align 64
+          Fl_Button Xcas_Superieur {
+            label {>}
+            xywh {260 440 30 25} shortcut 0x2d
+            class {xcas::No_Focus_Button}
+          }
+          Fl_Button Xcas_Inferieur_button {
+            label {<}
+            tooltip Inferior xywh {290 440 30 25} align 64
             class {xcas::No_Focus_Button}
           }
         }
-        Fl_Group Rewrite_keyboard {open
-          xywh {0 465 60 50}
+        Fl_Group Cst_keyboard {
+          xywh {410 465 25 50}
         } {
-          Fl_Button Xcas_approx_key {
-            label {~}
-            callback {xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"approx",true);}
-            tooltip Evalf xywh {0 465 15 25} shortcut 0x80061 labelsize 10
+          Fl_Button Xcas_Cst_i {
+            label i
+            callback {const giac::context * contextptr=Xcas_get_context();
+Xcas_input_0arg(Xcas_Cst_i,giac::printi(contextptr));}
+            tooltip {Complex square root of -1} xywh {410 490 25 25} shortcut 0x69 labelsize 10
             class {xcas::No_Focus_Button}
           }
-          Fl_Button Xcas_simplify_key {
-            label simplify
-            callback {xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"simplify",true);}
-            tooltip {simplify: Simplify expression} xywh {0 490 30 25} shortcut 0xc0073 labelsize 10 align 84
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_factor_key {
-            label factor
-            callback {xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"factor",true);}
-            tooltip {factor: Factorization} xywh {30 465 30 25} shortcut 0x80066 labelsize 10 align 84
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_convert_key {
-            label {=>}
-            callback {Xcas_input_0arg(Xcas_convert_key," => ");}
-            tooltip {Sto/Convert to} xywh {15 465 15 25} shortcut 0x80063 labelsize 10
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Menu_Button Xcas_Prg_Menubutton {
-            label prg open
-            xywh {30 490 30 25} labelsize 10
-          } {
-            MenuItem Xcas_Prg_si {
-              label si
-              callback {Fl::e_text=(char *)" si alors sinon fsi; ";Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);}
-              xywh {0 0 31 20} labelsize 10
-            }
-            MenuItem Xcas_Prg_pour {
-              label pour
-              callback {Fl::e_text=(char *)" pour de jusque faire  fpour; ";Fl::e_length=30; xcas::fl_handle(xcas::Xcas_input_focus);}
-              xywh {0 0 31 20} labelsize 10
-            }
-            MenuItem Xcas_Prg_tantque {
-              label tantque
-              callback {Fl::e_text=(char *)" tantque faire ftantque; ";Fl::e_length=25; xcas::fl_handle(xcas::Xcas_input_focus);}
-              xywh {0 0 31 20} labelsize 10
-            }
-            MenuItem Xcas_Prg_repeter {
-              label repeter
-              callback {Fl::e_text=(char *)" repeter jusqua ; ";Fl::e_length=18; xcas::fl_handle(xcas::Xcas_input_focus);}
-              xywh {0 0 31 20} labelsize 10
-            }
-            MenuItem Xcas_Prg_fonction {
-              label fonction
-              callback {Fl::e_text=(char *)"f(x,y):= { local ;  }";
-Fl::e_length=21; xcas::fl_handle(xcas::Xcas_input_focus);}
-              xywh {0 0 31 20} labelsize 10
-            }
-            MenuItem Xcas_Prg_return {
-              label return
-              callback {Fl::e_text=(char *)"return ;";
-Fl::e_length=8; xcas::fl_handle(xcas::Xcas_input_focus);}
-              xywh {0 0 31 20} labelsize 10
-            }
-          }
-        }
-        Fl_Group Xcas_calculus_group {open
-          xywh {60 465 40 50}
-        } {
-          Fl_Button Xcas_diff_key {
-            label {∂}
-            callback {if (calc_mode(Xcas_get_context())==38) xcas::Xcas_input_arg(Xcas_diff_key,"∂"); else xcas::Xcas_input_arg(Xcas_diff_key,"diff");}
-            tooltip diff xywh {60 465 20 25} shortcut 0x80064 labelfont 10 labelsize 10
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_int_key {
-            label {∫}
-            callback {if (calc_mode(Xcas_get_context())==38) xcas::Xcas_input_arg(Xcas_int_key,"∫"); else xcas::Xcas_input_arg(Xcas_int_key,"integrate");}
-            tooltip Integral xywh {80 465 20 25} shortcut 0x80069 labelfont 10 labelsize 12
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_sigma_key {
-            label {Σ}
-            callback {if (calc_mode(Xcas_get_context())==38) xcas::Xcas_input_arg(Xcas_sigma_key,"Σ"); else xcas::Xcas_input_arg(Xcas_sigma_key,"sum");}
-            tooltip Sum xywh {80 490 20 25} labelsize 10 align 64
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_limit_key {
-            label lim
-            callback {xcas::Xcas_input_arg(Xcas_limit_key,"limit");}
-            tooltip Limit xywh {60 490 20 25} shortcut 0x8006c labelsize 10
+          Fl_Button Xcas_Cst_pi {
+            label {π}
+            callback {Xcas_input_0arg(Xcas_Cst_pi,"pi");}
+            tooltip {The pi number} xywh {410 465 25 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
         }
-        Fl_Group Transcendental {open
-          xywh {100 465 150 50}
+        Fl_Group Transcendental {
+          xywh {235 465 175 50}
         } {
           Fl_Group Trig_keyboard {open
-            xywh {100 465 150 25}
+            xywh {235 465 175 25}
           } {
             Fl_Button Xcas_Sinus_button {
               label sin
-              tooltip Sinus xywh {115 465 35 25} labelsize 10 align 64
+              tooltip Sinus xywh {275 465 35 25} labelsize 10 align 64
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Cosinus_button {
               label cos
-              xywh {165 465 35 25} labelsize 10 align 64
+              xywh {325 465 35 25} labelsize 10 align 64
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Tangeant_button {
               label tan
-              tooltip Tangent xywh {215 465 35 25} labelsize 10 align 64
+              tooltip Tangent xywh {375 465 35 25} labelsize 10 align 64
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Asinus_button {
               label a
               callback {Xcas_input_arg(Xcas_Asinus_button,"asin");}
-              tooltip Arcsinus xywh {100 465 15 25} color 29 labelsize 10 labelcolor 4
+              tooltip Arcsinus xywh {260 465 15 25} color 29 labelsize 10 labelcolor 4
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Acosinus_button {
               label a
               callback {Xcas_input_arg(Xcas_Acosinus_button,"acos");}
-              tooltip Arccosinus xywh {150 465 15 25} color 29 labelsize 10 labelcolor 4
+              tooltip Arccosinus xywh {310 465 15 25} color 29 labelsize 10 labelcolor 4
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Atangeant_button {
               label a
               callback {Xcas_input_arg(Xcas_Atangeant_button,"atan");}
-              tooltip Arctangent xywh {200 465 15 25} color 29 labelsize 10 labelcolor 4
+              tooltip Arctangent xywh {360 465 15 25} color 29 labelsize 10 labelcolor 4
+              class {xcas::No_Focus_Button}
+            }
+            Fl_Button Xcas_approx_key {
+              label {~}
+              callback {xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"approx",true);}
+              tooltip Evalf xywh {235 465 25 25} shortcut 0x80061 labelsize 10
               class {xcas::No_Focus_Button}
             }
           }
           Fl_Group Exp_keyboard {open
-            xywh {100 490 150 25}
+            xywh {235 490 175 25}
           } {
             Fl_Button Xcas_Exp_button {
               label exp
-              tooltip Exponential xywh {150 490 30 25} labelsize 10 align 64
+              tooltip Exponential xywh {305 490 35 25} labelsize 10 align 64
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Dix_puissance {
               label {10^}
-              xywh {215 490 35 25} labelsize 10 align 64
+              xywh {375 490 35 25} labelsize 10 align 64
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Ln10_button {
               label log10
-              tooltip {base 10 logarithm} xywh {180 490 35 25} labelsize 10 align 64
+              tooltip {base 10 logarithm} xywh {340 490 35 25} labelsize 10 align 64
               class {xcas::No_Focus_Button}
             }
             Fl_Button Xcas_Ln_button {
               label ln
-              tooltip {Natural logarithm} xywh {120 490 30 25} labelsize 10 align 64
+              tooltip {Natural logarithm} xywh {270 490 35 25} labelsize 10 align 64
+              class {xcas::No_Focus_Button}
+            }
+            Fl_Button Xcas_Racine_carree {
+              label sqrt
+              callback {xcas::in_Xcas_input_1arg(xcas::Xcas_input_focus,"sqrt",true);}
+              tooltip {Square root} xywh {235 490 35 25} labelsize 10 align 64
               class {xcas::No_Focus_Button}
             }
           }
         }
         Fl_Group Operations_keyboard {open
-          xywh {100 415 210 100}
+          xywh {205 465 30 50}
         } {
-          Fl_Button Xcas_Plus {
-            label {+}
-            xywh {250 440 30 25} shortcut 0x2b
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Moins {
-            label {-}
-            tooltip Subtract xywh {280 440 30 25} shortcut 0x2d
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Fois {
-            label {*}
-            xywh {250 465 30 25} shortcut 0x2a
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Divise {
-            label {/}
-            xywh {280 465 30 25} shortcut 0x2f
-            class {xcas::No_Focus_Button}
-          }
           Fl_Button Xcas_Puissance {
             label {^}
-            xywh {250 490 30 25} shortcut 0x5e labelsize 10
+            xywh {205 465 30 25} shortcut 0x5e labelsize 10
             class {xcas::No_Focus_Button}
           }
           Fl_Button Xcas_C_mod {
             label {%}
-            tooltip Modulo xywh {280 490 30 25} labelsize 10
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Inverse_button {
-            label inv
-            tooltip Inverse xywh {100 490 20 25} labelsize 10 align 64
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Inferieur_button {
-            label {<}
-            tooltip Inferior xywh {250 415 20 25} align 64
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Superieur {
-            label {>}
-            xywh {290 415 20 25} shortcut 0x2d
-            class {xcas::No_Focus_Button}
-          }
-          Fl_Button Xcas_Equal_button {
-            label {=}
-            tooltip Equal xywh {270 415 20 25} align 64
+            tooltip Modulo xywh {205 490 30 25} labelsize 10
             class {xcas::No_Focus_Button}
           }
         }
       }
       Fl_Group Numeric_numbers {
-        xywh {310 415 75 100}
+        xywh {100 415 105 100}
       } {
         Fl_Button Xcas_Un {
           label 1
-          xywh {310 465 25 25} shortcut 0x31
+          xywh {100 465 25 25} shortcut 0x31
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Deux {
           label 2
-          xywh {335 465 25 25} shortcut 0x32
+          xywh {125 465 25 25} shortcut 0x32
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Trois {
           label 3
-          xywh {360 465 25 25} shortcut 0x33
+          xywh {150 465 25 25} shortcut 0x33
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Quatre {
           label 4
-          xywh {310 440 25 25} shortcut 0x34
+          xywh {100 440 25 25} shortcut 0x34
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Cinq {
           label 5
-          xywh {335 440 25 25} shortcut 0x35
+          xywh {125 440 25 25} shortcut 0x35
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Six {
           label 6
-          xywh {360 440 25 25} shortcut 0x36
+          xywh {150 440 25 25} shortcut 0x36
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Sept {
           label 7
-          xywh {310 415 25 25} shortcut 0x37
+          xywh {100 415 25 25} shortcut 0x37
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Huit {
           label 8
-          xywh {335 415 25 25} shortcut 0x38
+          xywh {125 415 25 25} shortcut 0x38
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Neuf {
           label 9
-          xywh {360 415 25 25} shortcut 0x39
+          xywh {150 415 25 25} shortcut 0x39
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Zero {
           label 0
-          xywh {310 490 25 25} shortcut 0x30
+          xywh {100 490 25 25} shortcut 0x30
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Point {
           label {.}
-          xywh {335 490 25 25}
+          xywh {125 490 25 25}
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_EEX {
           label E
-          xywh {360 490 25 25} labelsize 10
+          xywh {150 490 25 25} labelsize 10
+          class {xcas::No_Focus_Button}
+        }
+        Fl_Button Xcas_Plus {
+          label {+}
+          xywh {175 415 30 25} shortcut 0x2b
+          class {xcas::No_Focus_Button}
+        }
+        Fl_Button Xcas_Moins {
+          label {-}
+          tooltip Subtract xywh {175 440 30 25} shortcut 0x2d
+          class {xcas::No_Focus_Button}
+        }
+        Fl_Button Xcas_Fois {
+          label {*}
+          xywh {175 465 30 25} shortcut 0x2a
+          class {xcas::No_Focus_Button}
+        }
+        Fl_Button Xcas_Divise {
+          label {/}
+          xywh {175 490 30 25} shortcut 0x2f
           class {xcas::No_Focus_Button}
         }
       }
       Fl_Group Kbd_control {open
-        xywh {385 415 100 100}
+        xywh {0 415 100 100}
       } {
+        Fl_Button Xcas_Undo_Key {
+          label undo
+          callback {
+      static char petit_buffer[2]={26,0};
+      Fl::e_length=1;
+      Fl::e_text=petit_buffer;
+      Fl::e_keysym=26;
+      xcas::fl_handle(Fl::focus());} selected
+          tooltip {Undo last edit} xywh {65 415 35 25} labelsize 10 align 64
+          class {xcas::No_Focus_Button}
+        }
         Fl_Button Xcas_Echap {
           label esc
           callback {;
@@ -4059,8 +4297,8 @@ static char petit_buffer[]="";
 Fl::e_length=0;
 Fl::e_text=petit_buffer;
 Fl::e_keysym=FL_Escape;
-xcas::fl_handle(xcas::Xcas_input_focus);}
-          tooltip {Cancel (erase cmdline, stop interactive_plotode)} xywh {385 415 30 25} shortcut 0xff1b labelsize 10 align 64
+xcas::fl_handle(Fl::focus());}
+          tooltip {Cancel (erase cmdline, stop interactive_plotode)} xywh {30 415 35 25} shortcut 0xff1b labelsize 10 align 64 hide
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Alpha {
@@ -4073,19 +4311,19 @@ else {
   Xcas_Alpha_Keyboard->show();
   Xcas_Scientific_Keyboard->hide();
 }}
-          tooltip {Show/Hide alphabetic keyboard} xywh {415 465 35 25} shortcut 0xff1b labelsize 10 labelcolor 4 align 64
+          tooltip {Show/Hide alphabetic keyboard} xywh {30 465 35 25} shortcut 0xff1b labelsize 10 labelcolor 4 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Cmds {
           label cmds
           callback {Xcas_Keyboard_Switch(4);}
-          tooltip {Show commands bandeau} xywh {450 440 35 25} shortcut 0xff1b color 17 labelsize 10 align 64
+          tooltip {Show commands bandeau} xywh {30 415 35 25} shortcut 0xff1b color 17 labelsize 10 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Msg {
           label msg
           callback {Xcas_Keyboard_Switch(2);}
-          tooltip {Show messages} xywh {420 445 65 20} shortcut 0xff1b color 17 labelsize 10 align 64 hide
+          tooltip {Show messages} xywh {35 445 65 20} shortcut 0xff1b color 17 labelsize 10 align 64 hide
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_b7 {
@@ -4093,7 +4331,7 @@ else {
           callback {xcas::alt_ctrl=4+Xcas_Alpha_Keyboard->visible();
   Xcas_Alpha_Keyboard->show();
   Xcas_Scientific_Keyboard->hide();}
-          tooltip {Set bit 7 for next key entry} xywh {385 425 35 20} shortcut 0xff1b labelsize 10 align 64 hide
+          tooltip {Set bit 7 for next key entry} xywh {0 425 35 20} shortcut 0xff1b labelsize 10 align 64 hide
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_Ctrl {
@@ -4101,13 +4339,13 @@ else {
           callback {xcas::alt_ctrl=2+Xcas_Alpha_Keyboard->visible();
   Xcas_Alpha_Keyboard->show();
   Xcas_Scientific_Keyboard->hide();}
-          tooltip Control xywh {415 415 35 25} shortcut 0xff1b labelsize 10 align 64 hide
+          tooltip Control xywh {30 415 35 25} shortcut 0xff1b labelsize 10 align 64 hide
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_close_keyboard {
           label X
           callback {Xcas_Keyboard_Switch(1);}
-          tooltip {Close keyboard} xywh {450 415 35 25} color 17 labelsize 10
+          tooltip {Close keyboard} xywh {0 415 30 25} color 17 labelsize 10
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_del_button {
@@ -4117,14 +4355,14 @@ else {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_BackSpace;
-      xcas::fl_handle(xcas::Xcas_input_focus);}
-          tooltip Backspace xywh {385 490 30 25} shortcut 0x40076 align 64
+      xcas::fl_handle(Fl::focus());}
+          tooltip Backspace xywh {0 490 30 25} shortcut 0x40076 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_paste_button {
           label paste
           callback {xcas::cb_Paste(0,0);}
-          xywh {385 440 30 25} shortcut 0x40076 labelsize 10 align 64
+          xywh {65 440 35 25} shortcut 0x40076 labelsize 10 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_enter_button {
@@ -4134,8 +4372,8 @@ else {
       Fl::e_length=1;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Enter;
-      xcas::fl_handle(xcas::Xcas_input_focus);}
-          xywh {450 490 35 25} shortcut 0x40076 color 167 labelcolor 49 align 64
+      xcas::fl_handle(Fl::focus());}
+          xywh {65 490 35 25} shortcut 0x40076 color 167 labelcolor 49 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_left_button {
@@ -4145,8 +4383,8 @@ else {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Left;
-      xcas::fl_handle(xcas::Xcas_input_focus);}
-          xywh {385 465 30 25} labelsize 10 align 64
+      xcas::fl_handle(Fl::focus());}
+          xywh {0 465 30 25} labelsize 10 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_down_button {
@@ -4156,8 +4394,8 @@ else {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Down;
-      xcas::fl_handle(xcas::Xcas_input_focus);}
-          xywh {415 490 35 25} labelsize 10 align 64
+      xcas::fl_handle(Fl::focus());}
+          xywh {30 490 35 25} labelsize 10 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_up_button {
@@ -4167,8 +4405,8 @@ else {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Up;
-      xcas::fl_handle(xcas::Xcas_input_focus);}
-          xywh {415 440 35 25} labelsize 10 align 64
+      xcas::fl_handle(Fl::focus());}
+          xywh {30 440 35 25} labelsize 10 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_right_button {
@@ -4178,8 +4416,8 @@ else {
       Fl::e_length=0;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=FL_Right;
-      xcas::fl_handle(xcas::Xcas_input_focus);}
-          xywh {450 465 35 25} labelsize 10 align 64
+      xcas::fl_handle(Fl::focus());}
+          xywh {65 465 35 25} labelsize 10 align 64
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_main_tab_button {
@@ -4189,8 +4427,8 @@ else {
       Fl::e_length=1;
       Fl::e_text=petit_buffer;
       Fl::e_keysym=9;
-      xcas::fl_handle(xcas::Xcas_input_focus);}
-          xywh {415 415 35 25} labelsize 10 align 64
+      xcas::fl_handle(Fl::focus());}
+          xywh {0 440 30 25} shortcut 0xff09 labelsize 10 align 64
           class {xcas::No_Focus_Button}
         }
       }
@@ -4252,7 +4490,7 @@ show_rpn_menu(rpn_menu_page);}
           class {xcas::No_Focus_Button}
         }
         Fl_Button Xcas_CST_Key {
-          label cust
+          label CST
           callback {giac::gen e=giac::protecteval(giac::CST__IDNT_e,2,Xcas_get_context());
   if (e.type==giac::_VECT){
     rpn_menu=*e._VECTptr;
@@ -4306,7 +4544,7 @@ Xcas_resize_mainwindow();}
     }
   }
   Fl_Window Xcas_General_Setup {
-    label {Xcas General Setup} open
+    label {Xcas General Setup}
     xywh {349 164 305 345} type Double hide resizable
   } {
     Fl_Menu_Button Xcas_Level {
@@ -4497,12 +4735,12 @@ Xcas_Page_Format_Output->value("8");}
   }
   Fl_Window Xcas_Script_Window {
     label {Xcas Script Window}
-    xywh {483 87 540 345} type Double resizable visible
+    xywh {489 114 540 345} type Double hide resizable
   } {}
   Fl_Window Xcas_DispG_Window_ {
-    label {Xcas DispG Window} open
-    xywh {483 123 540 550} type Double resizable
-    class {xcas::DispG_Window} visible
+    label {Xcas DispG Window}
+    xywh {489 150 540 550} type Double hide resizable
+    class {xcas::DispG_Window}
   } {
     Fl_Menu_Bar Xcas_DispG_Menu {
       xywh {0 0 95 25} align 64
@@ -4564,6 +4802,10 @@ Xcas_Page_Format_Output->value("8");}
     }
   }
   code {xcas::Xcas_Main_Window=Xcas_Main_Window_;
+xcas::Xcas_MainTab=Xcas_Main_Tab;        
+\#ifdef EMCC2
+Xcas_Main_Window_->border(0);
+\#endif
   xcas_main_tab=Xcas_Main_Tab;
 xcas::Xcas_DispG=Xcas_DispG_;
 giac::my_gprintf=xcas::xcas_gprintf;
@@ -4580,7 +4822,7 @@ Xcas_Exp_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
 Xcas_Ln_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
 Xcas_Dix_puissance->callback((Fl_Callback* )xcas::Xcas_input_1arg);
 Xcas_Ln10_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
-Xcas_Inverse_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
+//Xcas_Inverse_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
 Xcas_Inferieur_button->callback((Fl_Callback* )xcas::Xcas_input_1arg);
 Xcas_Equal_button->callback((Fl_Callback* )xcas::Xcas_input_char);
 Xcas_a_key->callback((Fl_Callback *)xcas::Xcas_input_char);
@@ -4609,23 +4851,23 @@ Xcas_w_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_x_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_y_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_z_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Inferieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Superieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Inferieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Superieur_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Backslash_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Parenthese_ouvrante_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Parenthese_fermante_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Espace_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Point_exclamation_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Crochet_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Crochet_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Accolade_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Accolade_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Crochet_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Crochet_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Accolade_ouvrant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Accolade_fermant_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Deux_points_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Equal_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Equal_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Guillemet_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Souligne_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Diese_key->callback((Fl_Callback *)xcas::Xcas_input_char);
-Xcas_Pi_key->callback((Fl_Callback *)xcas::Xcas_input_char);
+//Xcas_Pi_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Alpha_virgule_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Alpha_point_virgule_key->callback((Fl_Callback *)xcas::Xcas_input_char);
 Xcas_Alpha_quote_key->callback((Fl_Callback *)xcas::Xcas_input_char);
@@ -4766,6 +5008,15 @@ Xcas_help_cauchy->callback(cb_Assistant_ItemName);
 Xcas_help_weibull->callback(cb_Assistant_ItemName);
 Xcas_help_gammad->callback(cb_Assistant_ItemName);
 Xcas_help_betad->callback(cb_Assistant_ItemName);
+Xcas_Alg_simplify->callback(cb_Assistant_ItemName);
+Xcas_Alg_factor->callback(cb_Assistant_ItemName);
+Xcas_Calc_diff->callback(cb_Assistant_ItemName);
+Xcas_Calc_integrate->callback(cb_Assistant_ItemName);
+Xcas_Calc_sum->callback(cb_Assistant_ItemName);
+Xcas_Calc_limit->callback(cb_Assistant_ItemName);
+Xcas_Plot_plot->callback(cb_Assistant_ItemName);
+Xcas_Plot_plotparam->callback(cb_Assistant_ItemName);
+Xcas_Plot_plotpolar->callback(cb_Assistant_ItemName);
 
 Xcas_help_debug->callback(cb_Assistant_ItemName);
 
@@ -4794,12 +5045,6 @@ Xcas_approx_key->labelfont(FL_SYMBOL);
 \#endif
 \#endif} {}
   code {// First take control of signals
-signal(SIGINT,giac::ctrl_c_signal_handler);
-giac::child_id=1;
-giac::print_rewrite_prod_inv=true;
-doc_prefix=giac::read_env(giac::context0); // Set giac::language and modes from environment
-xcas::read_aide("aide_cas",giac::language(giac::context0));
-giac::set_language(giac::language(giac::context0),giac::context0);
 // Add spreadsheet menu
 Fl_Menu_Item * tmpitem = xcas::Tableur_menu;
 xcas::copy_menu(Xcas_main_menu,gettext("Spreadsheet")+std::string("/"),tmpitem);
@@ -4814,7 +5059,7 @@ xcas::add_user_menu(Xcas_main_menu,"xcasmenu",doc_prefix,cb_Insert_ItemName); //
 xcas::menu2rpn_callback=cb_Insert_ItemName;
 // Add RPN-like menus, skip the first four items
 Fl_Menu_Item * menu_xcas_tmp= (Fl_Menu_Item *)Xcas_main_menu->menu();
-for (int i=0;i<6;i++){
+for (int i=0;i<5;i++){
  if (menu_xcas_tmp->text)
   xcas::nextfl_menu(menu_xcas_tmp);
 }
@@ -4934,6 +5179,18 @@ else make_history();
 \#endif
 \#endif
   Xcas_Main_Window_->label(windowname.c_str());
+\#ifdef EMCC2
+int res=init_fs();
+if (res==1){
+      if (Xcas_Main_Tab->children()){
+        xcas::History_Fold * hf = dynamic_cast<xcas::History_Fold *>(Xcas_Main_Tab->child(0));
+        if (hf && hf->pack && hf->pack->children() < 2 ) { hf->pack->close(""); Xcas_Main_Tab->remove(hf);}
+      }
+  load_filename("/data/session.xw",false);
+}
+  chdir("/data");
+  emscripten_set_main_loop(Xcas_emscripten_main_loop, 0, true);
+\#else
   while (running){
     while (Xcas_Main_Window_->visible() || Xcas_Main_Window_->shown() ) {
       Fl::wait();
@@ -4941,6 +5198,7 @@ else make_history();
     running=!Xcas_save_all(Xcas_Main_Tab);
     if (running) Xcas_Main_Window_->show();
   }
+\#endif
   return 0;} {}
 }
 
@@ -4950,6 +5208,7 @@ Function {main(int argc,char ** argv)} {open return_type int
 \#ifdef HAVE_LIBMICROPYTHON
     python_heap=micropy_init(pythonjs_stack_size,pythonjs_heap_size);
 \#endif
+xcas::qr_update=Xcas_qrupdate;
 if (argc==2 && strlen(argv[1])==0)
   argc=1;
 if (getenv("XCAS_AUTOSAVE_FOLDER")){
@@ -4959,6 +5218,12 @@ if (getenv("XCAS_AUTOSAVE_FOLDER")){
 }
 \#if defined WIN32 && !defined __MINGW_H
 Xcas_Numworks_menu->deactivate();
+\#endif
+\#ifdef EMCC2
+Xcas_Numworks_menu->deactivate();
+Xcas_Print->deactivate();
+Xcas_Print_Latex->deactivate();
+Xcas_screen_capture->deactivate();
 \#endif
 \#if defined WIN32 && defined __MINGW_H
 \#undef chdir
@@ -5004,7 +5269,9 @@ xcas::autosave_folder=giac::home_directory();
 Fl::gl_visual(FL_RGB | FL_DEPTH | FL_ACCUM | FL_ALPHA);
 \#endif
 xcas::fonts_available=Fl::set_fonts(0);
+\#ifndef EMCC2
 fl_register_images();
+\#endif
 Xcas_run(argc,argv);
 \#ifdef WITH_GNUPLOT
 giac::kill_gnuplot();

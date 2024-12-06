@@ -56,7 +56,7 @@ namespace xcas {
   void (* Xcas_save_config_ptr)(GIAC_CONTEXT) = 0;
   void (* Xcas_update_mode_ptr)(void) = 0;
 
-  Fl_Double_Window *Xcas_Cas_Setup=(Fl_Double_Window *)0;
+  Fl_Group *Xcas_Cas_Setup=(Fl_Group *)0;
 
   Fl_Menu_Button *Xcas_Float_style=(Fl_Menu_Button *)0;
 
@@ -68,7 +68,7 @@ namespace xcas {
 
   Fl_Check_Button *Xcas_Approx_mode=(Fl_Check_Button *)0;
 
-  Fl_Input *Xcas_Autosimplify=(Fl_Input *)0;
+  Multiline_Input_tab *Xcas_Autosimplify=(Multiline_Input_tab *)0;
 
   Fl_Check_Button *Xcas_Angle_radian=(Fl_Check_Button *)0;
 
@@ -225,7 +225,11 @@ namespace xcas {
     const giac::context * contextptr = context0;
     if (userdata)
       contextptr=(const giac::context *)(userdata);
-    Xcas_Cancel_cas_setup->window()->hide();
+    if (xcas::Xcas_MainTab) xcas::Xcas_MainTab->show();
+    Xcas_Cas_Setup->hide();
+#ifdef EMCC2
+    //xcas::Xcas_Main_Window->border(0);
+#endif
     giac::epsilon(fabs(Xcas_Epsilon->value()),contextptr);
     giac::proba_epsilon(contextptr)=fabs(Xcas_Proba_Epsilon->value());
     giac::threads=max(giac::absint(int(Xcas_Threads->value())),1);
@@ -286,7 +290,11 @@ namespace xcas {
   }
 
   static void cb_Xcas_Cancel_cas_setup(Fl_Button*, void*) {
-    Xcas_Cancel_cas_setup->window()->hide();
+    if (xcas::Xcas_MainTab) xcas::Xcas_MainTab->show();
+    Xcas_Cas_Setup->hide();
+#ifdef EMCC2
+    //xcas::Xcas_Main_Window->border(0);
+#endif
     if (Xcas_input_focus)
       Fl::focus(Xcas_input_focus);
   }
@@ -327,8 +335,8 @@ namespace xcas {
 
   void xcas_cas_setup_init()
   {
-    Fl_Group::current(0);
-    Fl_Double_Window* o = Xcas_Cas_Setup = new Fl_Double_Window(20,80,355, 315, gettext("Xcas Cas Setup"));
+    Fl_Group::current(xcas::Xcas_Main_Window);
+    Fl_Group* o = Xcas_Cas_Setup = new Fl_Group(15,15,360, 380, gettext("Xcas Cas Setup"));
     { Fl_Menu_Button* o = Xcas_Float_style = new Fl_Menu_Button(125, 15, 95, 25, gettext("Float format"));
     o->align(FL_ALIGN_CLIP);
     o->menu(menu_Xcas_Float_style);
@@ -358,7 +366,7 @@ namespace xcas {
     o->selection_color((Fl_Color)1);
     o->align(68|FL_ALIGN_INSIDE);
     }
-    { Fl_Input* o = Xcas_Autosimplify = new Fl_Input(175, 205, 55, 25, gettext("autosimplify"));
+    { Multiline_Input_tab* o = Xcas_Autosimplify = new Multiline_Input_tab(175, 205, 55, 25, gettext("autosimplify"));
     o->tooltip(gettext("Command automatically executed after evaluation (auto-simplification), type 0 for nothing, 1 for regroup and 2 for simplify"));
     o->value("regroup");
     }
@@ -491,7 +499,7 @@ or default eval level)"));
     o->align(68);
     }
     o->end();
-    o->resizable(o);
+    //o->resizable(o);
   } // end Xcas_Cas_Setup creation
 
 
@@ -552,15 +560,23 @@ or default eval level)"));
     Xcas_debug_infolevel->value(do_debug_infolevel);
     Fl_Widget * foc = Fl::focus();
     if (foc && (foc=Fl::focus()->window()) ){
+      Xcas_Cas_Setup->resize(20,foc->h()/8,2*foc->w()/3,3*foc->h()/4);
       xcas::change_group_fontsize(Xcas_Cas_Setup,foc->labelsize());
-      Xcas_Cas_Setup->resize(20,80,3*foc->w()/4,3*foc->h()/4);
+      if (xcas::Xcas_MainTab){
+        xcas::Xcas_MainTab->hide();
+        // Xcas_Cas_Setup->resize(xcas::Xcas_MainTab->x(),xcas::Xcas_MainTab->y()+40,xcas::Xcas_MainTab->w(),xcas::Xcas_MainTab->h()-40);
+      }
+      //else
     }
     Xcas_Cas_Setup->show();
+#ifdef EMCC2
+    //xcas::Xcas_Main_Window->border(1);
+#endif
   }
 
 
   // xcas geo setup
-  Fl_Double_Window *Xcas_Plot_Setup=(Fl_Double_Window *)0;
+  Fl_Group *Xcas_Plot_Setup=(Fl_Group *)0;
 
   Fl_Group *Plot_setup_w=(Fl_Group *)0;
 
@@ -639,7 +655,8 @@ or default eval level)"));
     giac::gnuplot_opengl=Xcas_opengl->value();
     giac::class_minimum=Xcas_Class_min->value();
     giac::class_size=Xcas_Class_size->value();
-    Xcas_Plot_Setup_OK->window()->hide();
+    Xcas_Plot_Setup->hide();
+    if (xcas::Xcas_MainTab) xcas::Xcas_MainTab->show();
     if (Xcas_input_focus)
       Fl::focus(Xcas_input_focus);
   }
@@ -654,7 +671,8 @@ or default eval level)"));
   }
   
   static void cb_Xcas_Plot_Setup_Cancel(Fl_Button*, void*) {
-    Xcas_Plot_Setup_Cancel->window()->hide();
+    Xcas_Plot_Setup->hide();
+    if (xcas::Xcas_MainTab) xcas::Xcas_MainTab->show();
     if (Xcas_input_focus)
       Fl::focus(Xcas_input_focus);
   }
@@ -669,8 +687,8 @@ or default eval level)"));
 
   void xcas_plot_setup_init()
   { 
-    Fl_Group::current(0);
-    Fl_Double_Window* o = Xcas_Plot_Setup = new Fl_Double_Window(20,80,300, 230, gettext("Xcas Plot Setup"));
+    Fl_Group::current(xcas::Xcas_Main_Window);
+    Fl_Group* o = Xcas_Plot_Setup = new Fl_Group(0,0,300, 320, gettext("Xcas Plot Setup"));
     { Fl_Group* o = Plot_setup_w = new Fl_Group(0, 0, 300, 320, gettext("Plot setup"));
     o->box(FL_SHADOW_BOX);
     o->color(FL_BACKGROUND2_COLOR);
@@ -892,9 +910,10 @@ or default eval level)"));
     Fl_Widget * foc = Fl::focus();
     if (foc && (foc=foc->window())){
       xcas::change_group_fontsize(Xcas_Plot_Setup,foc->labelsize());
-      Xcas_Plot_Setup->resize(20,80,3*foc->w()/4,3*foc->h()/4);
+      Xcas_Plot_Setup->resize(0,foc->h()/4,2*foc->w()/3,3*foc->h()/4);
     }
     Xcas_Plot_Setup->show();
+    if (xcas::Xcas_MainTab) xcas::Xcas_MainTab->hide();
   }
 
 #endif // HAVE_LIBFLTK

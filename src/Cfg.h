@@ -25,8 +25,8 @@ namespace xcas {
 
   void Xcas_load_cas_setup(const giac::context * contextptr);
   void Xcas_load_graph_setup(const giac::context * contextptr);
-  extern Fl_Double_Window *Xcas_Cas_Setup ;
-  extern Fl_Double_Window *Xcas_Plot_Setup ;
+  extern Fl_Group *Xcas_Cas_Setup ;
+  extern Fl_Group *Xcas_Plot_Setup ;
 
   extern void (* Xcas_save_config_ptr)(const giac::context * contextptr) ;
   extern void (* Xcas_update_mode_ptr)(void) ;

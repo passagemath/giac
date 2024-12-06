@@ -358,6 +358,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(graphic_get_pixel_obj, 2, 3, graphic_get_pix
 static mp_obj_t graphic_draw_string(size_t n_args, const mp_obj_t *args) {
   uint16_t x = mp_obj_get_int(args[0]), y = mp_obj_get_int(args[1]),c=0,bg=0xffff;
   const char * text = mp_obj_str_get_str(args[2]);
+  const char * font = 0;
   if (n_args>=4)
     c = mp_get_color(args[3]);
   if (n_args>=5){
@@ -367,7 +368,6 @@ static mp_obj_t graphic_draw_string(size_t n_args, const mp_obj_t *args) {
     else
       bg =c;
   }
-  const char * font = 0;
   if (n_args>=6)
     font=mp_obj_str_get_str(args[5]);
   if (font && strcmp(font,"small")==0)
