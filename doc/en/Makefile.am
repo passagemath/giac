@@ -1,4 +1,4 @@
-TEX_LOCAL = cascmd_en.tex casinter.tex cas.tex slipres.tex giacxcas.tex
+TEX_LOCAL = cascmd_en.tex casinter.tex cas.tex slipres.tex giacxcas.tex tutoriel.tex
 
 PDF_LOCAL = cascmd_en.pdf casinter.pdf cas.pdf
 
