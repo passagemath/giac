@@ -531,20 +531,20 @@ dnl AC_CHECK_LIB(micropython,mp_version)
 AC_PROG_EGREP
 CONFIG_DOC_PROGS="yes"
 AC_PATH_PROG(LATEX, latex, "")
-if test -z "$LATEX"; then CONFIG_DOC_PROGS = "no"; fi
+if test -z "$LATEX"; then CONFIG_DOC_PROGS="no"; fi
 
 if test "$CONFIG_DOC_PROGS" = "yes"; then
 	AC_PATH_PROG(MAKEINDEX, makeindex, "")
-	if test -z "$MAKEINDEX"; then CONFIG_DOC_PROGS = "no"; fi
+	if test -z "$MAKEINDEX"; then CONFIG_DOC_PROGS="no"; fi
 fi
 
 if test "$CONFIG_DOC_PROGS" = "yes"; then
 	AC_PATH_PROG(PDFLATEX, pdflatex, "")
-	if test -z "$PDFLATEX"; then CONFIG_DOC_PROGS = "no"; fi
+	if test -z "$PDFLATEX"; then CONFIG_DOC_PROGS="no"; fi
 fi
 if test "$CONFIG_DOC_PROGS" = "yes"; then
 	AC_PATH_PROG(DVIPS, dvips, "")
-	if test -z "$DVIPS"; then CONFIG_DOC_PROGS = "no"; fi
+	if test -z "$DVIPS"; then CONFIG_DOC_PROGS="no"; fi
 fi
 dnl if test "$CONFIG_DOC_PROGS" = "yes"; then
 dnl 	AC_PATH_PROG(LATEX2HTML, latex2html, "")
