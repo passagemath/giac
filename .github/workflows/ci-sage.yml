@@ -99,8 +99,8 @@ jobs:
       targets: SAGE_CHECK=no SAGE_CHECK_PACKAGES="?giac,sagemath_giac" giac conway_polynomials sagemath_giac
       # Standard setting: Test with main HEAD of passagemath:
       sage_repo: passagemath/passagemath
-      sage_ref: main
-      #sage_ref: refs/pull/221/merge
+      #sage_ref: main
+      sage_ref: refs/pull/221/merge
       upstream_artifact: upstream
       # Docker targets (stages) to tag
       docker_targets: "with-targets"
