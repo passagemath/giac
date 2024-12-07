@@ -96,7 +96,7 @@ jobs:
       # https://github.com/passagemath/passagemath/tree/develop/build/pkgs
       extra_sage_packages: "patch cmake gfortran openblas"
       # Sage distribution packages to build
-      targets: SAGE_CHECK=no SAGE_CHECK_PACKAGES="?giac,sagemath_giac" giac sagemath_giac
+      targets: SAGE_CHECK=no SAGE_CHECK_PACKAGES="?giac,sagemath_giac" giac conway_polynomials sagemath_giac
       # Standard setting: Test with main HEAD of passagemath:
       sage_repo: passagemath/passagemath
       sage_ref: main
